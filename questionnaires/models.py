@@ -103,6 +103,15 @@ class QuestionSection(TimeStampedModel):
     def __str__(self):
         return f"{self.questionnaire.name} - {self.title}"
 
+    def get_translation_only(self, language, fallback):
+        translation = self.translations.filter(language=language).first()
+        if translation is None:
+            return None
+        return {
+            'title': translation.title or fallback['title'],
+            'description': translation.description or fallback.get('description', ''),
+        }
+
     def get_translated(self, language):
         translation = self.translations.filter(language=language).first()
         if translation is None:
@@ -177,6 +186,15 @@ class Question(TimeStampedModel):
 
     def __str__(self):
         return f"{self.section.title} - {self.question_text[:50]}"
+
+    def get_translation_only(self, language, fallback):
+        translation = self.translations.filter(language=language).first()
+        if translation is None:
+            return None
+        return {
+            'question_text': translation.question_text or fallback['question_text'],
+            'config': translation.config or fallback['question_config'],
+        }
 
     def get_translated(self, language):
         translation = self.translations.filter(language=language).first()
