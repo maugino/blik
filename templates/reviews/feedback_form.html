@@ -1,10 +1,10 @@
-{% load static feedback_tags %}
+{% load i18n static feedback_tags %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback - {{ reviewee.name }}</title>
+    <title>{% blocktrans with reviewee_name=reviewee.name %}Feedback - {{ reviewee_name }}{% endblocktrans %}</title>
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <script>
         // Theme detection and initialization
@@ -32,9 +32,10 @@
     </script>
 </head>
 <body style="background: var(--bg-body);">
+    {% include "components/language_selector.html" %}
     <div class="feedback-container">
         <div class="feedback-header">
-            <h1>360 Feedback</h1>
+            <h1>{% translate "360 Feedback" %}</h1>
             <div class="reviewee-name">{{ reviewee.name }}</div>
             <div class="category-badge">{{ token.get_category_display }}</div>
         </div>
@@ -43,7 +44,7 @@
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
-            <div class="progress-text">Step 1 of {{ sections|length }}</div>
+            <div class="progress-text">{% blocktrans with section_count=sections|length %}Step 1 of {{ section_count }}{% endblocktrans %}</div>
         </div>
 
         <div id="error-container" class="error-message" style="display: none;"></div>
@@ -113,7 +114,7 @@
                         name="question_{{ question.id }}"
                         class="text-input"
                         {% if question.required %}required{% endif %}
-                        placeholder="Share your thoughts..."
+                        placeholder="{% translate 'Share your thoughts...' %}"
                     >{% if existing_responses|get_item:question.id %}{{ existing_responses|get_item:question.id }}{% endif %}</textarea>
 
                     {% elif question.question_type == 'single_choice' %}
@@ -122,7 +123,7 @@
                         class="text-input"
                         {% if question.required %}required{% endif %}
                     >
-                        <option value="">Select an option</option>
+                        <option value="">{% translate "Select an option" %}</option>
                         {% for choice in question.config.choices %}
                         <option value="{{ choice }}" {% if existing_responses|get_item:question.id == choice %}selected{% endif %}>
                             {{ choice }}
@@ -190,13 +191,13 @@
 
             <div class="form-actions">
                 <button type="button" id="prev-btn" class="btn btn-secondary" style="display: none;">
-                    Previous
+                    {% translate "Previous" %}
                 </button>
                 <button type="button" id="next-btn" class="btn btn-primary">
-                    Next
+                    {% translate "Next" %}
                 </button>
                 <button type="submit" id="submit-btn" class="btn btn-primary" style="display: none;">
-                    Submit Feedback
+                    {% translate "Submit Feedback" %}
                 </button>
             </div>
         </form>
