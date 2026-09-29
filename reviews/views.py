@@ -116,7 +116,17 @@ def feedback_form(request, token):
         'token': reviewer_token,
         'cycle': cycle,
         'questionnaire': questionnaire,
+        'translated_questionnaire': questionnaire.get_translated(request.LANGUAGE_CODE),
         'sections': sections,
+        'translated_sections': {
+            str(section.id): section.get_translated(request.LANGUAGE_CODE)
+            for section in sections
+        },
+        'translated_questions': {
+            str(question.id): question.get_translated(request.LANGUAGE_CODE)
+            for section in sections
+            for question in section.questions.all()
+        },
         'reviewee': cycle.reviewee,
         'existing_responses': existing_responses,
         'invitation_token': invitation_token,
