@@ -189,6 +189,7 @@ LANGUAGES = [
     ('ja', 'Japanese'),
     ('zh-hans', 'Simplified Chinese'),
 ]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
