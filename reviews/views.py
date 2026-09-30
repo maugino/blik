@@ -93,6 +93,10 @@ def feedback_form(request, token):
             'error': 'This review cycle has been closed. Feedback can no longer be submitted.'
         }, status=410)
 
+    if not reviewer_token.language:
+        reviewer_token.language = request.LANGUAGE_CODE
+        reviewer_token.save(update_fields=['language'])
+
     # Mark token as claimed on first access (for email-invited users)
     if reviewer_token.claimed_at is None:
         reviewer_token.claimed_at = timezone.now()
