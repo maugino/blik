@@ -184,6 +184,10 @@ LANGUAGES = [
     ('fr', 'French'),
     ('it', 'Italian'),
     ('de', 'German'),
+    ('es', 'Spanish'),
+    ('pt', 'Portuguese'),
+    ('ja', 'Japanese'),
+    ('zh-hans', 'Simplified Chinese'),
 ]
 TIME_ZONE = 'UTC'
 USE_I18N = True
