@@ -36,7 +36,9 @@
     </script>
 </head>
 <body class="setup-page">
-    {% include "components/language_selector.html" %}
+    <div style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">
+        {% include "components/language_selector.html" %}
+    </div>
     <div class="setup-container">
         <div class="header">
             <h1>{% translate "Blik Setup Wizard" %}</h1>

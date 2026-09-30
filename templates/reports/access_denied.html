@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 <body>
-    {% include "components/language_selector.html" %}
+    <div style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">
+        {% include "components/language_selector.html" %}
+    </div>
     <div class="container" style="max-width: 600px; margin: 4rem auto; text-align: center;">
         <div style="background: white; padding: 3rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <h1 style="font-size: 2rem; margin-bottom: 1rem;">{% translate "Access Denied" %}</h1>

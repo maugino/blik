@@ -55,7 +55,9 @@
     </script>
 </head>
 <body>
-    {% include "components/language_selector.html" %}
+    <div style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">
+        {% include "components/language_selector.html" %}
+    </div>
     <div class="container">
         <div class="complete-container">
             <div class="complete-icon">✓</div>
