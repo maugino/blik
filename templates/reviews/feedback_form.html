@@ -32,7 +32,9 @@
     </script>
 </head>
 <body style="background: var(--bg-body);">
-    {% include "components/language_selector.html" %}
+    <div style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">
+        {% include "components/language_selector.html" %}
+    </div>
     <div class="feedback-container">
         <div class="feedback-header">
             <h1>{% translate "360 Feedback" %}</h1>
