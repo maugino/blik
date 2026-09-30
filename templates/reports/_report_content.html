@@ -253,13 +253,15 @@
 <h2 id="detailed-feedback" style="font-size: 1.75rem; font-weight: 600; margin: 2rem 0 1rem; color: var(--text-primary);">{% translate "Detailed Feedback" %}</h2>
 
 {% for section_id, section_data in display_data.by_section.items %}
+{% with translated_section=translated_sections|get_item:section_id %}
 <div class="section-report">
-    <h2 class="section-title">{{ section_data.title }}</h2>
+    <h2 class="section-title">{% if translated_section %}{{ translated_section.title }}{% else %}{{ section_data.title }}{% endif %}</h2>
 
     {% for question_id, question_data in section_data.questions.items %}
-        {% include "reports/_question_response.html" with question_data=question_data %}
+        {% include "reports/_question_response.html" with question_data=question_data translated_question=translated_questions|get_item:question_id %}
     {% endfor %}
 </div>
+{% endwith %}
 {% endfor %}
 
 {% if not is_admin_view %}
