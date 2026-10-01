@@ -36,7 +36,7 @@
     </script>
 </head>
 <body class="report-page">
-    <div style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">
+    <div class="report-language-selector" style="position: fixed; top: 1rem; right: 1rem; z-index: 10;">
         {% include "components/language_selector.html" %}
     </div>
     <button class="report-theme-toggle" aria-label="{% translate 'Toggle theme' %}">
@@ -90,6 +90,7 @@
         <div class="actions">
             <a href="{% url 'review_cycle_detail' cycle.uuid %}" class="btn btn-secondary">{% translate "Back to Cycle" %}</a>
             <a href="{% url 'reports:regenerate_report' cycle.uuid %}" class="btn btn-primary">{% translate "Regenerate Report" %}</a>
+            <button type="button" class="btn btn-secondary" onclick="window.print()">{% translate "Print Report" %}</button>
         </div>
         {% endif %}
 
@@ -140,6 +141,30 @@
                     renderGapChart('gapChart', chartData);
                 }
                 {% endif %}
+
+                if (new URLSearchParams(window.location.search).get('print') === '1') {
+                    window.addEventListener('load', function() {
+                        window.requestAnimationFrame(function() {
+                            window.requestAnimationFrame(function() {
+                                window.print();
+                            });
+                        });
+                    }, { once: true });
+                }
+
+                window.addEventListener('beforeprint', function() {
+                    document.querySelectorAll('.chart-container canvas').forEach(function(canvas) {
+                        const chart = Chart.getChart(canvas);
+                        if (chart) chart.resize(900, 600);
+                    });
+                });
+
+                window.addEventListener('afterprint', function() {
+                    document.querySelectorAll('.chart-container canvas').forEach(function(canvas) {
+                        const chart = Chart.getChart(canvas);
+                        if (chart) chart.resize();
+                    });
+                });
 
                 // Tab switching for development path
                 const tabButtons = document.querySelectorAll('.tab-button');
