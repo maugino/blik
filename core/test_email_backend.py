@@ -6,12 +6,16 @@ connection. Hardcoding SMTP means the console backend never prints and the
 locmem backend never fills mail.outbox, so email fails in dev and in tests
 regardless of EMAIL_BACKEND.
 """
+from unittest.mock import patch
+
 from django.core import mail
+from django.core.mail import EmailMultiAlternatives
 from django.core.mail.backends.locmem import EmailBackend as LocmemBackend
 from django.core.mail.backends.smtp import EmailBackend as SMTPBackend
 from django.test import TestCase, override_settings
 
 from core.email import get_email_backend, send_email
+from core.email_backends import PowerAutomateBackend
 from core.factories import OrganizationFactory
 
 
@@ -32,6 +36,15 @@ class GetEmailBackendTests(TestCase):
         self.assertEqual(backend.host, 'smtp.acme.example.com')
         self.assertEqual(backend.port, 2525)
 
+    @override_settings(POWER_AUTOMATE_WEBHOOK_URL='https://example.com/webhook')
+    def test_power_automate_webhook_takes_priority_over_organization_smtp(self):
+        OrganizationFactory(smtp_host='smtp.acme.example.com')
+
+        backend = get_email_backend()
+
+        self.assertIsInstance(backend, PowerAutomateBackend)
+        self.assertEqual(backend.webhook_url, 'https://example.com/webhook')
+
     @override_settings(DEFAULT_FROM_EMAIL='fallback@example.com')
     def test_send_email_delivers_through_configured_backend(self):
         OrganizationFactory(smtp_host='', from_email='org@example.com')
@@ -46,3 +59,48 @@ class GetEmailBackendTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['someone@example.com'])
         self.assertEqual(mail.outbox[0].from_email, 'org@example.com')
+
+
+class PowerAutomateBackendTests(TestCase):
+    @patch('core.email_backends.requests.post')
+    def test_posts_email_payload_and_counts_successful_message(self, mock_post):
+        message = EmailMultiAlternatives(
+            subject='Hello',
+            body='Plain text',
+            from_email='sender@example.com',
+            to=['someone@example.com'],
+        )
+        message.attach_alternative('<p>HTML</p>', 'text/html')
+        backend = PowerAutomateBackend(webhook_url='https://example.com/webhook')
+
+        sent = backend.send_messages([message])
+
+        self.assertEqual(sent, 1)
+        mock_post.assert_called_once_with(
+            'https://example.com/webhook',
+            json={
+                'to': ['someone@example.com'],
+                'subject': 'Hello',
+                'body': 'Plain text',
+                'html_body': '<p>HTML</p>',
+                'from_email': 'sender@example.com',
+            },
+        )
+
+    @patch('core.email_backends.requests.post')
+    def test_logs_request_failure_and_does_not_count_failed_message(self, mock_post):
+        import requests
+
+        message = EmailMultiAlternatives(
+            subject='Hello',
+            body='Plain text',
+            from_email='sender@example.com',
+            to=['someone@example.com'],
+        )
+        mock_post.side_effect = requests.RequestException('offline')
+        backend = PowerAutomateBackend(webhook_url='https://example.com/webhook')
+
+        with self.assertLogs('core.email_backends', level='ERROR'):
+            sent = backend.send_messages([message])
+
+        self.assertEqual(sent, 0)

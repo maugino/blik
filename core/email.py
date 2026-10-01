@@ -7,6 +7,7 @@ from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 from django.conf import settings
 from .models import Organization
+from .email_backends import PowerAutomateBackend
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,9 @@ def get_email_backend():
     is configured — that fallback must honour EMAIL_BACKEND, otherwise console
     and locmem (test) backends are bypassed in favour of a real SMTP connection.
     """
+    if settings.POWER_AUTOMATE_WEBHOOK_URL:
+        return PowerAutomateBackend(webhook_url=settings.POWER_AUTOMATE_WEBHOOK_URL)
+
     try:
         org = Organization.objects.filter(is_active=True).first()
 

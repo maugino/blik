@@ -211,6 +211,7 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@example.com')
+POWER_AUTOMATE_WEBHOOK_URL = env('POWER_AUTOMATE_WEBHOOK_URL', default='')
 
 # Security settings
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE')
