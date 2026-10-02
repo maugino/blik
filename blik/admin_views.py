@@ -1804,7 +1804,7 @@ def send_reminder(request, cycle_uuid):
 @require_POST
 def send_individual_reminder(request, cycle_uuid, token_id):
     """Send a reminder email to a specific reviewer"""
-    from django.core.mail import EmailMultiAlternatives
+    from core.email import send_email
     from django.template.loader import render_to_string
     from django.conf import settings
 
@@ -1847,14 +1847,13 @@ def send_individual_reminder(request, cycle_uuid, token_id):
         from_email = settings.DEFAULT_FROM_EMAIL
         subject = f'Reminder: Feedback Request for {cycle.reviewee.name}'
 
-        email = EmailMultiAlternatives(
+        send_email(
             subject=subject,
-            body=text_content,
+            message=text_content,
+            recipient_list=[token.reviewer_email],
+            html_message=html_content,
             from_email=from_email,
-            to=[token.reviewer_email]
         )
-        email.attach_alternative(html_content, "text/html")
-        email.send()
 
         # Update last reminder sent timestamp
         from django.utils import timezone
