@@ -19,6 +19,10 @@ from core.email_backends import PowerAutomateBackend
 from core.factories import OrganizationFactory
 
 
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    POWER_AUTOMATE_WEBHOOK_URL='',
+)
 class GetEmailBackendTests(TestCase):
     def test_falls_back_to_configured_backend_when_org_has_no_smtp_host(self):
         OrganizationFactory(smtp_host='')
@@ -36,14 +40,14 @@ class GetEmailBackendTests(TestCase):
         self.assertEqual(backend.host, 'smtp.acme.example.com')
         self.assertEqual(backend.port, 2525)
 
-    @override_settings(POWER_AUTOMATE_WEBHOOK_URL='https://example.com/webhook')
+    @override_settings(POWER_AUTOMATE_WEBHOOK_URL='https://webhook.invalid/test')
     def test_power_automate_webhook_takes_priority_over_organization_smtp(self):
         OrganizationFactory(smtp_host='smtp.acme.example.com')
 
         backend = get_email_backend()
 
         self.assertIsInstance(backend, PowerAutomateBackend)
-        self.assertEqual(backend.webhook_url, 'https://example.com/webhook')
+        self.assertEqual(backend.webhook_url, 'https://webhook.invalid/test')
 
     @override_settings(DEFAULT_FROM_EMAIL='fallback@example.com')
     def test_send_email_delivers_through_configured_backend(self):
@@ -64,6 +68,7 @@ class GetEmailBackendTests(TestCase):
 class PowerAutomateBackendTests(TestCase):
     @patch('core.email_backends.requests.post')
     def test_posts_email_payload_and_counts_successful_message(self, mock_post):
+        response = mock_post.return_value
         message = EmailMultiAlternatives(
             subject='Hello',
             body='Plain text',
@@ -71,13 +76,13 @@ class PowerAutomateBackendTests(TestCase):
             to=['someone@example.com'],
         )
         message.attach_alternative('<p>HTML</p>', 'text/html')
-        backend = PowerAutomateBackend(webhook_url='https://example.com/webhook')
+        backend = PowerAutomateBackend(webhook_url='https://webhook.invalid/test')
 
         sent = backend.send_messages([message])
 
         self.assertEqual(sent, 1)
         mock_post.assert_called_once_with(
-            'https://example.com/webhook',
+            'https://webhook.invalid/test',
             json={
                 'to': ['someone@example.com'],
                 'subject': 'Hello',
@@ -86,6 +91,7 @@ class PowerAutomateBackendTests(TestCase):
                 'from_email': 'sender@example.com',
             },
         )
+        response.raise_for_status.assert_called_once_with()
 
     @patch('core.email_backends.requests.post')
     def test_logs_request_failure_and_does_not_count_failed_message(self, mock_post):
@@ -98,9 +104,30 @@ class PowerAutomateBackendTests(TestCase):
             to=['someone@example.com'],
         )
         mock_post.side_effect = requests.RequestException('offline')
-        backend = PowerAutomateBackend(webhook_url='https://example.com/webhook')
+        backend = PowerAutomateBackend(webhook_url='https://webhook.invalid/test')
 
         with self.assertLogs('core.email_backends', level='ERROR'):
             sent = backend.send_messages([message])
 
         self.assertEqual(sent, 0)
+
+    @patch('core.email_backends.requests.post')
+    def test_does_not_count_http_error_response(self, mock_post):
+        import requests
+
+        message = EmailMultiAlternatives(
+            subject='Hello',
+            body='Plain text',
+            from_email='sender@example.com',
+            to=['someone@example.com'],
+        )
+        mock_post.return_value.raise_for_status.side_effect = requests.HTTPError(
+            'server error'
+        )
+        backend = PowerAutomateBackend(webhook_url='https://webhook.invalid/test')
+
+        with self.assertLogs('core.email_backends', level='ERROR'):
+            sent = backend.send_messages([message])
+
+        self.assertEqual(sent, 0)
+        mock_post.return_value.raise_for_status.assert_called_once_with()
