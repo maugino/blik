@@ -8,7 +8,7 @@ input is cosmetic: the view has to refuse the write too.
 import os
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import UserProfile
@@ -25,7 +25,7 @@ def only_env(**overrides):
     clear these would silently inherit whatever the machine has set.
     """
     env = {k: v for k, v in os.environ.items()
-           if k not in set(ENV_MANAGED_FIELDS.values())}
+           if k not in set(ENV_MANAGED_FIELDS.values()) | {'POWER_AUTOMATE_WEBHOOK_URL'}}
     env.update(overrides)
     return patch.dict(os.environ, env, clear=True)
 
@@ -40,6 +40,11 @@ class EnvManagedFieldsTests(TestCase):
         self.assertNotIn('smtp_port', locked)
 
 
+@override_settings(
+    EMAIL_DELIVERY_METHOD='',
+    EMAIL_WEBHOOK_URL='',
+    POWER_AUTOMATE_WEBHOOK_URL='',
+)
 class SettingsViewEnvLockTests(TestCase):
     def setUp(self):
         self.org = Organization.objects.create(
@@ -85,6 +90,45 @@ class SettingsViewEnvLockTests(TestCase):
 
         self.assertEqual(response.context['locked_fields'].get('smtp_host'), 'EMAIL_HOST')
         self.assertContains(response, 'Managed by')
+
+    def test_webhook_environment_urls_are_locked_and_never_rendered(self):
+        values = (
+            ('EMAIL_WEBHOOK_URL', 'https://generic.invalid/private'),
+            ('POWER_AUTOMATE_WEBHOOK_URL', 'https://legacy.invalid/private'),
+        )
+        for variable, url in values:
+            with self.subTest(variable=variable):
+                setting_name = (
+                    'EMAIL_WEBHOOK_URL'
+                    if variable == 'EMAIL_WEBHOOK_URL'
+                    else 'POWER_AUTOMATE_WEBHOOK_URL'
+                )
+                with only_env(**{variable: url}), patch(
+                    'core.email._environment_webhook_url', return_value=url
+                ):
+                    with patch('core.email._email_delivery_method', return_value='http_webhook'):
+                        response = self.client.get(reverse('settings'))
+
+                self.assertEqual(
+                    response.context['locked_fields'].get('email_webhook_url'),
+                    variable,
+                )
+                self.assertNotContains(response, url)
+                self.assertNotContains(response, setting_name + '=' + url)
+
+    def test_environment_delivery_method_cannot_be_changed_in_settings(self):
+        with only_env(EMAIL_DELIVERY_METHOD='http_webhook'):
+            self.client.post(
+                reverse('settings'),
+                {
+                    'section': 'email',
+                    'email_delivery_method': 'smtp',
+                    'email_webhook_url': '',
+                },
+            )
+
+        self.org.refresh_from_db()
+        self.assertEqual(self.org.email_delivery_method, 'smtp')
 
     def test_bad_smtp_port_in_form_does_not_500(self):
         with only_env():

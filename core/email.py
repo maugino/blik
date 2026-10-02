@@ -1,30 +1,75 @@
-"""
-Custom email utilities that use Organization SMTP settings
-"""
+"""Central email utilities that select organization and environment backends."""
 import logging
 
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from .models import Organization
-from .email_backends import PowerAutomateBackend
+from .email_backends import HTTPWebhookBackend
 
 logger = logging.getLogger(__name__)
 
 
-def get_email_backend():
+def _environment_webhook_url():
+    """Get the preferred generic URL, falling back to the legacy variable."""
+    return (
+        getattr(settings, 'EMAIL_WEBHOOK_URL', '')
+        or getattr(settings, 'POWER_AUTOMATE_WEBHOOK_URL', '')
+    )
+
+
+def _email_delivery_method(organization):
+    """Resolve the selected method, keeping environment overrides secret-free."""
+    environment_method = getattr(settings, 'EMAIL_DELIVERY_METHOD', '').strip().lower()
+    if environment_method:
+        if environment_method not in {'smtp', 'http_webhook'}:
+            raise ImproperlyConfigured(
+                'EMAIL_DELIVERY_METHOD must be "smtp" or "http_webhook"'
+            )
+        return environment_method
+
+    if _environment_webhook_url():
+        return 'http_webhook'
+    return getattr(organization, 'email_delivery_method', 'smtp')
+
+
+def get_email_delivery_method(organization=None):
+    """Return the effective delivery method without exposing webhook secrets."""
+    if organization is None:
+        try:
+            organization = Organization.objects.filter(is_active=True).first()
+        except Exception:
+            logger.exception('Error loading organization email settings')
+    return _email_delivery_method(organization)
+
+
+def email_webhook_is_configured(organization=None):
+    """Return whether any effective webhook URL is configured, without decrypting it."""
+    if _environment_webhook_url():
+        return True
+    return bool(organization and organization.email_webhook_url_encrypted)
+
+
+def get_email_backend(organization=None):
     """
-    Get email backend configured with Organization SMTP settings.
-    Falls back to the backend in Django settings if no organization SMTP host
-    is configured — that fallback must honour EMAIL_BACKEND, otherwise console
-    and locmem (test) backends are bypassed in favour of a real SMTP connection.
+    Select the organization or environment-configured email backend.
+    SMTP falls back to Django's configured backend when no organization host
+    is configured, preserving console and locmem behavior.
     """
-    if settings.POWER_AUTOMATE_WEBHOOK_URL:
-        return PowerAutomateBackend(webhook_url=settings.POWER_AUTOMATE_WEBHOOK_URL)
+    try:
+        org = organization or Organization.objects.filter(is_active=True).first()
+    except Exception:
+        logger.exception('Error loading organization email settings')
+        org = None
+
+    if _email_delivery_method(org) == 'http_webhook':
+        webhook_url = _environment_webhook_url()
+        if not webhook_url and org:
+            webhook_url = org.get_email_webhook_url()
+        return HTTPWebhookBackend(webhook_url=webhook_url)
 
     try:
-        org = Organization.objects.filter(is_active=True).first()
-
         if org and org.smtp_host:
             # Use organization's SMTP settings
             return EmailBackend(
@@ -41,10 +86,10 @@ def get_email_backend():
     return get_connection(fail_silently=False)
 
 
-def get_from_email():
+def get_from_email(organization=None):
     """Get the from_email from Organization or fall back to Django settings"""
     try:
-        org = Organization.objects.filter(is_active=True).first()
+        org = organization or Organization.objects.filter(is_active=True).first()
         if org and org.from_email:
             return org.from_email
     except Exception:
@@ -53,9 +98,11 @@ def get_from_email():
     return settings.DEFAULT_FROM_EMAIL
 
 
-def send_email(subject, message, recipient_list, html_message=None, from_email=None):
+def send_email(
+    subject, message, recipient_list, html_message=None, from_email=None, organization=None
+):
     """
-    Send email using Organization SMTP settings.
+    Send email through the organization's effective delivery configuration.
 
     Args:
         subject: Email subject
@@ -63,14 +110,15 @@ def send_email(subject, message, recipient_list, html_message=None, from_email=N
         recipient_list: List of recipient email addresses
         html_message: Optional HTML version of message
         from_email: Optional from email (defaults to organization setting)
+        organization: Optional Organization for selecting organization-specific settings
 
     Returns:
         Number of emails sent (0 or 1)
     """
     if from_email is None:
-        from_email = get_from_email()
+        from_email = get_from_email(organization)
 
-    backend = get_email_backend()
+    backend = get_email_backend(organization)
 
     email = EmailMultiAlternatives(
         subject=subject,
@@ -113,12 +161,15 @@ def send_password_reset_email(user, token):
 
     html_message = render_to_string('emails/password_reset.html', context)
     text_message = render_to_string('emails/password_reset.txt', context)
+    from accounts.models import UserProfile
+    profile = UserProfile.objects.filter(user=user).select_related('organization').first()
 
     return send_email(
         subject=subject,
         message=text_message,
         recipient_list=[user.email],
-        html_message=html_message
+        html_message=html_message,
+        organization=profile.organization if profile else None,
     )
 
 
@@ -194,5 +245,6 @@ def send_welcome_email(user, organization, password=None):
         message=text_message,
         recipient_list=[user.email],
         html_message=html_message,
-        from_email=organization.from_email if organization.from_email else None
+        from_email=organization.from_email if organization.from_email else None,
+        organization=organization,
     )

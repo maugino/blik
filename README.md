@@ -110,15 +110,21 @@ docker run -d -p 8000:8000 \
 
 **Security:**
 - `SECRET_KEY` - Django secret key (auto-generated if not provided)
-- `ENCRYPTION_KEY` - For encrypting SMTP passwords
+- `ENCRYPTION_KEY` - For encrypting SMTP passwords and organization webhook URLs
 - `ALLOWED_HOSTS` - Comma-separated hostnames (default: `*`)
 - `DEBUG` - `True` or `False` (default: `False`)
 
 **Email & links:**
 - `SITE_DOMAIN`, `SITE_PROTOCOL` - Public URL; every link in outgoing email is built from these, not from the request host
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` - SMTP settings
+- `EMAIL_DELIVERY_METHOD` - Optional `smtp` or `http_webhook` environment override
+- `EMAIL_WEBHOOK_URL` - Preferred webhook URL environment override; keep its value in deployment secrets
+- `POWER_AUTOMATE_WEBHOOK_URL` - Legacy webhook URL variable retained for existing deployments; new deployments should use `EMAIL_WEBHOOK_URL`
 
-Any `EMAIL_*` or `ORGANIZATION_NAME` variable you set here wins over the admin UI: it is re-applied on every container start, so those fields are shown read-only on the Settings page. Leave them unset (or empty) to configure email from the UI instead.
+SMTP variables and `ORGANIZATION_NAME` are re-applied to the organization on
+container startup. `EMAIL_DELIVERY_METHOD` and webhook URL variables act as
+runtime overrides and are shown read-only in the Settings page when set. Leave
+the relevant variables unset (or empty) to configure email from the UI instead.
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete environment variable documentation.
 

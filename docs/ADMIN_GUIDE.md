@@ -39,7 +39,10 @@ Navigate to **Dashboard → Settings** to configure:
 - **Organization Name** - Displayed in emails and reports
 - **Contact Email** - Primary organization contact
 
-### Email (SMTP) Settings
+### Email Settings
+- **Email Delivery Method** - Select SMTP or HTTP Webhook
+- **HTTP Webhook URL** - Enter a replacement URL when using HTTP Webhook. A configured URL is never redisplayed; leave the field blank to keep it.
+- **Send Test Email** - Send a test message to your account email address using the saved effective configuration
 - **SMTP Host** - Your email server (e.g., `smtp.gmail.com` or `host.docker.internal` for local Mailpit)
 - **SMTP Port** - Common ports: 587 (TLS), 465 (SSL), 25 (Plain)
 - **SMTP Username** - Authentication username (usually your email)
@@ -52,25 +55,28 @@ Navigate to **Dashboard → Settings** to configure:
 ### Settings managed by environment variables
 
 If a setting has a matching environment variable in your `.env` (or compose
-file), the environment owns it: the deployment rewrites that value on every
-container start. Those fields are shown read-only on the Settings page, labelled
-*"Managed by `EMAIL_HOST` in the environment"*, so an edit you make in the UI
-can't be silently reverted by the next restart.
+file), the environment owns it. SMTP variables are synchronized at startup;
+delivery-method and webhook variables are runtime overrides. Environment-owned
+fields are shown read-only on the Settings page and cannot be changed there.
 
 | Setting | Environment variable |
 |---------|----------------------|
 | Organization Name | `ORGANIZATION_NAME` |
 | Contact Email / From Email | `DEFAULT_FROM_EMAIL` |
+| Email delivery method | `EMAIL_DELIVERY_METHOD` |
+| HTTP Webhook URL | `EMAIL_WEBHOOK_URL` |
 | SMTP Host | `EMAIL_HOST` |
 | SMTP Port | `EMAIL_PORT` |
 | SMTP Username | `EMAIL_HOST_USER` |
 | SMTP Password | `EMAIL_HOST_PASSWORD` |
 | Use TLS | `EMAIL_USE_TLS` |
 
-To manage a setting from the UI instead, leave its variable unset — or set it to
-an empty value (`EMAIL_HOST=`), which hands the field back to the UI without
-removing the line. Settings with no environment variable (anonymity threshold,
-registration options) are always editable in the UI.
+To manage a setting from the UI instead, leave its variable unset — or set it
+to an empty value (`EMAIL_HOST=`), which hands the field back to the UI without
+removing the line. The legacy `POWER_AUTOMATE_WEBHOOK_URL` is still recognized
+for existing deployments, but `EMAIL_WEBHOOK_URL` is preferred. Environment
+webhook values are never shown in the UI. Settings with no environment variable
+(anonymity threshold, registration options) are always editable in the UI.
 
 ### Report Settings
 - **Minimum Responses for Anonymity** - Minimum number of responses required to display results
@@ -317,8 +323,8 @@ Custom questionnaires must be created via Django Admin:
 
 ### Emails Not Sending
 
-1. Check **Settings → Email (SMTP) Settings**
-2. Verify SMTP credentials are correct
+1. Check **Settings → Email Settings** and confirm the delivery method
+2. For SMTP, verify the credentials; for HTTP Webhook, confirm a URL is configured and use **Send Test Email**
 3. Test with a single cycle first
 4. Check email server logs or use Mailpit for development testing
 

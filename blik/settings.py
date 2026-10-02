@@ -211,6 +211,9 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@example.com')
+EMAIL_DELIVERY_METHOD = env('EMAIL_DELIVERY_METHOD', default='')
+EMAIL_WEBHOOK_URL = env('EMAIL_WEBHOOK_URL', default='')
+# Legacy compatibility; new deployments should use EMAIL_WEBHOOK_URL.
 POWER_AUTOMATE_WEBHOOK_URL = env('POWER_AUTOMATE_WEBHOOK_URL', default='')
 
 # Security settings

@@ -36,6 +36,7 @@ def send_feedback_invitation(token, reviewer_email=None):
             recipient_list=[reviewer_email],
             html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
+            organization=token.cycle.reviewee.organization,
         )
         return True
 

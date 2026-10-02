@@ -101,7 +101,8 @@ Best regards,
 </body>
 </html>
                 ''',
-                from_email=org.from_email if org.from_email else None
+                from_email=org.from_email if org.from_email else None,
+                organization=org,
             )
             messages.success(request, f'Invitation sent to {email}')
         except Exception as e:

@@ -28,6 +28,7 @@ class FeedbackInvitationTests(TestCase):
                 'recipient_list': ['reviewer@example.test'],
                 'html_message': '<p>HTML invitation</p>',
                 'from_email': settings.DEFAULT_FROM_EMAIL,
+                'organization': token.cycle.reviewee.organization,
             },
         )
 
