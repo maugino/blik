@@ -1,8 +1,10 @@
+import json
 from copy import deepcopy
 
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.urls import resolve
 
 from accounts.factories import UserProfileFactory
 from core.factories import OrganizationFactory
@@ -12,6 +14,7 @@ from questionnaires.factories import (
     QuestionSectionFactory,
 )
 from questionnaires.models import (
+    Question,
     Questionnaire,
     QuestionnaireTranslation,
     QuestionSectionTranslation,
@@ -106,6 +109,63 @@ class QuestionnaireTranslationBuilderTests(TestCase):
             'language_code': 'fr',
         })
         self.assertRedirects(response, f'{self.edit_url}?lang=fr', fetch_redirect_response=False)
+
+    def translation_payload(self):
+        return {
+            'questionnaire': {
+                'name': 'Questionnaire traduit',
+                'description': 'Description traduite',
+            },
+            'sections': [{
+                'id': self.section.id,
+                'title': 'Section traduite',
+                'description': 'Description de section traduite',
+            }],
+            'questions': [
+                {
+                    'id': self.rating_question.id,
+                    'question_text': 'Question de notation',
+                    'translated_config': {
+                        'labels': {'1': 'Faible', '2': 'Bien'},
+                    },
+                },
+                {
+                    'id': self.likert_question.id,
+                    'question_text': 'Question Likert',
+                    'translated_config': {'scale': ['Souvent', 'Toujours']},
+                },
+                {
+                    'id': self.single_choice_question.id,
+                    'question_text': 'Question à choix unique',
+                    'translated_config': {'choices': ['Souvent', 'Toujours']},
+                },
+                {
+                    'id': self.multiple_choice_question.id,
+                    'question_text': 'Question à choix multiple',
+                    'translated_config': {'choices': ['Souvent', 'Toujours']},
+                },
+                {
+                    'id': self.scale_question.id,
+                    'question_text': 'Question à échelle',
+                    'translated_config': {
+                        'min_label': 'Pas du tout',
+                        'max_label': 'Extrêmement',
+                    },
+                },
+                {
+                    'id': self.text_question.id,
+                    'question_text': 'Question ouverte',
+                    'translated_config': {},
+                },
+            ],
+        }
+
+    def save_translation_payload(self, payload, language='fr'):
+        return self.client.post(self.edit_url, {
+            'action': 'save_all_translations',
+            'lang': language,
+            'translation_payload': json.dumps(payload),
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
     def test_add_supported_language_creates_no_duplicate_questionnaire_structure(self):
         existing_questionnaire_count = Questionnaire.objects.filter(
@@ -427,10 +487,15 @@ class QuestionnaireTranslationBuilderTests(TestCase):
 
         translated_response = self.client.get(f'{self.edit_url}?lang=fr')
         self.assertEqual(translated_response.status_code, 200)
+        self.assertContains(translated_response, 'Save translations')
+        self.assertContains(translated_response, 'id="translation-workspace"')
         self.assertContains(translated_response, 'Canonical questionnaire')
         self.assertContains(translated_response, 'Canonical section')
         self.assertContains(translated_response, 'Canonical rating question')
-        self.assertContains(translated_response, 'translated_question_text')
+        self.assertContains(
+            translated_response,
+            f'data-translation-path="questions.{self.rating_question.id}.question_text"',
+        )
         self.assertContains(
             translated_response,
             'to change questionnaire structure.',
@@ -440,14 +505,216 @@ class QuestionnaireTranslationBuilderTests(TestCase):
 
         source_response = self.client.get(f'{self.edit_url}?lang=en-us')
         self.assertEqual(source_response.status_code, 200)
+        self.assertNotContains(source_response, 'Save translations')
+        self.assertNotContains(source_response, 'id="translation-workspace"')
         self.assertContains(source_response, 'name="action" value="add_section"')
         self.assertContains(source_response, 'name="action" value="add_question"')
 
         fallback_response = self.client.get(f'{self.edit_url}?lang=zz-zz')
         self.assertEqual(fallback_response.status_code, 200)
         self.assertContains(fallback_response, 'name="action" value="add_section"')
-        self.assertNotContains(fallback_response, 'translated_question_text')
+        self.assertNotContains(fallback_response, 'data-translation-path="questions.')
         self.assertNotContains(fallback_response, 'value="zz-zz"')
+
+    def test_bulk_translation_save_updates_all_displayed_translation_fields(self):
+        self.add_french()
+        original_configs = {
+            question.pk: deepcopy(question.config)
+            for question in (
+                self.rating_question,
+                self.likert_question,
+                self.single_choice_question,
+                self.multiple_choice_question,
+                self.scale_question,
+                self.text_question,
+            )
+        }
+
+        response = self.save_translation_payload(self.translation_payload())
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result['success'])
+        self.assertEqual(result['language'], 'fr')
+        self.assertEqual(result['completeness']['percentage'], 100)
+        questionnaire_translation = self.questionnaire.translations.get(
+            language_code='fr'
+        )
+        self.assertEqual(questionnaire_translation.name, 'Questionnaire traduit')
+        self.assertEqual(
+            questionnaire_translation.description,
+            'Description traduite',
+        )
+        self.assertEqual(
+            self.section.translations.get(language_code='fr').title,
+            'Section traduite',
+        )
+        expected_configs = {
+            self.rating_question.id: {'labels': {'1': 'Faible', '2': 'Bien'}},
+            self.likert_question.id: {'scale': ['Souvent', 'Toujours']},
+            self.single_choice_question.id: {'choices': ['Souvent', 'Toujours']},
+            self.multiple_choice_question.id: {'choices': ['Souvent', 'Toujours']},
+            self.scale_question.id: {
+                'min_label': 'Pas du tout',
+                'max_label': 'Extrêmement',
+            },
+            self.text_question.id: {},
+        }
+        for question_id, expected_config in expected_configs.items():
+            question = Question.objects.get(pk=question_id)
+            translation = question.translations.get(language_code='fr')
+            self.assertTrue(translation.question_text)
+            self.assertEqual(translation.translated_config, expected_config)
+            self.assertEqual(question.config, original_configs[question_id])
+
+    def test_rendered_bulk_save_url_resolves_and_accepts_valid_post(self):
+        self.add_french()
+        page = self.client.get(f'{self.edit_url}?lang=fr')
+        self.assertEqual(page.status_code, 200)
+        expected_url = f'{self.edit_url}?lang=fr'
+        self.assertContains(
+            page,
+            f'id="translation-workspace" method="post" action="{expected_url}"',
+        )
+        self.assertContains(page, 'name="action" value="save_all_translations"')
+        self.assertContains(page, "fetch(form.getAttribute('action')")
+        self.assertNotContains(page, 'fetch(form.action,')
+        self.assertEqual(resolve(self.edit_url).url_name, 'questionnaire_edit')
+
+        response = self.client.post(
+            expected_url,
+            {
+                'action': 'save_all_translations',
+                'lang': 'fr',
+                'translation_payload': json.dumps(self.translation_payload()),
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertNotEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+
+    def test_bulk_translation_save_rejects_invalid_payload_without_partial_writes(self):
+        self.add_french()
+        payload = self.translation_payload()
+        payload['questions'][1]['translated_config']['scale'] = ['Incomplet']
+
+        response = self.save_translation_payload(payload)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()['success'])
+        self.assertFalse(
+            self.section.translations.filter(language_code='fr').exists()
+        )
+        self.assertFalse(
+            self.rating_question.translations.filter(language_code='fr').exists()
+        )
+        self.assertEqual(
+            self.questionnaire.translations.get(language_code='fr').name,
+            '',
+        )
+
+    def test_bulk_translation_save_rejects_source_or_unavailable_language(self):
+        self.add_french()
+        payload = self.translation_payload()
+
+        for language in ('en-us', 'de'):
+            response = self.save_translation_payload(payload, language=language)
+            self.assertEqual(response.status_code, 400)
+            self.assertFalse(response.json()['success'])
+
+    def test_bulk_translation_save_rejects_malformed_or_out_of_scope_ids(self):
+        self.add_french()
+        other_section = QuestionSectionFactory()
+        other_question = QuestionFactory(section=other_section)
+        payloads = []
+
+        duplicate_section = self.translation_payload()
+        duplicate_section['sections'].append(deepcopy(duplicate_section['sections'][0]))
+        payloads.append(duplicate_section)
+
+        foreign_section = self.translation_payload()
+        foreign_section['sections'][0]['id'] = other_section.id
+        payloads.append(foreign_section)
+
+        duplicate_question = self.translation_payload()
+        duplicate_question['questions'].append(
+            deepcopy(duplicate_question['questions'][0])
+        )
+        payloads.append(duplicate_question)
+
+        foreign_question = self.translation_payload()
+        foreign_question['questions'][0]['id'] = other_question.id
+        payloads.append(foreign_question)
+
+        for payload in payloads:
+            response = self.save_translation_payload(payload)
+            self.assertEqual(response.status_code, 400)
+            self.assertFalse(response.json()['success'])
+            self.assertFalse(
+                self.section.translations.filter(language_code='fr').exists()
+            )
+
+        malformed_response = self.client.post(self.edit_url, {
+            'action': 'save_all_translations',
+            'lang': 'fr',
+            'translation_payload': '{',
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(malformed_response.status_code, 400)
+        self.assertFalse(malformed_response.json()['success'])
+
+    def test_bulk_translation_save_creates_rows_lazily_for_blank_content(self):
+        self.add_french()
+        payload = self.translation_payload()
+        payload['questionnaire'] = {'name': '', 'description': ''}
+        payload['sections'] = [{
+            'id': self.section.id,
+            'title': '',
+            'description': '',
+        }]
+        payload['questions'] = [
+            {
+                'id': question.id,
+                'question_text': '',
+                'translated_config': (
+                    {'labels': {'1': '', '2': ''}}
+                    if question == self.rating_question else
+                    {'scale': ['', '']}
+                    if question == self.likert_question else
+                    {'choices': ['', '']}
+                    if question in (
+                        self.single_choice_question,
+                        self.multiple_choice_question,
+                    ) else
+                    {'min_label': '', 'max_label': ''}
+                    if question == self.scale_question else
+                    {}
+                ),
+            }
+            for question in (
+                self.rating_question,
+                self.likert_question,
+                self.single_choice_question,
+                self.multiple_choice_question,
+                self.scale_question,
+                self.text_question,
+            )
+        ]
+
+        response = self.save_translation_payload(payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.section.translations.filter(language_code='fr').exists())
+        for question in (
+            self.rating_question,
+            self.likert_question,
+            self.single_choice_question,
+            self.multiple_choice_question,
+            self.scale_question,
+            self.text_question,
+        ):
+            self.assertFalse(question.translations.filter(language_code='fr').exists())
 
     def test_anonymous_user_cannot_edit_translations(self):
         self.client.logout()

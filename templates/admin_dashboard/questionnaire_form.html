@@ -9,6 +9,46 @@
         border-color: var(--danger);
         background: var(--danger-50);
     }
+
+    .translation-save-bar {
+        position: fixed;
+        right: 1.5rem;
+        bottom: 1.5rem;
+        z-index: 1100;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: calc(100vw - 3rem);
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        background: var(--bg-body);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+    }
+
+    .translation-save-status {
+        max-width: 18rem;
+        color: var(--text-secondary);
+    }
+
+    #translation-workspace {
+        padding-bottom: 5rem;
+    }
+
+    @media (max-width: 600px) {
+        .translation-save-bar {
+            right: 0.75rem;
+            bottom: max(0.75rem, env(safe-area-inset-bottom));
+            left: 0.75rem;
+            justify-content: space-between;
+            max-width: none;
+        }
+
+        .translation-save-status {
+            max-width: 45%;
+            font-size: 0.875rem;
+        }
+    }
 </style>
 <div style="margin-bottom: 2rem;">
     <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">{{ action }} Questionnaire</h1>
@@ -24,22 +64,22 @@
 {% if questionnaire %}
 <div class="card mb-2" style="max-width: 900px;">
     <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem;">
-        <form method="get" style="display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin: 0;">
+        <form id="questionnaire-language-form" method="get" style="display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin: 0;">
             <div class="form-group" style="margin: 0;">
                 <label for="questionnaire_language" class="form-label">Editing language</label>
-                <select id="questionnaire_language" name="lang" class="form-control" onchange="this.form.submit()">
+                <select id="questionnaire_language" name="lang" class="form-control">
                     <option value="{{ source_language }}" {% if not translation_mode %}selected{% endif %}>
                         {{ source_language_label }} (Primary)
                     </option>
                     {% for language in language_completeness %}
-                    <option value="{{ language.code }}" {% if selected_language == language.code %}selected{% endif %}>
+                    <option value="{{ language.code }}" data-completeness-option="{{ language.code }}" {% if selected_language == language.code %}selected{% endif %}>
                         {{ language.label }} ({{ language.translated_count }}/{{ language.total_count }})
                     </option>
                     {% endfor %}
                 </select>
             </div>
             {% if translation_mode %}
-            <span class="badge {% if selected_language_complete %}badge-success{% else %}badge-warning{% endif %}">
+            <span id="selected-translation-completeness" class="badge {% if selected_language_complete %}badge-success{% else %}badge-warning{% endif %}">
                 {{ selected_language_label }} · {{ selected_language_completion.translated_count }}/{{ selected_language_completion.total_count }}
                 {% if selected_language_completion.complete %}Complete{% else %}Incomplete{% endif %}
             </span>
@@ -73,14 +113,14 @@
                 <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;">
                     <div>
                         <strong>{{ language.label }}</strong>
-                        <span style="color: var(--text-secondary);">{{ language.translated_count }}/{{ language.total_count }}</span>
-                        <span class="badge {% if language.complete %}badge-success{% else %}badge-warning{% endif %}">
+                        <span data-completeness-count="{{ language.code }}" style="color: var(--text-secondary);">{{ language.translated_count }}/{{ language.total_count }}</span>
+                        <span data-completeness-status="{{ language.code }}" class="badge {% if language.complete %}badge-success{% else %}badge-warning{% endif %}">
                             {% if language.complete %}Complete{% else %}Incomplete{% endif %}
                         </span>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <a class="btn btn-sm btn-secondary" href="{% url 'questionnaire_edit' questionnaire.id %}?lang={{ language.code }}">Edit translation</a>
-                        <form method="post" style="margin: 0;" onsubmit="return confirm('Remove {{ language.label|escapejs }} and delete all questionnaire, section, and question translations for this language? Canonical content, responses, cycles, and reports will not be changed.');">
+                        <form method="post" class="remove-translation-language-form" data-confirm-message="Remove {{ language.label }} and delete all questionnaire, section, and question translations for this language? Canonical content, responses, cycles, and reports will not be changed." style="margin: 0;">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="remove_translation_language">
                             <input type="hidden" name="language_code" value="{{ language.code }}">
@@ -118,6 +158,13 @@
 {% endif %}
 
 <div style="max-width: 900px;">
+    {% if questionnaire and translation_mode %}
+    <form id="translation-workspace" method="post" action="{% url 'questionnaire_edit' questionnaire.id %}?lang={{ selected_language|urlencode }}" data-language="{{ selected_language }}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_all_translations">
+        <input type="hidden" name="lang" value="{{ selected_language }}">
+        <input type="hidden" name="translation_payload" value="">
+    {% endif %}
     <!-- Basic Information -->
     <div class="card mb-2">
         <div class="card-header">
@@ -125,26 +172,22 @@
         </div>
         <div class="card-body">
             {% if translation_mode %}
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="update_questionnaire_translation">
-                <input type="hidden" name="lang" value="{{ selected_language }}">
                 <div class="form-group">
                     <label class="form-label">SOURCE · {{ source_language_label }}</label>
                     <div class="card"><div class="card-body">{{ questionnaire.name }}</div></div>
                     <label for="translated_name" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · Name</label>
-                    <input type="text" id="translated_name" name="translated_name" class="form-control {% if not questionnaire_translation.name %}translation-missing{% endif %}" value="{{ questionnaire_translation.name }}">
+                    <input type="text" id="translated_name" data-translation-path="questionnaire.name" data-translation-kind="questionnaire" data-translation-field="name" class="form-control {% if not questionnaire_translation.name %}translation-missing{% endif %}" value="{{ questionnaire_translation.name }}">
+                    <small class="translation-field-error" data-translation-error-for="questionnaire.name" hidden></small>
                     {% if not questionnaire_translation.name %}<small style="color: var(--danger);">Translation missing</small>{% endif %}
                 </div>
                 <div class="form-group">
                     <label class="form-label">SOURCE · {{ source_language_label }}</label>
                     <div class="card"><div class="card-body">{{ questionnaire.description|default:"(No source description)" }}</div></div>
                     <label for="translated_description" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · Description</label>
-                    <textarea id="translated_description" name="translated_description" class="form-control {% if questionnaire.description and not questionnaire_translation.description %}translation-missing{% endif %}" rows="3">{{ questionnaire_translation.description }}</textarea>
+                    <textarea id="translated_description" data-translation-path="questionnaire.description" data-translation-kind="questionnaire" data-translation-field="description" class="form-control {% if questionnaire.description and not questionnaire_translation.description %}translation-missing{% endif %}" rows="3">{{ questionnaire_translation.description }}</textarea>
+                    <small class="translation-field-error" data-translation-error-for="questionnaire.description" hidden></small>
                     {% if questionnaire.description and not questionnaire_translation.description %}<small style="color: var(--danger);">Translation missing</small>{% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary">Save questionnaire translation</button>
-            </form>
             {% else %}
             <form method="post">
                 {% csrf_token %}
@@ -200,6 +243,17 @@
 
     {% if questionnaire and translation_mode %}
     {% include "admin_dashboard/partials/questionnaire_translation_editor.html" %}
+    {% endif %}
+    {% if questionnaire and translation_mode %}
+    </form>
+    <div class="translation-save-bar">
+        <span id="translation-save-status" class="translation-save-status" role="status" aria-live="polite">
+            No unsaved translation changes.
+        </span>
+        <button id="save-translations-button" type="button" class="btn btn-secondary" disabled>
+            Save translations
+        </button>
+    </div>
     {% endif %}
 
     {% if questionnaire and not translation_mode %}
@@ -1682,5 +1736,262 @@ function removeActionItem(itemId) {
     }
 }
 </script>
+
+{% if questionnaire and translation_mode %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('translation-workspace');
+    const button = document.getElementById('save-translations-button');
+    const status = document.getElementById('translation-save-status');
+    const payloadField = form.querySelector('input[name="translation_payload"]');
+    const languageForm = document.getElementById('questionnaire-language-form');
+    const languageSelect = document.getElementById('questionnaire_language');
+    let saving = false;
+    let allowUnload = false;
+    let stateTimeout;
+
+    function buildPayload() {
+        const sections = Array.from(form.querySelectorAll('[data-translation-section-id]'))
+            .map(section => {
+                const title = section.querySelector('[data-translation-field="title"]');
+                const description = section.querySelector('[data-translation-field="description"]');
+                return {
+                    id: Number(section.dataset.translationSectionId),
+                    title: title ? title.value : '',
+                    description: description ? description.value : '',
+                };
+            });
+
+        const questions = Array.from(form.querySelectorAll('.translation-question'))
+            .map(question => {
+                const config = {};
+                question.querySelectorAll('[data-config-key]').forEach(input => {
+                    const key = input.dataset.configKey;
+                    if (input.dataset.labelKey !== undefined) {
+                        config[key] ||= {};
+                        config[key][input.dataset.labelKey] = input.value;
+                    } else if (input.dataset.configIndex !== undefined) {
+                        config[key] ||= [];
+                        config[key][Number(input.dataset.configIndex)] = input.value;
+                    } else {
+                        config[key] = input.value;
+                    }
+                });
+                return {
+                    id: Number(question.dataset.translationQuestionId),
+                    question_text: question.querySelector('[data-translation-field="question_text"]').value,
+                    translated_config: config,
+                };
+            });
+
+        return {
+            questionnaire: {
+                name: form.querySelector('[data-translation-path="questionnaire.name"]').value,
+                description: form.querySelector('[data-translation-path="questionnaire.description"]').value,
+            },
+            sections,
+            questions,
+        };
+    }
+
+    function currentSnapshot() {
+        return JSON.stringify(buildPayload());
+    }
+
+    let savedSnapshot = currentSnapshot();
+
+    function setDirtyState() {
+        const dirty = currentSnapshot() !== savedSnapshot;
+        button.disabled = !dirty || saving;
+        button.classList.toggle('btn-primary', dirty || saving);
+        button.classList.toggle('btn-secondary', !dirty && !saving);
+        if (dirty && !saving) {
+            clearTimeout(stateTimeout);
+            button.textContent = 'Save translations';
+            status.textContent = 'Unsaved translation changes.';
+        } else if (!dirty && !saving && button.textContent !== 'Saved ✓') {
+            button.textContent = 'Save translations';
+            status.textContent = 'No unsaved translation changes.';
+        }
+        return dirty;
+    }
+
+    function clearFieldErrors() {
+        form.querySelectorAll('[data-translation-error-for]').forEach(error => {
+            error.hidden = true;
+            error.textContent = '';
+        });
+        form.querySelectorAll('[aria-invalid="true"]').forEach(field => {
+            field.removeAttribute('aria-invalid');
+        });
+    }
+
+    function displayFieldErrors(errors) {
+        clearFieldErrors();
+        Object.entries(errors || {}).forEach(([path, messages]) => {
+            let error = Array.from(form.querySelectorAll('[data-translation-error-for]'))
+                .find(element => element.dataset.translationErrorFor === path);
+            if (error) {
+                error.textContent = Array.isArray(messages) ? messages.join(' ') : String(messages);
+                error.hidden = false;
+            }
+            let field = Array.from(form.querySelectorAll('[data-translation-path]'))
+                .find(element => element.dataset.translationPath === path);
+            const configPath = path.match(/^questions\.(\d+)\.translated_config(?:\.(.+))?$/);
+            if (!error && configPath) {
+                const question = form.querySelector(
+                    `.translation-question[data-translation-question-id="${configPath[1]}"]`
+                );
+                if (question) {
+                    const configFields = question.querySelectorAll('[data-config-key]');
+                    field = configFields[0];
+                    const configKey = configPath[2]?.split('.')[0];
+                    error = Array.from(question.querySelectorAll('[data-translation-error-for]'))
+                        .find(element => element.dataset.translationErrorFor.includes(
+                            `.translated_config.${configKey || ''}`
+                        ));
+                    if (error) {
+                        error.textContent = Array.isArray(messages)
+                            ? messages.join(' ')
+                            : String(messages);
+                        error.hidden = false;
+                    }
+                }
+            }
+            if (field) field.setAttribute('aria-invalid', 'true');
+        });
+    }
+
+    form.addEventListener('input', function(event) {
+        if (event.target.matches('[data-translation-path]')) {
+            clearFieldErrors();
+            setDirtyState();
+        }
+    });
+
+    async function saveTranslations() {
+        if (saving || !setDirtyState()) return;
+
+        saving = true;
+        const submittedSnapshot = currentSnapshot();
+        payloadField.value = submittedSnapshot;
+        button.disabled = true;
+        button.textContent = 'Saving…';
+        status.textContent = 'Saving translations.';
+        clearFieldErrors();
+
+        try {
+            const response = await fetch(form.getAttribute('action'), {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value,
+                },
+                credentials: 'same-origin',
+            });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result || result.success !== true) {
+                displayFieldErrors(result && result.errors);
+                throw new Error(
+                    (result && result.message)
+                    || `Translations could not be saved (HTTP ${response.status}).`
+                );
+            }
+
+            savedSnapshot = submittedSnapshot;
+            const completeness = result.completeness;
+            const badge = document.getElementById('selected-translation-completeness');
+            if (badge && completeness) {
+                badge.textContent = `${badge.textContent.split(' · ')[0]} · ${completeness.translated_count}/${completeness.total_count} ${completeness.complete ? 'Complete' : 'Incomplete'}`;
+                badge.classList.toggle('badge-success', completeness.complete);
+                badge.classList.toggle('badge-warning', !completeness.complete);
+            }
+            document.querySelectorAll(
+                `[data-completeness-count="${result.language}"]`
+            ).forEach(element => {
+                element.textContent = `${completeness.translated_count}/${completeness.total_count}`;
+            });
+            document.querySelectorAll(
+                `[data-completeness-status="${result.language}"]`
+            ).forEach(element => {
+                element.textContent = completeness.complete ? 'Complete' : 'Incomplete';
+                element.classList.toggle('badge-success', completeness.complete);
+                element.classList.toggle('badge-warning', !completeness.complete);
+            });
+            const option = document.querySelector(
+                `[data-completeness-option="${result.language}"]`
+            );
+            if (option) {
+                option.textContent = `${option.textContent.split(' (')[0]} (${completeness.translated_count}/${completeness.total_count})`;
+            }
+            status.textContent = 'Translations saved successfully.';
+            button.textContent = 'Saved ✓';
+            clearTimeout(stateTimeout);
+            stateTimeout = setTimeout(function() {
+                if (currentSnapshot() === savedSnapshot) {
+                    button.textContent = 'Save translations';
+                    status.textContent = 'No unsaved translation changes.';
+                }
+                setDirtyState();
+            }, 1800);
+        } catch (error) {
+            button.textContent = 'Save failed — retry';
+            button.disabled = false;
+            status.textContent = error.message || 'Save failed. Your edits remain on this page.';
+        } finally {
+            saving = false;
+            if (currentSnapshot() !== savedSnapshot) {
+                button.disabled = false;
+                button.classList.add('btn-primary');
+                button.classList.remove('btn-secondary');
+            }
+        }
+    }
+
+    button.addEventListener('click', saveTranslations);
+
+    function hasUnsavedChanges() {
+        return currentSnapshot() !== savedSnapshot;
+    }
+
+    window.addEventListener('beforeunload', function(event) {
+        if (!allowUnload && hasUnsavedChanges()) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
+
+    languageForm.addEventListener('submit', function(event) {
+        if (hasUnsavedChanges() && !window.confirm(
+            'You have unsaved translations. Leave this language without saving?'
+        )) {
+            event.preventDefault();
+            languageSelect.value = form.dataset.language;
+            return;
+        }
+        allowUnload = true;
+    });
+    languageSelect.addEventListener('change', function() {
+        languageForm.requestSubmit();
+    });
+
+    document.querySelectorAll('.remove-translation-language-form').forEach(removeForm => {
+        removeForm.addEventListener('submit', function(event) {
+            const warning = hasUnsavedChanges()
+                ? '\n\nYou also have unsaved translations. Continue without saving them?'
+                : '';
+            if (!window.confirm(`${removeForm.dataset.confirmMessage}${warning}`)) {
+                event.preventDefault();
+                return;
+            }
+            allowUnload = true;
+        });
+    });
+
+    setDirtyState();
+});
+</script>
+{% endif %}
 
 {% endblock %}

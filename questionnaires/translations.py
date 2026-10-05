@@ -27,6 +27,43 @@ def questionnaire_language_name(language_code):
     )
 
 
+def available_questionnaire_language_options(questionnaire):
+    """List the source language and added, catalogue-supported translations."""
+    source_code = normalize_language_code(questionnaire.source_language)
+    catalog = supported_language_options()
+    catalog_by_code = {language['code']: language for language in catalog}
+
+    source_option = catalog_by_code.get(source_code, {
+        'code': source_code or questionnaire.source_language,
+        'label': questionnaire_language_name(questionnaire.source_language),
+    })
+    options = [source_option]
+
+    added_codes = {
+        normalized_code
+        for translation in questionnaire.translations.all()
+        if (normalized_code := normalize_language_code(translation.language_code))
+    }
+    options.extend(
+        language
+        for language in catalog
+        if language['code'] != source_code and language['code'] in added_codes
+    )
+    return options
+
+
+def resolve_questionnaire_language(questionnaire, requested_language):
+    """Return a selected language only when it is available for this questionnaire."""
+    normalized_language = normalize_language_code(requested_language)
+    available_codes = {
+        language['code']
+        for language in available_questionnaire_language_options(questionnaire)
+    }
+    if normalized_language in available_codes:
+        return normalized_language
+    return normalize_language_code(questionnaire.source_language) or questionnaire.source_language
+
+
 def is_supported_language(language_code, source_language):
     normalized_code = normalize_language_code(language_code)
     if not normalized_code:

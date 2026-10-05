@@ -1,6 +1,8 @@
 """
 Admin dashboard views for Blik
 """
+import json
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, JsonResponse
@@ -21,6 +23,7 @@ from accounts.permissions import can_view_all_reports, visible_cycles
 from reviews.models import ReviewCycle, ReviewerToken
 from reviews.services import assign_tokens_to_emails, send_reviewer_invitations
 from questionnaires.models import (
+    Question,
     Questionnaire,
     QuestionnaireTranslation,
     QuestionSectionTranslation,
@@ -73,6 +76,216 @@ def _questionnaire_translation_context(questionnaire):
             **questionnaire_translation_completeness(questionnaire, language_code),
         })
     return supported_options, completeness
+
+
+def _translation_workspace_error(message, errors=None, status=400):
+    return JsonResponse({
+        'success': False,
+        'message': message,
+        'errors': errors or {},
+    }, status=status)
+
+
+def _translation_workspace_string(record, key, path, errors):
+    value = record.get(key)
+    if not isinstance(value, str):
+        errors[path] = 'Enter text for this translation field.'
+        return ''
+    return value
+
+
+def _prepare_translation_workspace(questionnaire, language_code, payload):
+    errors = {}
+    if not isinstance(payload, dict) or set(payload) != {
+        'questionnaire', 'sections', 'questions'
+    }:
+        raise ValidationError({'payload': 'Translation workspace payload is invalid.'})
+
+    questionnaire_values = payload['questionnaire']
+    if (
+        not isinstance(questionnaire_values, dict)
+        or set(questionnaire_values) != {'name', 'description'}
+    ):
+        raise ValidationError({'questionnaire': 'Questionnaire translation fields are invalid.'})
+
+    questionnaire_translation = questionnaire.translations.filter(
+        language_code=language_code
+    ).first()
+    if questionnaire_translation is None:
+        raise ValidationError({'language': 'This translation language is unavailable.'})
+    questionnaire_translation.name = _translation_workspace_string(
+        questionnaire_values,
+        'name',
+        'questionnaire.name',
+        errors,
+    )
+    questionnaire_translation.description = _translation_workspace_string(
+        questionnaire_values,
+        'description',
+        'questionnaire.description',
+        errors,
+    )
+
+    sections_payload = payload['sections']
+    if not isinstance(sections_payload, list):
+        raise ValidationError({'sections': 'Section translations must be a list.'})
+    sections = {
+        section.pk: section
+        for section in questionnaire.sections.all()
+    }
+    seen_section_ids = set()
+    section_translations = []
+    for item in sections_payload:
+        if (
+            not isinstance(item, dict)
+            or set(item) != {'id', 'title', 'description'}
+            or isinstance(item.get('id'), bool)
+            or not isinstance(item.get('id'), int)
+        ):
+            raise ValidationError({'sections': 'A section translation entry is malformed.'})
+        section_id = item['id']
+        if section_id in seen_section_ids or section_id not in sections:
+            raise ValidationError({'sections': 'A section does not belong to this questionnaire.'})
+        seen_section_ids.add(section_id)
+        section = sections[section_id]
+        title = _translation_workspace_string(
+            item, 'title', f'sections.{section_id}.title', errors
+        )
+        description = _translation_workspace_string(
+            item, 'description', f'sections.{section_id}.description', errors
+        )
+        if not section.description.strip() and description:
+            errors[f'sections.{section_id}.description'] = (
+                'A description cannot be translated when the source description is blank.'
+            )
+        translation = section.translations.filter(language_code=language_code).first()
+        if translation is None and (title.strip() or description.strip()):
+            translation = QuestionSectionTranslation(
+                section=section,
+                language_code=language_code,
+            )
+        if translation is not None:
+            translation.title = title
+            translation.description = description
+            section_translations.append(translation)
+
+    if seen_section_ids != set(sections):
+        raise ValidationError({'sections': 'Include every section in the translation workspace.'})
+
+    questions_payload = payload['questions']
+    if not isinstance(questions_payload, list):
+        raise ValidationError({'questions': 'Question translations must be a list.'})
+    questions = {
+        question.pk: question
+        for question in Question.objects.filter(section__questionnaire=questionnaire)
+    }
+    seen_question_ids = set()
+    question_translations = []
+    for item in questions_payload:
+        if (
+            not isinstance(item, dict)
+            or set(item) != {'id', 'question_text', 'translated_config'}
+            or isinstance(item.get('id'), bool)
+            or not isinstance(item.get('id'), int)
+        ):
+            raise ValidationError({'questions': 'A question translation entry is malformed.'})
+        question_id = item['id']
+        if question_id in seen_question_ids or question_id not in questions:
+            raise ValidationError({'questions': 'A question does not belong to this questionnaire.'})
+        seen_question_ids.add(question_id)
+        question = questions[question_id]
+        question_text = _translation_workspace_string(
+            item,
+            'question_text',
+            f'questions.{question_id}.question_text',
+            errors,
+        )
+        translated_config = item['translated_config']
+        if not isinstance(translated_config, dict):
+            errors[f'questions.{question_id}.translated_config'] = (
+                'Translated labels must be an object.'
+            )
+            translated_config = {}
+
+        canonical_config = question.config or {}
+        expected_config_keys = {
+            'rating': {'labels'} if canonical_config.get('labels') else set(),
+            'likert': {'scale'} if canonical_config.get('scale') else set(),
+            'single_choice': {'choices'} if canonical_config.get('choices') else set(),
+            'multiple_choice': {'choices'} if canonical_config.get('choices') else set(),
+            'scale': {
+                key for key in ('min_label', 'max_label')
+                if isinstance(canonical_config.get(key), str)
+                and canonical_config[key].strip()
+            },
+            'text': set(),
+        }.get(question.question_type, set())
+        if set(translated_config) != expected_config_keys:
+            errors[f'questions.{question_id}.translated_config'] = (
+                'Translated labels do not match the canonical question configuration.'
+            )
+            translated_config = {}
+        else:
+            for config_key, value in translated_config.items():
+                field_path = f'questions.{question_id}.translated_config.{config_key}'
+                if question.question_type == 'rating':
+                    canonical_labels = canonical_config.get('labels', {})
+                    if (
+                        not isinstance(value, dict)
+                        or set(value) != set(canonical_labels)
+                        or any(not isinstance(label, str) for label in value.values())
+                    ):
+                        errors[field_path] = (
+                            'Provide one text label for each canonical rating label.'
+                        )
+                elif question.question_type in {
+                    'likert', 'single_choice', 'multiple_choice'
+                }:
+                    canonical_key = 'scale' if question.question_type == 'likert' else 'choices'
+                    canonical_values = canonical_config.get(canonical_key, [])
+                    if (
+                        not isinstance(value, list)
+                        or len(value) != len(canonical_values)
+                        or any(not isinstance(label, str) for label in value)
+                    ):
+                        errors[field_path] = (
+                            'Provide one text label for each canonical answer option.'
+                        )
+                elif not isinstance(value, str):
+                    errors[field_path] = 'Translated scale labels must be text.'
+
+        translation = question.translations.filter(
+            language_code=language_code
+        ).first()
+        has_translated_content = bool(question_text.strip()) or any(
+            value.strip()
+            for value in translated_config.values()
+            if isinstance(value, str)
+        ) or any(
+            label.strip()
+            for value in translated_config.values()
+            if isinstance(value, (dict, list))
+            for label in (value.values() if isinstance(value, dict) else value)
+            if isinstance(label, str)
+        )
+        if translation is None and has_translated_content:
+            translation = QuestionTranslation(
+                question=question,
+                language_code=language_code,
+            )
+        if translation is not None:
+            translation.question_text = question_text
+            translation.translated_config = translated_config
+            question_translations.append(translation)
+
+    if seen_question_ids != set(questions):
+        raise ValidationError({'questions': 'Include every question in the translation workspace.'})
+    if errors:
+        raise ValidationError(errors)
+
+    for translation in [questionnaire_translation, *section_translations, *question_translations]:
+        translation.full_clean()
+    return questionnaire_translation, section_translations, question_translations
 
 
 def get_cycle_or_404(request, cycle_uuid):
@@ -843,6 +1056,73 @@ def questionnaire_edit(request, questionnaire_id):
         requested_language = normalize_language_code(
             request.POST.get('lang', request.GET.get('lang', source_language))
         )
+        if action == 'save_all_translations':
+            if (
+                not requested_language
+                or requested_language == source_language
+                or requested_language not in available_languages
+                or not is_supported_language(requested_language, source_language)
+            ):
+                return _translation_workspace_error(
+                    'Select an available translation language.',
+                    {'language': ['The selected language cannot be edited.']},
+                )
+            try:
+                payload = json.loads(request.POST.get('translation_payload', ''))
+            except (TypeError, ValueError):
+                return _translation_workspace_error(
+                    'The translation workspace data is not valid JSON.',
+                    {'payload': ['Submit the translation workspace again.']},
+                )
+
+            try:
+                with transaction.atomic():
+                    prepared = _prepare_translation_workspace(
+                        questionnaire,
+                        requested_language,
+                        payload,
+                    )
+                    for translation in prepared[1]:
+                        translation.save()
+                    for translation in prepared[2]:
+                        translation.save()
+                    prepared[0].save()
+                    completeness = questionnaire_translation_completeness(
+                        questionnaire,
+                        requested_language,
+                    )
+            except ValidationError as error:
+                if hasattr(error, 'message_dict'):
+                    errors = {
+                        field: messages
+                        for field, messages in error.message_dict.items()
+                    }
+                else:
+                    errors = {'translation': error.messages}
+                return _translation_workspace_error(
+                    'Some translation fields need attention.',
+                    errors,
+                )
+            except Exception:
+                logger.exception(
+                    'Error saving questionnaire translation workspace',
+                    extra={
+                        'questionnaire_id': questionnaire.pk,
+                        'language_code': requested_language,
+                    },
+                )
+                return _translation_workspace_error(
+                    'Unable to save translations. Your edits are still on this page.',
+                    status=500,
+                )
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Translations saved.',
+                'language': requested_language,
+                'completeness': completeness,
+            })
+
         if action not in {
             'add_translation_language',
             'remove_translation_language',
@@ -1446,6 +1726,13 @@ def questionnaire_edit(request, questionnaire_id):
                 language_code=requested_language,
             )
         }
+        question_translation_map = {
+            translation.question_id: translation
+            for translation in QuestionTranslation.objects.filter(
+                question__section__questionnaire=questionnaire,
+                language_code=requested_language,
+            )
+        }
         for section in sections:
             section_translation = section_translation_map.get(section.id)
             translation_questions = []
@@ -1459,13 +1746,6 @@ def questionnaire_edit(request, questionnaire_id):
                 'translation': section_translation,
                 'questions': translation_questions,
             })
-        question_translation_map = {
-            translation.question_id: translation
-            for translation in QuestionTranslation.objects.filter(
-                question__section__questionnaire=questionnaire,
-                language_code=requested_language,
-            )
-        }
 
     context = {
         'action': 'Edit',

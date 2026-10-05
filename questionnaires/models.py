@@ -12,6 +12,19 @@ def _translation_for_language(translations, language_code, source_language):
     normalized_language = normalize_language_code(language_code)
     if not normalized_language or normalized_language == source_language:
         return None
+    prefetched_translations = getattr(
+        translations.instance,
+        '_prefetched_objects_cache',
+        {},
+    ).get('translations')
+    if prefetched_translations is not None:
+        return next(
+            (
+                translation for translation in prefetched_translations
+                if translation.language_code == normalized_language
+            ),
+            None,
+        )
     return translations.filter(language_code=normalized_language).first()
 
 

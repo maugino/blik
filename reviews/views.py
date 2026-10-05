@@ -4,9 +4,15 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.db import transaction
+from django.urls import reverse
 from django_ratelimit.decorators import ratelimit
 from .models import ReviewerToken, Response, ReviewCycle
 from questionnaires.models import Question
+from questionnaires.translations import (
+    available_questionnaire_language_options,
+    questionnaire_language_name,
+    resolve_questionnaire_language,
+)
 import secrets
 import logging
 
@@ -76,7 +82,17 @@ def claim_token(request, invitation_token):
 
 def feedback_form(request, token):
     """Token-based feedback form view"""
-    reviewer_token = get_object_or_404(ReviewerToken, token=token)
+    reviewer_token = get_object_or_404(
+        ReviewerToken.objects.select_related(
+            'cycle__questionnaire',
+            'cycle__reviewee',
+        ).prefetch_related(
+            'cycle__questionnaire__translations',
+            'cycle__questionnaire__sections__translations',
+            'cycle__questionnaire__sections__questions__translations',
+        ),
+        token=token,
+    )
 
     # Check if already completed
     if reviewer_token.is_completed:
@@ -99,9 +115,23 @@ def feedback_form(request, token):
         reviewer_token.save(update_fields=['claimed_at'])
 
     questionnaire = cycle.questionnaire
+    language_options = available_questionnaire_language_options(questionnaire)
+    selected_language = resolve_questionnaire_language(
+        questionnaire,
+        request.GET.get('lang'),
+    )
 
     # Get all sections with questions
-    sections = questionnaire.sections.prefetch_related('questions').all()
+    sections = questionnaire.sections.all()
+    questionnaire_display_name = questionnaire.resolve_name(selected_language)
+    questionnaire_display_description = questionnaire.resolve_description(selected_language)
+    for section in sections:
+        section.display_title = section.resolve_title(selected_language)
+        section.display_description = section.resolve_description(selected_language)
+        for question in section.questions.all():
+            question.display_text = question.resolve_question_text(selected_language)
+            question.display_options = question.get_display_options(selected_language)
+            question.display_config = question.resolve_config(selected_language)
 
     # Get existing responses for this token
     existing_responses = {}
@@ -116,6 +146,11 @@ def feedback_form(request, token):
         'token': reviewer_token,
         'cycle': cycle,
         'questionnaire': questionnaire,
+        'questionnaire_display_name': questionnaire_display_name,
+        'questionnaire_display_description': questionnaire_display_description,
+        'language_options': language_options,
+        'selected_language': selected_language,
+        'selected_language_name': questionnaire_language_name(selected_language),
         'sections': sections,
         'reviewee': cycle.reviewee,
         'existing_responses': existing_responses,
@@ -129,7 +164,10 @@ def feedback_form(request, token):
 @ratelimit(key='ip', rate='10/h', method='POST', block=True)
 def submit_feedback(request, token):
     """Handle feedback form submission"""
-    reviewer_token = get_object_or_404(ReviewerToken, token=token)
+    reviewer_token = get_object_or_404(
+        ReviewerToken.objects.select_related('cycle__questionnaire'),
+        token=token,
+    )
 
     # Check if already completed
     if reviewer_token.is_completed:
@@ -142,6 +180,10 @@ def submit_feedback(request, token):
         return JsonResponse({'error': 'This review cycle has been closed. Feedback can no longer be submitted.'}, status=410)
 
     questionnaire = cycle.questionnaire
+    selected_language = resolve_questionnaire_language(
+        questionnaire,
+        request.POST.get('lang', request.GET.get('lang')),
+    )
 
     # Get all questions for validation
     questions = Question.objects.filter(section__questionnaire=questionnaire)
@@ -168,10 +210,21 @@ def submit_feedback(request, token):
             if not answer_values:
                 continue
 
+            canonical_choices = (question.config or {}).get('choices', [])
+            if (
+                not isinstance(canonical_choices, list)
+                or any(not isinstance(value, str) for value in canonical_choices)
+                or len(answer_values) != len(set(answer_values))
+                or any(value not in canonical_choices for value in answer_values)
+            ):
+                errors.append(f'Invalid choice for question "{question.question_text[:50]}"')
+                continue
+
             answer_data = {'value': answer_values}
         else:
             # For all other question types (single value)
-            answer_value = request.POST.get(field_name, '').strip()
+            raw_answer_value = request.POST.get(field_name, '')
+            answer_value = raw_answer_value.strip()
 
             # Check required fields
             if question.required and not answer_value:
@@ -186,30 +239,53 @@ def submit_feedback(request, token):
             if question.question_type == 'rating':
                 try:
                     rating = int(answer_value)
-                    min_val = question.config.get('min', 1)
-                    max_val = question.config.get('max', 5)
+                    min_val = int((question.config or {}).get('min', 1))
+                    max_val = int((question.config or {}).get('max', 5))
                     if rating < min_val or rating > max_val:
                         errors.append(f'Rating must be between {min_val} and {max_val}')
                         continue
                     answer_data = {'value': rating}
-                except ValueError:
-                    errors.append(f'Invalid rating value')
+                except (TypeError, ValueError):
+                    errors.append('Invalid rating value')
                     continue
             elif question.question_type == 'scale':
                 try:
                     scale_value = int(answer_value)
-                    min_val = question.config.get('min', 1)
-                    max_val = question.config.get('max', 100)
-                    if scale_value < min_val or scale_value > max_val:
+                    config = question.config or {}
+                    min_val = int(config.get('min', 1))
+                    max_val = int(config.get('max', 100))
+                    step = int(config.get('step', 1))
+                    if (
+                        step <= 0
+                        or scale_value < min_val
+                        or scale_value > max_val
+                        or (scale_value - min_val) % step
+                    ):
                         errors.append(f'Scale value must be between {min_val} and {max_val}')
                         continue
                     answer_data = {'value': scale_value}
-                except ValueError:
-                    errors.append(f'Invalid scale value')
+                except (TypeError, ValueError):
+                    errors.append('Invalid scale value')
                     continue
-            else:
-                # text, single_choice, likert
+            elif question.question_type in {'single_choice', 'likert'}:
+                config = question.config or {}
+                option_key = 'scale' if question.question_type == 'likert' else 'choices'
+                canonical_options = config.get(option_key, [])
+                if (
+                    not isinstance(canonical_options, list)
+                    or any(not isinstance(value, str) for value in canonical_options)
+                    or answer_value not in canonical_options
+                ):
+                    errors.append(f'Invalid choice for question "{question.question_text[:50]}"')
+                    continue
                 answer_data = {'value': answer_value}
+            elif question.question_type == 'text':
+                if not raw_answer_value.strip():
+                    continue
+                answer_data = {'value': raw_answer_value}
+            else:
+                errors.append(f'Unsupported question type for question "{question.question_text[:50]}"')
+                continue
 
         responses_to_save.append({
             'cycle': cycle,
@@ -220,7 +296,10 @@ def submit_feedback(request, token):
         })
 
     if errors:
-        return JsonResponse({'errors': errors}, status=400)
+        return JsonResponse({
+            'errors': errors,
+            'language': selected_language,
+        }, status=400)
 
     # Save all responses in a transaction
     try:
@@ -278,7 +357,11 @@ def submit_feedback(request, token):
                     # Log error but don't fail the submission
                     print(f"Error auto-generating report for cycle {cycle.id}: {e}")
 
-        return JsonResponse({'success': True, 'redirect': f'/feedback/{token}/complete/'})
+        completion_url = reverse('reviews:feedback_complete', kwargs={'token': token})
+        return JsonResponse({
+            'success': True,
+            'redirect': f'{completion_url}?lang={selected_language}',
+        })
 
     except Exception as e:
         logger.exception('Error submitting feedback')
