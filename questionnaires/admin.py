@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Questionnaire, QuestionSection, Question
+from .models import (
+    Questionnaire,
+    QuestionnaireTranslation,
+    QuestionSection,
+    QuestionSectionTranslation,
+    Question,
+    QuestionTranslation,
+)
 
 
 class QuestionInline(admin.TabularInline):
@@ -41,3 +48,8 @@ class QuestionAdmin(admin.ModelAdmin):
     def question_text_short(self, obj):
         return obj.question_text[:60] + '...' if len(obj.question_text) > 60 else obj.question_text
     question_text_short.short_description = 'Question'
+
+
+admin.site.register(QuestionnaireTranslation)
+admin.site.register(QuestionSectionTranslation)
+admin.site.register(QuestionTranslation)
