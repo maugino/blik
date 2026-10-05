@@ -1,39 +1,30 @@
 """Helpers for managing questionnaire translation languages and completeness."""
 
-from django.conf import settings
-from django.utils.translation import get_language_info
+from core.languages import (
+    SUPPORTED_QUESTIONNAIRE_LANGUAGES,
+    normalize_language_code,
+)
 
-from core.languages import normalize_language_code
+
+def supported_language_options():
+    """Return stable English labels for supported questionnaire languages."""
+    return [
+        {'code': language['code'], 'label': language['name']}
+        for language in SUPPORTED_QUESTIONNAIRE_LANGUAGES
+    ]
 
 
-def supported_language_options(source_language):
-    """Return configured Django languages, including a source language if absent."""
-    options = {}
-    for code, _label in settings.LANGUAGES:
-        normalized_code = normalize_language_code(code)
-        if not normalized_code:
-            continue
-        try:
-            label = get_language_info(code)['name_local']
-        except (KeyError, TypeError):
-            label = code
-        options[normalized_code] = {
-            'code': normalized_code,
-            'label': label,
-        }
-
-    normalized_source = normalize_language_code(source_language)
-    if normalized_source and normalized_source not in options:
-        try:
-            label = get_language_info(normalized_source)['name_local']
-        except (KeyError, TypeError):
-            label = normalized_source
-        options[normalized_source] = {
-            'code': normalized_source,
-            'label': label,
-        }
-
-    return sorted(options.values(), key=lambda option: option['label'].casefold())
+def questionnaire_language_name(language_code):
+    """Return a stable English name, falling back to the normalized code."""
+    normalized_code = normalize_language_code(language_code)
+    return next(
+        (
+            language['name']
+            for language in SUPPORTED_QUESTIONNAIRE_LANGUAGES
+            if language['code'] == normalized_code
+        ),
+        normalized_code or language_code,
+    )
 
 
 def is_supported_language(language_code, source_language):
@@ -42,7 +33,7 @@ def is_supported_language(language_code, source_language):
         return False
     return any(
         option['code'] == normalized_code
-        for option in supported_language_options(source_language)
+        for option in supported_language_options()
     )
 
 

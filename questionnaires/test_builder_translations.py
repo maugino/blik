@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.factories import UserProfileFactory
@@ -17,6 +17,7 @@ from questionnaires.models import (
     QuestionSectionTranslation,
     QuestionTranslation,
 )
+from core.languages import SUPPORTED_QUESTIONNAIRE_LANGUAGES
 from questionnaires.translations import questionnaire_translation_completeness
 from reviews.factories import ReviewerTokenFactory, ReviewCycleFactory
 from reviews.models import Response
@@ -143,6 +144,48 @@ class QuestionnaireTranslationBuilderTests(TestCase):
             fetch_redirect_response=False,
         )
         self.assertEqual(self.questionnaire.translations.count(), 1)
+
+    @override_settings(LANGUAGES=[('xx', 'Deployment-specific language')])
+    def test_builder_renders_authoritative_language_catalog_independent_of_settings(self):
+        QuestionnaireTranslation.objects.create(
+            questionnaire=self.questionnaire,
+            language_code='fr',
+        )
+
+        response = self.client.get(self.edit_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'English (Primary)')
+        self.assertContains(response, 'Primary / Source')
+        self.assertContains(response, 'English <span class="badge badge-info">')
+
+        add_language_options = response.context['available_language_options']
+        expected_languages = [
+            language
+            for language in SUPPORTED_QUESTIONNAIRE_LANGUAGES
+            if language['code'] not in {'en-us', 'fr'}
+        ]
+        self.assertEqual(
+            add_language_options,
+            [
+                {'code': language['code'], 'label': language['name']}
+                for language in expected_languages
+            ],
+        )
+        for language in expected_languages:
+            self.assertContains(
+                response,
+                f'<option value="{language["code"]}">{language["name"]}</option>',
+                html=True,
+            )
+
+        self.assertNotContains(response, '<option value="en-us">English</option>', html=True)
+        self.assertNotContains(response, '<option value="fr">French</option>', html=True)
+        self.assertNotContains(
+            response,
+            '<option value="xx">Deployment-specific language</option>',
+            html=True,
+        )
 
     def test_remove_translation_deletes_only_current_questionnaire_language(self):
         self.add_french()

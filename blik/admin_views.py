@@ -28,6 +28,7 @@ from questionnaires.models import (
 )
 from questionnaires.translations import (
     is_supported_language,
+    questionnaire_language_name,
     questionnaire_translation_completeness,
     supported_language_options,
 )
@@ -58,7 +59,7 @@ def _translation_validation_message(error):
 
 
 def _questionnaire_translation_context(questionnaire):
-    supported_options = supported_language_options(questionnaire.source_language)
+    supported_options = supported_language_options()
     labels = {option['code']: option['label'] for option in supported_options}
     completeness = []
     for language_code in questionnaire.translations.order_by('language_code').values_list(
@@ -1415,8 +1416,11 @@ def questionnaire_edit(request, questionnaire_id):
         questionnaire
     )
     labels = {option['code']: option['label'] for option in language_options}
-    source_language_label = labels.get(source_language, source_language)
-    selected_language_label = labels.get(requested_language, requested_language)
+    source_language_label = questionnaire_language_name(source_language)
+    selected_language_label = labels.get(
+        requested_language,
+        questionnaire_language_name(requested_language),
+    )
     translation_mode = requested_language != source_language
     selected_language_completion = next(
         (
