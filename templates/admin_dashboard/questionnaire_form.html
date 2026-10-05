@@ -4,6 +4,12 @@
 {% block title %}{{ action }} Questionnaire{% endblock %}
 
 {% block content %}
+<style>
+    .translation-missing {
+        border-color: var(--danger);
+        background: var(--danger-50);
+    }
+</style>
 <div style="margin-bottom: 2rem;">
     <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">{{ action }} Questionnaire</h1>
     <p style="color: var(--text-secondary);">
@@ -15,6 +21,102 @@
     </p>
 </div>
 
+{% if questionnaire %}
+<div class="card mb-2" style="max-width: 900px;">
+    <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem;">
+        <form method="get" style="display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin: 0;">
+            <div class="form-group" style="margin: 0;">
+                <label for="questionnaire_language" class="form-label">Editing language</label>
+                <select id="questionnaire_language" name="lang" class="form-control" onchange="this.form.submit()">
+                    <option value="{{ source_language }}" {% if not translation_mode %}selected{% endif %}>
+                        {{ source_language_label }} (Primary)
+                    </option>
+                    {% for language in language_completeness %}
+                    <option value="{{ language.code }}" {% if selected_language == language.code %}selected{% endif %}>
+                        {{ language.label }} ({{ language.translated_count }}/{{ language.total_count }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if translation_mode %}
+            <span class="badge {% if selected_language_complete %}badge-success{% else %}badge-warning{% endif %}">
+                {{ selected_language_label }} · {{ selected_language_completion.translated_count }}/{{ selected_language_completion.total_count }}
+                {% if selected_language_completion.complete %}Complete{% else %}Incomplete{% endif %}
+            </span>
+            {% endif %}
+        </form>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('language_management_modal').style.display='flex'">
+                Languages
+            </button>
+            <a href="{% url 'questionnaire_preview' questionnaire.id %}" class="btn btn-secondary">Preview</a>
+        </div>
+    </div>
+</div>
+
+<div id="language_management_modal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) this.style.display='none'">
+    <div class="modal-content" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <h2 style="margin: 0; color: var(--text-primary);">Questionnaire Languages</h2>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('language_management_modal').style.display='none'">Close</button>
+        </div>
+        <div class="card mb-2">
+            <div class="card-body">
+                <strong>{{ source_language_label }} <span class="badge badge-info">Primary / Source</span></strong>
+            </div>
+        </div>
+        <h3 style="font-size: 1rem;">Available translations</h3>
+        {% if language_completeness %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for language in language_completeness %}
+            <div class="card">
+                <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                    <div>
+                        <strong>{{ language.label }}</strong>
+                        <span style="color: var(--text-secondary);">{{ language.translated_count }}/{{ language.total_count }}</span>
+                        <span class="badge {% if language.complete %}badge-success{% else %}badge-warning{% endif %}">
+                            {% if language.complete %}Complete{% else %}Incomplete{% endif %}
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a class="btn btn-sm btn-secondary" href="{% url 'questionnaire_edit' questionnaire.id %}?lang={{ language.code }}">Edit translation</a>
+                        <form method="post" style="margin: 0;" onsubmit="return confirm('Remove {{ language.label|escapejs }} and delete all questionnaire, section, and question translations for this language? Canonical content, responses, cycles, and reports will not be changed.');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_translation_language">
+                            <input type="hidden" name="language_code" value="{{ language.code }}">
+                            <input type="hidden" name="lang" value="{{ selected_language }}">
+                            <button type="submit" class="btn btn-sm btn-secondary" style="color: white; background: var(--danger); border-color: var(--danger);">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary);">No additional languages have been added yet.</p>
+        {% endif %}
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_translation_language">
+            <input type="hidden" name="lang" value="{{ selected_language }}">
+            <div class="form-group">
+                <label for="new_translation_language" class="form-label">Add a language</label>
+                <select id="new_translation_language" name="language_code" class="form-control" required>
+                    <option value="">Select a supported language</option>
+                    {% for language in language_options %}
+                    {% if language.code != source_language and language.code not in available_language_codes %}
+                    <option value="{{ language.code }}">{{ language.label }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" {% if not available_language_options %}disabled{% endif %}>Add language</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <div style="max-width: 900px;">
     <!-- Basic Information -->
     <div class="card mb-2">
@@ -22,6 +124,28 @@
             <h2 class="card-title">Basic Information</h2>
         </div>
         <div class="card-body">
+            {% if translation_mode %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_questionnaire_translation">
+                <input type="hidden" name="lang" value="{{ selected_language }}">
+                <div class="form-group">
+                    <label class="form-label">SOURCE · {{ source_language_label }}</label>
+                    <div class="card"><div class="card-body">{{ questionnaire.name }}</div></div>
+                    <label for="translated_name" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · Name</label>
+                    <input type="text" id="translated_name" name="translated_name" class="form-control {% if not questionnaire_translation.name %}translation-missing{% endif %}" value="{{ questionnaire_translation.name }}">
+                    {% if not questionnaire_translation.name %}<small style="color: var(--danger);">Translation missing</small>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SOURCE · {{ source_language_label }}</label>
+                    <div class="card"><div class="card-body">{{ questionnaire.description|default:"(No source description)" }}</div></div>
+                    <label for="translated_description" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · Description</label>
+                    <textarea id="translated_description" name="translated_description" class="form-control {% if questionnaire.description and not questionnaire_translation.description %}translation-missing{% endif %}" rows="3">{{ questionnaire_translation.description }}</textarea>
+                    {% if questionnaire.description and not questionnaire_translation.description %}<small style="color: var(--danger);">Translation missing</small>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Save questionnaire translation</button>
+            </form>
+            {% else %}
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_info">
@@ -68,15 +192,17 @@
                     <button type="submit" class="btn btn-primary">Create Questionnaire</button>
                     {% endif %}
                     <a href="{% url 'questionnaire_list' %}" class="btn btn-secondary">Cancel</a>
-                    {% if questionnaire %}
-                    <a href="{% url 'questionnaire_preview' questionnaire.id %}" class="btn btn-secondary">Preview</a>
-                    {% endif %}
                 </div>
             </form>
+            {% endif %}
         </div>
     </div>
 
-    {% if questionnaire %}
+    {% if questionnaire and translation_mode %}
+    {% include "admin_dashboard/partials/questionnaire_translation_editor.html" %}
+    {% endif %}
+
+    {% if questionnaire and not translation_mode %}
     <!-- Edit Section Modal -->
     <div id="edit_section_modal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeEditSectionModal()">
         <div class="modal-content" style="max-width: 600px;">
