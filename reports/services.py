@@ -925,6 +925,7 @@ def send_report_ready_notification(report, request=None):
             message=text_message,
             recipient_list=[reviewee.email],
             html_message=html_message,
+            organization=cycle.reviewee.organization,
         )
 
         stats['sent'] += 1

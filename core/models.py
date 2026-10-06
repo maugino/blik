@@ -24,6 +24,12 @@ class Organization(TimeStampedModel):
     smtp_password_encrypted = models.BinaryField(blank=True, null=True)
     smtp_use_tls = models.BooleanField(default=True)
     from_email = models.EmailField(blank=True)
+    email_delivery_method = models.CharField(
+        max_length=20,
+        choices=[('smtp', 'SMTP'), ('http_webhook', 'HTTP Webhook')],
+        default='smtp',
+    )
+    email_webhook_url_encrypted = models.BinaryField(blank=True, null=True)
 
     # Report settings
     min_responses_for_anonymity = models.IntegerField(
@@ -70,10 +76,39 @@ class Organization(TimeStampedModel):
                     'ENCRYPTION_KEY not configured in settings. '
                     'Generate with: from cryptography.fernet import Fernet; Fernet.generate_key()'
                 )
-            f = Fernet(encryption_key.encode() if isinstance(encryption_key, str) else encryption_key)
-            self.smtp_password_encrypted = f.encrypt(raw_password.encode())
+            fernet = Fernet(
+                encryption_key.encode() if isinstance(encryption_key, str) else encryption_key
+            )
+            self.smtp_password_encrypted = fernet.encrypt(raw_password.encode())
         else:
             self.smtp_password_encrypted = None
+
+    def set_email_webhook_url(self, raw_url):
+        """Encrypt and store the organization's HTTP webhook URL."""
+        if raw_url:
+            self.email_webhook_url_encrypted = self._encrypt_secret(raw_url)
+        else:
+            self.email_webhook_url_encrypted = None
+
+    def _encrypt_secret(self, value):
+        encryption_key = getattr(settings, 'ENCRYPTION_KEY', None)
+        if not encryption_key:
+            raise ValueError('ENCRYPTION_KEY not configured in settings')
+        fernet = Fernet(
+            encryption_key.encode() if isinstance(encryption_key, str) else encryption_key
+        )
+        return fernet.encrypt(value.encode())
+
+    def _decrypt_secret(self, value):
+        if not value:
+            return None
+        encryption_key = getattr(settings, 'ENCRYPTION_KEY', None)
+        if not encryption_key:
+            raise ValueError('ENCRYPTION_KEY not configured in settings')
+        fernet = Fernet(
+            encryption_key.encode() if isinstance(encryption_key, str) else encryption_key
+        )
+        return fernet.decrypt(value).decode()
 
     def get_smtp_password(self):
         """
@@ -82,13 +117,11 @@ class Organization(TimeStampedModel):
         Returns:
             str or None: The decrypted SMTP password, or None if not set
         """
-        if self.smtp_password_encrypted:
-            encryption_key = getattr(settings, 'ENCRYPTION_KEY', None)
-            if not encryption_key:
-                raise ValueError('ENCRYPTION_KEY not configured in settings')
-            f = Fernet(encryption_key.encode() if isinstance(encryption_key, str) else encryption_key)
-            return f.decrypt(self.smtp_password_encrypted).decode()
-        return None
+        return self._decrypt_secret(self.smtp_password_encrypted)
+
+    def get_email_webhook_url(self):
+        """Decrypt and return the organization's HTTP webhook URL."""
+        return self._decrypt_secret(self.email_webhook_url_encrypted)
 
     @property
     def smtp_password(self):

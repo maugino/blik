@@ -41,7 +41,7 @@ CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 
-# REQUIRED: Encryption key for sensitive data (SMTP passwords in database)
+# REQUIRED: Encryption key for sensitive data (SMTP passwords and webhook URLs in database)
 # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ENCRYPTION_KEY=<your-encryption-key-here>
 ```
@@ -80,11 +80,23 @@ EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 ```
 
-Any `EMAIL_*` variable you set here is authoritative: it is written to the
-organization on every container start, and the matching field on the Settings
-page is shown read-only ("Managed by `EMAIL_HOST` in the environment"). To
-configure SMTP from the admin UI instead, leave these unset or empty
-(`EMAIL_HOST=`). See [ADMIN_GUIDE.md](ADMIN_GUIDE.md#settings-managed-by-environment-variables).
+SMTP is the safe default. To select a generic HTTP webhook from the environment,
+set `EMAIL_DELIVERY_METHOD=http_webhook` and provide `EMAIL_WEBHOOK_URL` through
+your deployment's secret manager. Do not commit the URL. `EMAIL_WEBHOOK_URL`
+takes priority over the encrypted organization URL. If both the generic and
+legacy webhook URL variables are set, the generic variable wins.
+
+`POWER_AUTOMATE_WEBHOOK_URL` remains supported for backward compatibility with
+existing installations; prefer `EMAIL_WEBHOOK_URL` for new deployments. An
+explicit `EMAIL_DELIVERY_METHOD=smtp` or `http_webhook` overrides the
+organization's selected method. Without an explicit method, a configured
+webhook URL selects HTTP Webhook; otherwise the organization's method applies.
+
+SMTP settings continue to be synchronized from environment variables and shown
+read-only when environment-managed. The delivery method and webhook URL are
+environment overrides and are also shown read-only when set. To configure a
+method through the admin UI, leave the corresponding environment variables
+unset. See [ADMIN_GUIDE.md](ADMIN_GUIDE.md#settings-managed-by-environment-variables).
 
 #### Site URLs (used in every email link)
 ```env
@@ -580,7 +592,7 @@ docker compose exec web chown -R www-data:www-data /app/mediafiles
    # SECRET_KEY (Django)
    python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 
-   # ENCRYPTION_KEY (for SMTP passwords)
+   # ENCRYPTION_KEY (for SMTP passwords and organization webhook URLs)
    python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
    ```
    **WARNING:** Never reuse the default `ENCRYPTION_KEY` from `.env.example` in production!

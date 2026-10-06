@@ -131,6 +131,15 @@ Set these in the **Environment Variables** section:
 | `EMAIL_HOST_USER` | Secret | Your email address |
 | `EMAIL_HOST_PASSWORD` | Secret | Your email password/app password |
 | `DEFAULT_FROM_EMAIL` | Plain | `noreply@yourdomain.com` |
+| `EMAIL_DELIVERY_METHOD` | Plain | Optional: `smtp` or `http_webhook` |
+| `EMAIL_WEBHOOK_URL` | Secret | Preferred HTTP Webhook URL; store as a deployment secret |
+| `POWER_AUTOMATE_WEBHOOK_URL` | Secret | Legacy compatibility only; prefer `EMAIL_WEBHOOK_URL` |
+
+SMTP remains the default when delivery variables are unset. An explicit
+`EMAIL_DELIVERY_METHOD` overrides the organization setting. A configured
+`EMAIL_WEBHOOK_URL` selects HTTP Webhook when no method is explicitly set, and
+has priority over the legacy URL variable and the organization's encrypted URL.
+Webhook values are never displayed in the Settings page.
 
 #### Stripe Configuration (Optional)
 

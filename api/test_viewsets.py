@@ -1,7 +1,10 @@
 """
 Tests for API viewsets.
 """
+from unittest.mock import patch
+
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 from accounts.models import Organization, User, Reviewee, UserProfile
 from accounts.permissions import assign_organization_admin
@@ -338,6 +341,66 @@ class ReviewCycleViewSetTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['reviewee_detail']['name'], 'Test Reviewee')
+
+    @patch('reviews.services.send_reminder_emails')
+    def test_send_reminders_uses_service_and_preserves_token_selection(
+        self, mock_send_reminder_emails
+    ):
+        cycle = ReviewCycle.objects.create(
+            reviewee=self.reviewee,
+            questionnaire=self.questionnaire,
+            created_by=self.user,
+        )
+        pending = ReviewerToken.objects.create(
+            cycle=cycle,
+            category='peer',
+            reviewer_email='pending@example.com',
+        )
+        completed = ReviewerToken.objects.create(
+            cycle=cycle,
+            category='manager',
+            reviewer_email='completed@example.com',
+            completed_at=timezone.now(),
+        )
+        mock_send_reminder_emails.return_value = {'sent': 1, 'errors': []}
+
+        response = self.client.post(
+            f'/api/v1/cycles/{cycle.uuid}/send_reminders/',
+            {'token_ids': [pending.id, completed.id]},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'sent': 1, 'total_pending': 1})
+        mock_send_reminder_emails.assert_called_once_with(
+            cycle, token_ids=[pending.id, completed.id]
+        )
+
+    @patch('reviews.services.send_email', return_value=1)
+    def test_send_reminders_updates_last_reminder_timestamp(self, mock_send_email):
+        cycle = ReviewCycle.objects.create(
+            reviewee=self.reviewee,
+            questionnaire=self.questionnaire,
+            created_by=self.user,
+        )
+        token = ReviewerToken.objects.create(
+            cycle=cycle,
+            category='peer',
+            reviewer_email='reviewer@example.com',
+            invitation_sent_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            f'/api/v1/cycles/{cycle.uuid}/send_reminders/',
+            {'token_ids': [token.id]},
+            format='json',
+        )
+
+        token.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'sent': 1, 'total_pending': 1})
+        self.assertIsNotNone(token.last_reminder_sent_at)
+        mock_send_email.assert_called_once()
 
     def test_filter_by_status(self):
         """Can filter cycles by status."""

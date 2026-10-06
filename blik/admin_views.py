@@ -2418,7 +2418,7 @@ def send_reminder(request, cycle_uuid):
 @require_POST
 def send_individual_reminder(request, cycle_uuid, token_id):
     """Send a reminder email to a specific reviewer"""
-    from django.core.mail import EmailMultiAlternatives
+    from core.email import send_email
     from django.template.loader import render_to_string
     from django.conf import settings
 
@@ -2461,14 +2461,14 @@ def send_individual_reminder(request, cycle_uuid, token_id):
         from_email = settings.DEFAULT_FROM_EMAIL
         subject = f'Reminder: Feedback Request for {cycle.reviewee.name}'
 
-        email = EmailMultiAlternatives(
+        send_email(
             subject=subject,
-            body=text_content,
+            message=text_content,
+            recipient_list=[token.reviewer_email],
+            html_message=html_content,
             from_email=from_email,
-            to=[token.reviewer_email]
+            organization=cycle.reviewee.organization,
         )
-        email.attach_alternative(html_content, "text/html")
-        email.send()
 
         # Update last reminder sent timestamp
         from django.utils import timezone
@@ -2582,7 +2582,7 @@ def send_report_email(request, cycle_uuid):
 
 @login_required
 def settings_view(request):
-    """Organization and SMTP settings page"""
+    """Organization and email settings page."""
     # Use the organization from the middleware (set based on user's profile)
     organization = request.organization
 
@@ -2606,6 +2606,36 @@ def settings_view(request):
 
         # Get which section is being updated
         section = request.POST.get('section', 'all')
+
+        if section == 'email_test':
+            from core.email import email_webhook_is_configured, get_email_delivery_method, send_email
+
+            if not request.user.email:
+                messages.error(request, 'Add an email address to your account before testing email.')
+            elif (
+                get_email_delivery_method(organization) == 'http_webhook'
+                and not email_webhook_is_configured(organization)
+            ):
+                messages.error(request, 'The HTTP Webhook URL is not configured.')
+            else:
+                try:
+                    sent = send_email(
+                        subject='Blik email delivery test',
+                        message='This is a test email from your organization settings.',
+                        recipient_list=[request.user.email],
+                        html_message=(
+                            '<p>This is a test email from your organization settings.</p>'
+                        ),
+                        organization=organization,
+                    )
+                except Exception:
+                    sent = 0
+
+                if sent:
+                    messages.success(request, 'Test email sent to your account email address.')
+                else:
+                    messages.error(request, 'Test email could not be sent. Check the email settings.')
+            return redirect('settings')
 
         try:
             if section == 'organization':
@@ -2636,24 +2666,45 @@ def settings_view(request):
                 messages.success(request, 'Report settings updated successfully.')
 
             elif section == 'email':
-                # Update SMTP settings
-                if editable('smtp_host'):
-                    organization.smtp_host = request.POST.get('smtp_host', '')
-                if editable('smtp_port'):
-                    try:
-                        organization.smtp_port = int(request.POST.get('smtp_port', 587))
-                    except (ValueError, TypeError):
-                        organization.smtp_port = 587
-                if editable('smtp_username'):
-                    organization.smtp_username = request.POST.get('smtp_username', '')
+                from core.email import email_webhook_is_configured
 
-                # Only update password if provided
-                smtp_password = request.POST.get('smtp_password', '')
-                if smtp_password and editable('smtp_password'):
-                    organization.smtp_password = smtp_password
+                requested_method = request.POST.get(
+                    'email_delivery_method', organization.email_delivery_method
+                )
+                if requested_method not in {'smtp', 'http_webhook'}:
+                    messages.error(request, 'Select a valid email delivery method.')
+                    return redirect('settings')
+                if editable('email_delivery_method'):
+                    organization.email_delivery_method = requested_method
 
-                if editable('smtp_use_tls'):
-                    organization.smtp_use_tls = request.POST.get('smtp_use_tls') == 'on'
+                if requested_method == 'smtp':
+                    if editable('smtp_host'):
+                        organization.smtp_host = request.POST.get('smtp_host', '')
+                    if editable('smtp_port'):
+                        try:
+                            organization.smtp_port = int(request.POST.get('smtp_port', 587))
+                        except (ValueError, TypeError):
+                            organization.smtp_port = 587
+                    if editable('smtp_username'):
+                        organization.smtp_username = request.POST.get('smtp_username', '')
+
+                    smtp_password = request.POST.get('smtp_password', '')
+                    if smtp_password and editable('smtp_password'):
+                        organization.smtp_password = smtp_password
+
+                    if editable('smtp_use_tls'):
+                        organization.smtp_use_tls = request.POST.get('smtp_use_tls') == 'on'
+                else:
+                    webhook_url = request.POST.get('email_webhook_url', '').strip()
+                    if webhook_url and editable('email_webhook_url'):
+                        organization.set_email_webhook_url(webhook_url)
+                    elif (
+                        not email_webhook_is_configured(organization)
+                        and not webhook_url
+                    ):
+                        messages.error(request, 'Enter an HTTP Webhook URL before selecting it.')
+                        return redirect('settings')
+
                 if editable('from_email'):
                     organization.from_email = request.POST.get('from_email', organization.from_email)
                 organization.save()
@@ -2667,7 +2718,10 @@ def settings_view(request):
 
             return redirect('settings')
         except Exception as e:
-            messages.error(request, f'Error updating settings: {str(e)}')
+            if section == 'email':
+                messages.error(request, 'Error updating email settings. Check the provided values.')
+            else:
+                messages.error(request, f'Error updating settings: {str(e)}')
 
     # Get subscription information if exists
     subscription = None
@@ -2699,6 +2753,8 @@ def settings_view(request):
     new_token = request.session.pop('new_api_token', None)
     new_token_name = request.session.pop('new_api_token_name', None)
 
+    from core.email import email_webhook_is_configured, get_email_delivery_method
+
     context = {
         'organization': organization,
         'subscription': subscription,
@@ -2710,6 +2766,8 @@ def settings_view(request):
         'new_token': new_token,
         'new_token_name': new_token_name,
         'locked_fields': locked,
+        'email_delivery_method': get_email_delivery_method(organization),
+        'webhook_url_configured': email_webhook_is_configured(organization),
     }
 
     return render(request, 'admin_dashboard/settings.html', context)

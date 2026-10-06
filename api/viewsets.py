@@ -351,16 +351,13 @@ class ReviewCycleViewSet(viewsets.ModelViewSet):
         if token_ids:
             pending_tokens = pending_tokens.filter(id__in=token_ids)
 
-        # Send reminders
-        from core.email import send_reviewer_reminder
+        # Send reminders through the existing service, which also updates the
+        # last-reminder timestamp for successfully sent messages.
+        from reviews.services import send_reminder_emails
 
-        sent_count = 0
-        for token in pending_tokens:
-            if token.reviewer_email:
-                send_reviewer_reminder(token)
-                sent_count += 1
+        stats = send_reminder_emails(cycle, token_ids=token_ids or None)
 
-        return Response({"sent": sent_count, "total_pending": pending_tokens.count()})
+        return Response({"sent": stats["sent"], "total_pending": pending_tokens.count()})
 
     @extend_schema(
         tags=["cycles"],

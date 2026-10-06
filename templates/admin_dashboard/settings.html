@@ -248,7 +248,7 @@
         <!-- Email Settings -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">{% translate "Email (SMTP) Settings" %}</h2>
+                <h2 class="card-title">{% translate "Email Settings" %}</h2>
             </div>
             <form method="post" action="{% url 'settings' %}">
                 {% csrf_token %}
@@ -263,64 +263,118 @@
                     </div>
                     {% endif %}
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="smtp_host">{% translate "Host" %}</label>
+                    <div class="form-group">
+                        <label class="form-label" for="email_delivery_method">{% translate "Email Delivery Method" %}</label>
+                        <select
+                            id="email_delivery_method"
+                            name="email_delivery_method"
+                            class="form-control"
+                            {% if not perms.accounts.can_manage_organization or locked_fields.email_delivery_method %}disabled{% endif %}
+                        >
+                            <option value="smtp" {% if email_delivery_method == 'smtp' %}selected{% endif %}>{% translate "SMTP" %}</option>
+                            <option value="http_webhook" {% if email_delivery_method == 'http_webhook' %}selected{% endif %}>{% translate "HTTP Webhook" %}</option>
+                        </select>
+                        {% if locked_fields.email_delivery_method %}<small class="form-text">{% blocktranslate with name=locked_fields.email_delivery_method %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
+                    </div>
+
+                    <div id="smtpEmailFields" {% if email_delivery_method != 'smtp' %}style="display: none;"{% endif %}>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" for="smtp_host">{% translate "Host" %}</label>
+                                <input
+                                    type="text"
+                                    id="smtp_host"
+                                    name="smtp_host"
+                                    class="form-control"
+                                    value="{{ organization.smtp_host }}"
+                                    {% if not perms.accounts.can_manage_organization %}disabled readonly{% endif %}
+                                    {% if locked_fields.smtp_host %}disabled readonly{% endif %}
+                                    placeholder="{% if subscription %}{% translate 'Optional' %}{% else %}smtp.gmail.com{% endif %}"
+                                >
+                                {% if locked_fields.smtp_host %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">{% blocktranslate with name=locked_fields.smtp_host %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" for="smtp_port">{% translate "Port" %}</label>
+                                <input
+                                    type="number"
+                                    id="smtp_port"
+                                    name="smtp_port"
+                                    class="form-control"
+                                    value="{{ organization.smtp_port|default:587 }}"
+                                    {% if not perms.accounts.can_manage_organization %}disabled readonly{% endif %}
+                                    {% if locked_fields.smtp_port %}disabled readonly{% endif %}
+                                    placeholder="587"
+                                >
+                                {% if locked_fields.smtp_port %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">{% blocktranslate with name=locked_fields.smtp_port %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                            <label class="form-label" for="smtp_username">{% translate "Username" %}</label>
                             <input
                                 type="text"
-                                id="smtp_host"
-                                name="smtp_host"
+                                id="smtp_username"
+                                name="smtp_username"
                                 class="form-control"
-                                value="{{ organization.smtp_host }}"
+                                value="{{ organization.smtp_username }}"
                                 {% if not perms.accounts.can_manage_organization %}disabled readonly{% endif %}
-                                {% if locked_fields.smtp_host %}disabled readonly{% endif %}
-                                placeholder="{% if subscription %}Optional{% else %}smtp.gmail.com{% endif %}"
+                                {% if locked_fields.smtp_username %}disabled readonly{% endif %}
+                                placeholder="your-email@gmail.com"
                             >
-                            {% if locked_fields.smtp_host %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">Managed by <code>{{ locked_fields.smtp_host }}</code> in the environment</small>{% endif %}
+                            {% if locked_fields.smtp_username %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">{% blocktranslate with name=locked_fields.smtp_username %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="smtp_port">{% translate "Port" %}</label>
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                            <label class="form-label" for="smtp_password">{% translate "Password" %}</label>
                             <input
-                                type="number"
-                                id="smtp_port"
-                                name="smtp_port"
+                                type="password"
+                                id="smtp_password"
+                                name="smtp_password"
                                 class="form-control"
-                                value="{{ organization.smtp_port|default:587 }}"
                                 {% if not perms.accounts.can_manage_organization %}disabled readonly{% endif %}
-                                {% if locked_fields.smtp_port %}disabled readonly{% endif %}
-                                placeholder="587"
+                                {% if locked_fields.smtp_password %}disabled readonly{% endif %}
+                                placeholder="{% translate 'Leave blank to keep current' %}"
                             >
-                            {% if locked_fields.smtp_port %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">Managed by <code>{{ locked_fields.smtp_port }}</code> in the environment</small>{% endif %}
+                            {% if locked_fields.smtp_password %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">{% blocktranslate with name=locked_fields.smtp_password %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-check">
+                                <input
+                                    type="checkbox"
+                                    id="smtp_use_tls"
+                                    name="smtp_use_tls"
+                                    class="form-check-input"
+                                    {% if organization.smtp_use_tls %}checked{% endif %}
+                                    {% if not perms.accounts.can_manage_organization %}disabled{% endif %}
+                                    {% if locked_fields.smtp_use_tls %}disabled readonly{% endif %}
+                                >
+                                {% if locked_fields.smtp_use_tls %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">{% blocktranslate with name=locked_fields.smtp_use_tls %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
+                                <label class="form-label" for="smtp_use_tls" style="display: inline; font-weight: normal; font-size: 0.875rem;">
+                                    {% translate "Use TLS encryption (port 587)" %}
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 0.75rem;">
-                        <label class="form-label" for="smtp_username">{% translate "Username" %}</label>
-                        <input
-                            type="text"
-                            id="smtp_username"
-                            name="smtp_username"
-                            class="form-control"
-                            value="{{ organization.smtp_username }}"
-                            {% if not perms.accounts.can_manage_organization %}disabled readonly{% endif %}
-                            {% if locked_fields.smtp_username %}disabled readonly{% endif %}
-                            placeholder="your-email@gmail.com"
-                        >
-                        {% if locked_fields.smtp_username %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">Managed by <code>{{ locked_fields.smtp_username }}</code> in the environment</small>{% endif %}
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0.75rem;">
-                        <label class="form-label" for="smtp_password">{% translate "Password" %}</label>
-                        <input
-                            type="password"
-                            id="smtp_password"
-                            name="smtp_password"
-                            class="form-control"
-                            {% if not perms.accounts.can_manage_organization %}disabled readonly{% endif %}
-                            {% if locked_fields.smtp_password %}disabled readonly{% endif %}
-                            placeholder="{% translate 'Leave blank to keep current' %}"
-                        >
-                        {% if locked_fields.smtp_password %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">Managed by <code>{{ locked_fields.smtp_password }}</code> in the environment</small>{% endif %}
+                    <div id="webhookEmailFields" {% if email_delivery_method != 'http_webhook' %}style="display: none;"{% endif %}>
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                            <label class="form-label" for="email_webhook_url">{% translate "Webhook URL" %}</label>
+                            <input
+                                type="password"
+                                id="email_webhook_url"
+                                name="email_webhook_url"
+                                class="form-control"
+                                autocomplete="new-password"
+                                {% if not perms.accounts.can_manage_organization or locked_fields.email_webhook_url %}disabled{% endif %}
+                                placeholder="{% translate 'Enter a new URL to replace the saved URL' %}"
+                            >
+                            {% if webhook_url_configured %}
+                                <small class="form-text">{% translate "A webhook URL is configured. Leave this blank to keep it." %}</small>
+                            {% else %}
+                                <small class="form-text">{% translate "No webhook URL is configured." %}</small>
+                            {% endif %}
+                            {% if locked_fields.email_webhook_url %}<small class="form-text">{% blocktranslate with name=locked_fields.email_webhook_url %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
+                        </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 0.75rem;">
@@ -335,25 +389,7 @@
                             {% if locked_fields.from_email %}disabled readonly{% endif %}
                             placeholder="noreply@example.com"
                         >
-                        {% if locked_fields.from_email %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">Managed by <code>{{ locked_fields.from_email }}</code> in the environment</small>{% endif %}
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <div class="form-check">
-                            <input
-                                type="checkbox"
-                                id="smtp_use_tls"
-                                name="smtp_use_tls"
-                                class="form-check-input"
-                                {% if organization.smtp_use_tls %}checked{% endif %}
-                                {% if not perms.accounts.can_manage_organization %}disabled{% endif %}
-                                {% if locked_fields.smtp_use_tls %}disabled readonly{% endif %}
-                            >
-                            {% if locked_fields.smtp_use_tls %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">Managed by <code>{{ locked_fields.smtp_use_tls }}</code> in the environment</small>{% endif %}
-                            <label class="form-label" for="smtp_use_tls" style="display: inline; font-weight: normal; font-size: 0.875rem;">
-                                {% translate "Use TLS encryption (port 587)" %}
-                            </label>
-                        </div>
+                        {% if locked_fields.from_email %}<small class="form-text" style="color: var(--text-muted, #6b7280); font-size: 0.75rem;">{% blocktranslate with name=locked_fields.from_email %}Managed by {{ name }} in the environment{% endblocktranslate %}</small>{% endif %}
                     </div>
 
                     {% if perms.accounts.can_manage_organization %}
@@ -363,6 +399,14 @@
                     {% endif %}
                 </div>
             </form>
+            {% if perms.accounts.can_manage_organization %}
+            <form method="post" action="{% url 'settings' %}" class="card-body" style="padding-top: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="email_test">
+                <button type="submit" class="btn btn-secondary btn-sm">{% translate "Send Test Email" %}</button>
+                <small class="form-text">{% translate "Sends a test message to your account email address using the saved effective configuration." %}</small>
+            </form>
+            {% endif %}
         </div>
 
         <!-- API Configuration -->
@@ -764,6 +808,16 @@
 {% endif %}
 
 <script>
+const emailDeliveryMethod = document.getElementById('email_delivery_method');
+if (emailDeliveryMethod) {
+    emailDeliveryMethod.addEventListener('change', function () {
+        document.getElementById('smtpEmailFields').style.display =
+            this.value === 'smtp' ? '' : 'none';
+        document.getElementById('webhookEmailFields').style.display =
+            this.value === 'http_webhook' ? '' : 'none';
+    });
+}
+
 // Modal control functions
 function showDeleteAccountModal() {
     document.getElementById('deleteAccountModal').style.display = 'flex';

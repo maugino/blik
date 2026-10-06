@@ -10,16 +10,26 @@ class OrganizationAdminForm(forms.ModelForm):
         widget=forms.PasswordInput(render_value=False),
         help_text='Enter a new SMTP password or leave blank to keep the existing one'
     )
+    email_webhook_url = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(render_value=False),
+        help_text='Enter a new webhook URL or leave blank to keep the existing one',
+    )
 
     class Meta:
         model = Organization
         fields = '__all__'
+        exclude = ('email_webhook_url_encrypted',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # If editing an existing organization with a password, show a placeholder
         if self.instance.pk and self.instance.smtp_password_encrypted:
             self.fields['smtp_password'].widget.attrs['placeholder'] = '••••••••'
+        if self.instance.pk and self.instance.email_webhook_url_encrypted:
+            self.fields['email_webhook_url'].widget.attrs['placeholder'] = (
+                'Configured; leave blank to keep the existing URL'
+            )
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -27,6 +37,9 @@ class OrganizationAdminForm(forms.ModelForm):
         smtp_password = self.cleaned_data.get('smtp_password')
         if smtp_password:
             instance.set_smtp_password(smtp_password)
+        webhook_url = self.cleaned_data.get('email_webhook_url')
+        if webhook_url:
+            instance.set_email_webhook_url(webhook_url)
         if commit:
             instance.save()
         return instance
@@ -43,7 +56,11 @@ class OrganizationAdmin(admin.ModelAdmin):
             'fields': ['name', 'email', 'is_active']
         }),
         ('Email Settings', {
-            'fields': ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_use_tls', 'from_email'],
+            'fields': [
+                'email_delivery_method', 'email_webhook_url', 'smtp_host',
+                'smtp_port', 'smtp_username', 'smtp_password', 'smtp_use_tls',
+                'from_email',
+            ],
             'classes': ['collapse']
         }),
     ]

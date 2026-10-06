@@ -113,6 +113,7 @@ def send_reviewer_invitations(cycle, token_ids=None):
                 message=text_message,
                 recipient_list=[token.reviewer_email],
                 html_message=html_message,
+                organization=cycle.reviewee.organization,
             )
 
             # Mark as sent
@@ -175,6 +176,7 @@ def send_reminder_emails(cycle, token_ids=None):
                 message=text_message,
                 recipient_list=[token.reviewer_email],
                 html_message=html_message,
+                organization=cycle.reviewee.organization,
             )
 
             # Update last reminder sent timestamp
@@ -232,6 +234,7 @@ def send_reviewee_notifications(cycle, request=None):
             message=text_message,
             recipient_list=[cycle.reviewee.email],
             html_message=html_message,
+            organization=cycle.reviewee.organization,
         )
 
         stats['sent'] += 1
@@ -261,6 +264,7 @@ def send_reviewee_notifications(cycle, request=None):
             message=text_message,
             recipient_list=[cycle.reviewee.email],
             html_message=html_message,
+            organization=cycle.reviewee.organization,
         )
 
         stats['sent'] += 1
@@ -334,6 +338,7 @@ def send_close_check_emails(dry_run=False):
                 message=text_message,
                 recipient_list=[cycle.reviewee.email],
                 html_message=html_message,
+                organization=cycle.reviewee.organization,
             )
 
             cycle.close_check_sent_at = timezone.now()
