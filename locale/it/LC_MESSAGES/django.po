@@ -1,0 +1,2701 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-06 11:30+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: accounts/forms.py:17 accounts/forms.py:19
+msgid "First name"
+msgstr "Nome"
+
+#: accounts/forms.py:27 accounts/forms.py:29
+msgid "Last name"
+msgstr "Cognome"
+
+#: accounts/forms.py:36 accounts/forms.py:38
+msgid "Email address"
+msgstr "Indirizzo e-mail"
+
+#: accounts/forms.py:57
+msgid "This email address is already in use."
+msgstr "Questo indirizzo e-mail è già in uso."
+
+#: accounts/forms.py:67
+#| msgid "Use your invited email address"
+msgid "Enter your email address"
+msgstr "Inserisci il tuo indirizzo e-mail"
+
+#: accounts/forms.py:76
+msgid "New Password"
+msgstr "Nuova password"
+
+#: accounts/forms.py:79
+#| msgid "New Password"
+msgid "New password"
+msgstr "Nuova password"
+
+#: accounts/forms.py:84
+msgid "Confirm Password"
+msgstr "Conferma password"
+
+#: accounts/forms.py:87
+#| msgid "Confirm Password"
+msgid "Confirm new password"
+msgstr "Conferma la nuova password"
+
+#: accounts/forms.py:98
+msgid "Passwords do not match."
+msgstr "Le password non coincidono."
+
+#: blik/admin_views.py:93
+msgid "Enter text for this translation field."
+msgstr "Inserisci il testo per questo campo di traduzione."
+
+#: blik/admin_views.py:1122
+msgid "Translations saved."
+msgstr "Traduzioni salvate."
+
+#: blik/admin_views.py:1489 blik/admin_views.py:1495
+#| msgid "Database connected successfully"
+msgid "Question added successfully."
+msgstr "Domanda aggiunta correttamente."
+
+#: blik/admin_views.py:1501 blik/admin_views.py:1503
+msgid "Error adding question. Please try again."
+msgstr "Errore durante l’aggiunta della domanda. Riprova."
+
+#: blik/admin_views.py:1601
+msgid "Invalid scale values. Using defaults (1-100, step 1)."
+msgstr ""
+"Valori della scala non validi. Verranno usati i valori predefiniti (1–100, "
+"passo 1)."
+
+#: blik/admin_views.py:1609 blik/admin_views.py:1620
+#| msgid "Database connected successfully"
+msgid "Question updated successfully."
+msgstr "Domanda aggiornata correttamente."
+
+#: blik/admin_views.py:1626 blik/admin_views.py:1628
+msgid "Error updating question. Please try again."
+msgstr "Errore durante l’aggiornamento della domanda. Riprova."
+
+#: templates/accounts/profile.html:18
+#: templates/admin_dashboard/dashboard.html:18
+msgid "Welcome to Blik"
+msgstr "Le diamo il benvenuto in Blik"
+
+#: templates/accounts/profile.html:19
+#: templates/admin_dashboard/dashboard.html:19
+msgid "Your 360-degree feedback platform"
+msgstr "La piattaforma di feedback a 360°"
+
+#: templates/accounts/profile.html:23
+#: templates/admin_dashboard/dashboard.html:23
+msgid "How Blik helps you:"
+msgstr "Come Blik può aiutarLa:"
+
+#: templates/accounts/profile.html:25
+#: templates/admin_dashboard/dashboard.html:25
+msgid "Gather comprehensive feedback from peers, managers, and direct reports"
+msgstr ""
+"Raccogliere feedback completo da colleghi, responsabili e collaboratori"
+
+#: templates/accounts/profile.html:26
+#: templates/admin_dashboard/dashboard.html:26
+msgid "Maintain complete anonymity for honest, constructive input"
+msgstr ""
+"Garantire il completo anonimato per favorire contributi sinceri e costruttivi"
+
+#: templates/accounts/profile.html:27
+#: templates/admin_dashboard/dashboard.html:27
+msgid "Generate actionable insights to drive professional growth"
+msgstr "Ottenere indicazioni concrete per favorire la crescita professionale"
+
+#: templates/accounts/profile.html:32
+#: templates/admin_dashboard/dashboard.html:32
+msgid "Getting started is simple:"
+msgstr "Iniziare è semplice:"
+
+#: templates/accounts/profile.html:37
+#: templates/admin_dashboard/dashboard.html:37
+msgid "Add reviewees"
+msgstr "Aggiunga le persone da valutare"
+
+#: templates/accounts/profile.html:38
+#: templates/admin_dashboard/dashboard.html:38
+msgid "People who will receive 360° feedback"
+msgstr "Persone che riceveranno feedback a 360°"
+
+#: templates/accounts/profile.html:44
+#: templates/admin_dashboard/dashboard.html:44
+msgid "Create a review cycle"
+msgstr "Crei un ciclo di valutazione"
+
+#: templates/accounts/profile.html:45
+#: templates/admin_dashboard/dashboard.html:45
+msgid "Choose a questionnaire and invite reviewers"
+msgstr "Scelga un questionario e inviti i valutatori"
+
+#: templates/accounts/profile.html:51
+#: templates/admin_dashboard/dashboard.html:51
+msgid "Share anonymous invite links"
+msgstr "Condivida link di invito anonimi"
+
+#: templates/accounts/profile.html:52
+#: templates/admin_dashboard/dashboard.html:52
+msgid "Copy links and share directly, or optionally send via email"
+msgstr "Copi i link e li condivida direttamente oppure li invii tramite e-mail"
+
+#: templates/accounts/profile.html:58
+#: templates/admin_dashboard/dashboard.html:58
+msgid "Review the report"
+msgstr "Esamini il report"
+
+#: templates/accounts/profile.html:59
+#: templates/admin_dashboard/dashboard.html:59
+msgid "View aggregated insights and share with reviewees"
+msgstr "Consulti i risultati aggregati e li condivida con le persone valutate"
+
+#: templates/accounts/profile.html:67
+#: templates/admin_dashboard/questionnaire_form.html:135
+msgid "Close"
+msgstr "Chiuda"
+
+#: templates/accounts/profile.html:70
+#: templates/admin_dashboard/dashboard.html:70
+msgid "Get Started"
+msgstr "Cominci"
+
+#: templates/accounts/profile.html:121
+msgid "My Profile"
+msgstr "Il mio profilo"
+
+#: templates/accounts/profile.html:130
+msgid "Personal Information"
+msgstr "Informazioni personali"
+
+#: templates/accounts/profile.html:137
+msgid "First Name"
+msgstr "Nome"
+
+#: templates/accounts/profile.html:145
+msgid "Last Name"
+msgstr "Cognome"
+
+#: templates/accounts/profile.html:153
+#: templates/admin_dashboard/reviewee_form.html:38
+#: templates/admin_dashboard/reviewee_list.html:32
+#: templates/admin_dashboard/team.html:67
+#: templates/admin_dashboard/team.html:145
+#: templates/admin_dashboard/team.html:219
+msgid "Email"
+msgstr "E-mail"
+
+#: templates/accounts/profile.html:161
+#: templates/admin_dashboard/settings.html:298
+msgid "Username"
+msgstr "Nome utente"
+
+#: templates/accounts/profile.html:163
+msgid "Username cannot be changed"
+msgstr "Il nome utente non può essere modificato"
+
+#: templates/accounts/profile.html:166
+msgid "Update Profile"
+msgstr "Aggiorni il profilo"
+
+#: templates/accounts/profile.html:173
+#: templates/admin_dashboard/settings.html:29
+msgid "Organization"
+msgstr "Organizzazione"
+
+#: templates/accounts/profile.html:184 templates/admin_dashboard/team.html:70
+#: templates/admin_dashboard/team.html:153
+msgid "Permissions"
+msgstr "Autorizzazioni"
+
+#: templates/accounts/profile.html:188
+msgid "Can create cycles for others"
+msgstr "Può creare cicli per altre persone"
+
+#: templates/accounts/profile.html:190
+msgid "Self cycles only"
+msgstr "Solo cicli personali"
+
+#: templates/accounts/profile.html:197
+#, python-format
+msgid "Member since %(member_since)s"
+msgstr "Membro dal %(member_since)s"
+
+#: templates/accounts/profile.html:206
+msgid "View Welcome Guide"
+msgstr "Consulti la guida introduttiva"
+
+#: templates/accounts/profile.html:216
+msgid "My Review Cycles"
+msgstr "I miei cicli di valutazione"
+
+#: templates/accounts/profile.html:228
+#, python-format
+msgid "Created %(created_date)s"
+msgstr "Creato il %(created_date)s"
+
+#: templates/accounts/profile.html:230
+#, python-format
+msgid "by %(creator)s"
+msgstr "da %(creator)s"
+
+#: templates/accounts/profile.html:238
+msgid "Responses:"
+msgstr "Risposte:"
+
+#: templates/accounts/profile.html:242
+#, python-format
+msgid "Total: %(total)s"
+msgstr "Totale: %(total)s"
+
+#: templates/accounts/profile.html:249
+#: templates/admin_dashboard/dashboard.html:346
+msgid "View Report"
+msgstr "Visualizzi il report"
+
+#: templates/accounts/profile.html:252
+msgid "Report available when cycle is completed"
+msgstr "Il report sarà disponibile al completamento del ciclo"
+
+#: templates/accounts/profile.html:257
+msgid "No report generated yet"
+msgstr "Non è ancora stato generato alcun report"
+
+#: templates/accounts/profile.html:263
+#: templates/admin_dashboard/dashboard.html:393
+#: templates/admin_dashboard/review_cycle_detail.html:13
+#: templates/admin_dashboard/review_cycle_list.html:46
+#: templates/admin_dashboard/reviewee_list.html:68
+#: templates/admin_dashboard/settings.html:202
+#: templates/admin_dashboard/team.html:235
+msgid "Active"
+msgstr "Attivo"
+
+#: templates/accounts/profile.html:265
+#: templates/admin_dashboard/dashboard.html:330
+#: templates/admin_dashboard/dashboard.html:395
+#: templates/admin_dashboard/review_cycle_detail.html:15
+#: templates/admin_dashboard/review_cycle_detail.html:141
+#: templates/admin_dashboard/review_cycle_detail.html:167
+#: templates/admin_dashboard/review_cycle_list.html:48
+msgid "Completed"
+msgstr "Completato"
+
+#: templates/accounts/profile.html:274
+msgid "No review cycles found for your account."
+msgstr "Non è stato trovato alcun ciclo di valutazione per il Suo account."
+
+#: templates/accounts/profile.html:275
+msgid ""
+"Review cycles will appear here when they're created for your email address."
+msgstr ""
+"I cicli di valutazione appariranno qui quando verranno creati per il Suo "
+"indirizzo e-mail."
+
+#: templates/admin_dashboard/base.html:7
+msgid "Admin Dashboard"
+msgstr "Dashboard di amministrazione"
+
+#: templates/admin_dashboard/base.html:44
+#| msgid "Toggle theme"
+msgid "Toggle menu"
+msgstr "Mostra o nascondi il menu"
+
+#: templates/admin_dashboard/base.html:53
+#: templates/admin_dashboard/dashboard.html:142
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: templates/admin_dashboard/base.html:54
+msgid "Team"
+msgstr "Team"
+
+#: templates/admin_dashboard/base.html:55
+#: templates/admin_dashboard/dashboard.html:219
+#: templates/admin_dashboard/reviewee_list.html:9
+msgid "Reviewees"
+msgstr "Persone valutate"
+
+#: templates/admin_dashboard/base.html:56
+#: templates/admin_dashboard/dashboard.html:264
+#: templates/admin_dashboard/questionnaire_list.html:4
+#: templates/admin_dashboard/questionnaire_list.html:9
+msgid "Questionnaires"
+msgstr "Questionari"
+
+#: templates/admin_dashboard/base.html:57
+#: templates/admin_dashboard/review_cycle_list.html:9
+#: templates/admin_dashboard/reviewee_list.html:34
+msgid "Review Cycles"
+msgstr "Cicli di valutazione"
+
+#: templates/admin_dashboard/base.html:59
+#| msgid "Review Date"
+msgid "Reviews"
+msgstr "Valutazioni"
+
+#: templates/admin_dashboard/base.html:61
+#: templates/admin_dashboard/settings.html:9
+msgid "Settings"
+msgstr "Impostazioni"
+
+#: templates/admin_dashboard/base.html:63
+#| msgid "Organization"
+msgid "Create Organization"
+msgstr "Crea organizzazione"
+
+#: templates/admin_dashboard/base.html:64
+msgid "Admin"
+msgstr "Amministrazione"
+
+#: templates/admin_dashboard/base.html:66
+msgid "Profile"
+msgstr "Profilo"
+
+#: templates/admin_dashboard/base.html:70
+msgid "Logout"
+msgstr "Esci"
+
+#: templates/admin_dashboard/base.html:73
+msgid "Toggle theme"
+msgstr "Cambi tema"
+
+#: templates/admin_dashboard/dashboard.html:67
+msgid "Skip for now"
+msgstr "Salta per ora"
+
+#: templates/admin_dashboard/dashboard.html:143
+#| msgid "to manage reviewees, questionnaires, and review cycles"
+msgid "Manage 360-degree feedback and review cycles"
+msgstr "Gestisci le valutazioni a 360° e i cicli di valutazione"
+
+#: templates/admin_dashboard/dashboard.html:152
+#| msgid "Add reviewees"
+msgid "Active Reviewees"
+msgstr "Persone valutate attive"
+
+#: templates/admin_dashboard/dashboard.html:159
+#: templates/admin_dashboard/dashboard.html:279
+#| msgid "Active"
+msgid "Active Cycles"
+msgstr "Cicli attivi"
+
+#: templates/admin_dashboard/dashboard.html:166
+#: templates/admin_dashboard/dashboard.html:322
+#| msgid "Completed"
+msgid "Completed Cycles"
+msgstr "Cicli completati"
+
+#: templates/admin_dashboard/dashboard.html:173
+#| msgid "Loading Review..."
+msgid "Pending Reviews"
+msgstr "Valutazioni in attesa"
+
+#: templates/admin_dashboard/dashboard.html:185
+msgid "Share Your Experience with Blik"
+msgstr "Condividi la tua esperienza con Blik"
+
+#: templates/admin_dashboard/dashboard.html:188
+msgid ""
+"Enjoying Blik? Take 2 minutes to share your feedback and help other teams "
+"discover us."
+msgstr "Ti piace Blik? Dedica 2 minuti a condividere il tuo feedback e aiutare altri team a conoscerci."
+
+#: templates/admin_dashboard/dashboard.html:193
+#| msgid "Submit Feedback"
+msgid "Submit a Review"
+msgstr "Invia una valutazione"
+
+#: templates/admin_dashboard/dashboard.html:205
+msgid "Subscription & Limits"
+msgstr "Abbonamento e limiti"
+
+#: templates/admin_dashboard/dashboard.html:210
+#: templates/admin_dashboard/settings.html:192
+msgid "Plan"
+msgstr "Piano"
+
+#: templates/admin_dashboard/dashboard.html:214
+#, python-format
+#| msgid "Created %(created_date)s"
+msgid "Renews %(renewal_date)s"
+msgstr "Si rinnova il %(renewal_date)s"
+
+#: templates/admin_dashboard/dashboard.html:227
+#, python-format
+msgid "%(count)s remaining"
+msgstr "Ne restano %(count)s"
+
+#: templates/admin_dashboard/dashboard.html:231
+msgid "Team Members"
+msgstr "Membri del team"
+
+#: templates/admin_dashboard/dashboard.html:234
+msgid "Unlimited"
+msgstr "Illimitato"
+
+#: templates/admin_dashboard/dashboard.html:240
+msgid "Approaching Limit:"
+msgstr "Limite quasi raggiunto:"
+
+#: templates/admin_dashboard/dashboard.html:242
+#, python-format
+msgid ""
+"You're nearing your plan limit of %(limit)s reviewees. Contact us to upgrade "
+"your plan."
+msgstr "Ti stai avvicinando al limite di %(limit)s persone valutate previsto dal tuo piano. Contattaci per passare a un piano superiore."
+
+#: templates/admin_dashboard/dashboard.html:253
+msgid "Quick Actions"
+msgstr "Azioni rapide"
+
+#: templates/admin_dashboard/dashboard.html:258
+#| msgid "My Review Cycles"
+msgid "New Review Cycle"
+msgstr "Nuovo ciclo di valutazione"
+
+#: templates/admin_dashboard/dashboard.html:261
+#: templates/admin_dashboard/reviewee_list.html:18
+#: templates/admin_dashboard/reviewee_list.html:204
+#| msgid "Add reviewees"
+msgid "Add Reviewee"
+msgstr "Aggiungi persona valutata"
+
+#: templates/admin_dashboard/dashboard.html:267
+msgid "All Cycles"
+msgstr "Tutti i cicli"
+
+#: templates/admin_dashboard/dashboard.html:286
+#: templates/admin_dashboard/dashboard.html:329
+#: templates/admin_dashboard/dashboard.html:373
+#: templates/admin_dashboard/review_cycle_form.html:64
+#: templates/admin_dashboard/review_cycle_list.html:22
+#: templates/admin_dashboard/reviewee_form.html:4
+#: templates/admin_dashboard/reviewee_form.html:8
+#: templates/admin_dashboard/reviewee_form.html:64
+#| msgid "Review Date"
+msgid "Reviewee"
+msgstr "Persona valutata"
+
+#: templates/admin_dashboard/dashboard.html:287
+#: templates/admin_dashboard/review_cycle_detail.html:193
+#: templates/admin_dashboard/review_cycle_detail.html:206
+#: templates/admin_dashboard/review_cycle_list.html:25
+msgid "Progress"
+msgstr "Avanzamento"
+
+#: templates/admin_dashboard/dashboard.html:288
+#: templates/admin_dashboard/dashboard.html:331
+#: templates/admin_dashboard/dashboard.html:377
+#: templates/admin_dashboard/review_cycle_list.html:27
+#: templates/admin_dashboard/reviewee_list.html:35
+#: templates/admin_dashboard/team.html:72
+#| msgid "Action:"
+msgid "Actions"
+msgstr "Azioni"
+
+#: templates/admin_dashboard/dashboard.html:307
+#: templates/admin_dashboard/dashboard.html:348
+#: templates/admin_dashboard/dashboard.html:399
+#: templates/admin_dashboard/review_cycle_list.html:140
+#: templates/admin_dashboard/review_cycle_list.html:143
+msgid "View"
+msgstr "Visualizza"
+
+#: templates/admin_dashboard/dashboard.html:365
+#| msgid "My Review Cycles"
+msgid "Recent Review Cycles"
+msgstr "Cicli di valutazione recenti"
+
+#: templates/admin_dashboard/dashboard.html:366
+msgid "View All"
+msgstr "Visualizza tutto"
+
+#: templates/admin_dashboard/dashboard.html:374
+#: templates/admin_dashboard/questionnaire_form.html:87
+#: templates/admin_dashboard/review_cycle_form.html:77
+#: templates/admin_dashboard/review_cycle_list.html:23
+#: templates/admin_dashboard/reviewee_list.html:33
+msgid "Questionnaire"
+msgstr "Questionario"
+
+#: templates/admin_dashboard/dashboard.html:375
+#: templates/admin_dashboard/questionnaire_list.html:55
+#: templates/admin_dashboard/review_cycle_list.html:26
+msgid "Created"
+msgstr "Creato"
+
+#: templates/admin_dashboard/dashboard.html:376
+#: templates/admin_dashboard/review_cycle_list.html:24
+#: templates/admin_dashboard/team.html:223
+msgid "Status"
+msgstr "Stato"
+
+#: templates/admin_dashboard/dashboard.html:412
+#: templates/admin_dashboard/review_cycle_list.html:192
+#| msgid "My Review Cycles"
+msgid "No review cycles yet"
+msgstr "Nessun ciclo di valutazione"
+
+#: templates/admin_dashboard/dashboard.html:413
+#| msgid "Create your first reviewee:"
+msgid "Create your first review cycle to get started"
+msgstr "Crea il tuo primo ciclo di valutazione per iniziare"
+
+#: templates/admin_dashboard/dashboard.html:414
+#: templates/admin_dashboard/review_cycle_form.html:8
+#: templates/admin_dashboard/review_cycle_form.html:15
+#: templates/admin_dashboard/review_cycle_form.html:188
+#: templates/admin_dashboard/review_cycle_list.html:12
+#: templates/admin_dashboard/review_cycle_list.html:194
+#| msgid "Create a review cycle"
+msgid "Create Review Cycle"
+msgstr "Crea ciclo di valutazione"
+
+#: templates/admin_dashboard/dashboard.html:425
+msgid "Share Your Experience"
+msgstr "Condividi la tua esperienza"
+
+#: templates/admin_dashboard/dashboard.html:426
+msgid "Help us improve by sharing your feedback"
+msgstr "Aiutaci a migliorare condividendo il tuo feedback"
+
+#: templates/admin_dashboard/partials/question_card.html:12
+msgid "Type"
+msgstr "Tipo"
+
+#: templates/admin_dashboard/partials/question_card.html:14
+#| msgid "Scale:"
+msgid "Scale"
+msgstr "Scala"
+
+#: templates/admin_dashboard/partials/question_card.html:16
+#, python-format
+msgid "%(count)s-point scale"
+msgstr "Scala a %(count)s punti"
+
+#: templates/admin_dashboard/partials/question_card.html:25
+msgid "Configure Dreyfus/Agency weights and action items"
+msgstr "Configura i pesi Dreyfus/Agency e le azioni"
+
+#: templates/admin_dashboard/partials/question_card.html:27
+msgid "Dreyfus/Agency"
+msgstr "Dreyfus/Agency"
+
+#: templates/admin_dashboard/partials/question_card.html:36
+#: templates/admin_dashboard/questionnaire_form.html:87
+#: templates/admin_dashboard/questionnaire_form.html:583
+#: templates/admin_dashboard/questionnaire_list.html:37
+#: templates/admin_dashboard/reviewee_form.html:4
+#: templates/admin_dashboard/reviewee_form.html:8
+#: templates/admin_dashboard/reviewee_list.html:155
+msgid "Edit"
+msgstr "Modifica"
+
+#: templates/admin_dashboard/partials/question_card.html:37
+msgid "Delete this question?"
+msgstr "Eliminare questa domanda?"
+
+#: templates/admin_dashboard/partials/question_card.html:41
+#: templates/admin_dashboard/reviewee_list.html:156
+msgid "Delete"
+msgstr "Elimina"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:4
+#, python-format
+msgid "Translating into %(language)s"
+msgstr "Traduzione in %(language)s"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:6
+#, python-format
+msgid ""
+"Source content remains visible for reference. Switch to %(language)s "
+"(Primary) to change questionnaire structure."
+msgstr "Il contenuto originale resta visibile come riferimento. Passa a %(language)s (principale) per modificare la struttura del questionario."
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:18
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:31
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:44
+#: templates/admin_dashboard/questionnaire_form.html:210
+#: templates/admin_dashboard/questionnaire_form.html:218
+msgid "SOURCE"
+msgstr "ORIGINALE"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:24
+msgid "Section title"
+msgstr "Titolo della sezione"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:27
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:35
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:49
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:61
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:73
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:85
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:96
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:102
+#: templates/admin_dashboard/questionnaire_form.html:215
+#: templates/admin_dashboard/questionnaire_form.html:223
+msgid "Translation missing"
+msgstr "Traduzione mancante"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:32
+msgid "Section description"
+msgstr "Descrizione della sezione"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:46
+msgid "Question"
+msgstr "Domanda"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:54
+msgid "Rating labels"
+msgstr "Etichette di valutazione"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:66
+msgid "Likert labels"
+msgstr "Etichette Likert"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:78
+msgid "Choice labels"
+msgstr "Etichette delle opzioni"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:91
+msgid "Scale endpoint labels"
+msgstr "Etichette degli estremi della scala"
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:110
+msgid "This section has no questions."
+msgstr "Questa sezione non contiene domande."
+
+#: templates/admin_dashboard/partials/questionnaire_translation_editor.html:116
+msgid "There are no sections to translate yet."
+msgstr "Non ci sono ancora sezioni da tradurre."
+
+#: templates/admin_dashboard/questionnaire_form.html:54
+#: templates/admin_dashboard/questionnaire_form.html:288
+msgid "Save translations"
+msgstr "Salva le traduzioni"
+
+#: templates/admin_dashboard/questionnaire_form.html:55
+msgid "Saving translations…"
+msgstr "Salvataggio delle traduzioni…"
+
+#: templates/admin_dashboard/questionnaire_form.html:56
+msgid "Unsaved translation changes."
+msgstr "Modifiche alle traduzioni non salvate."
+
+#: templates/admin_dashboard/questionnaire_form.html:57
+#: templates/admin_dashboard/questionnaire_form.html:285
+msgid "No unsaved translation changes."
+msgstr "Non ci sono modifiche alle traduzioni non salvate."
+
+#: templates/admin_dashboard/questionnaire_form.html:58
+msgid "Translations saved successfully."
+msgstr "Traduzioni salvate."
+
+#: templates/admin_dashboard/questionnaire_form.html:59
+msgid "Saved"
+msgstr "Salvato"
+
+#: templates/admin_dashboard/questionnaire_form.html:60
+#: templates/admin_dashboard/questionnaire_form.html:118
+#: templates/admin_dashboard/questionnaire_form.html:152
+msgid "Complete"
+msgstr "Completa"
+
+#: templates/admin_dashboard/questionnaire_form.html:61
+#: templates/admin_dashboard/questionnaire_form.html:118
+#: templates/admin_dashboard/questionnaire_form.html:152
+msgid "Incomplete"
+msgstr "Incompleta"
+
+#: templates/admin_dashboard/questionnaire_form.html:62
+msgid "Save failed — retry"
+msgstr "Salvataggio non riuscito — riprova"
+
+#: templates/admin_dashboard/questionnaire_form.html:63
+msgid "Save failed. Your edits remain on this page."
+msgstr "Salvataggio non riuscito. Le modifiche sono ancora su questa pagina."
+
+#: templates/admin_dashboard/questionnaire_form.html:64
+#, python-format
+msgid "Translations could not be saved (HTTP %%(status)s)."
+msgstr "Impossibile salvare le traduzioni (HTTP %%(status)s)."
+
+#: templates/admin_dashboard/questionnaire_form.html:65
+#: templates/admin_dashboard/questionnaire_form.html:82
+msgid "You have unsaved translations. Leave this language without saving?"
+msgstr "Ci sono traduzioni non salvate. Uscire da questa lingua senza salvarle?"
+
+#: templates/admin_dashboard/questionnaire_form.html:66
+#: templates/admin_dashboard/questionnaire_form.html:83
+msgid "You also have unsaved translations. Continue without saving them?"
+msgstr "Ci sono altre traduzioni non salvate. Continuare senza salvarle?"
+
+#: templates/admin_dashboard/questionnaire_form.html:67
+msgid "Request failed."
+msgstr "Richiesta non riuscita."
+
+#: templates/admin_dashboard/questionnaire_form.html:68
+msgid "Saving…"
+msgstr "Salvataggio…"
+
+#: templates/admin_dashboard/questionnaire_form.html:69
+msgid "Adding…"
+msgstr "Aggiunta…"
+
+#: templates/admin_dashboard/questionnaire_form.html:70
+msgid "Question list container not found."
+msgstr "Contenitore dell’elenco delle domande non trovato."
+
+#: templates/admin_dashboard/questionnaire_form.html:71
+msgid "Failed to update question."
+msgstr "Aggiornamento della domanda non riuscito."
+
+#: templates/admin_dashboard/questionnaire_form.html:72
+msgid "Failed to add question."
+msgstr "Aggiunta della domanda non riuscita."
+
+#: templates/admin_dashboard/questionnaire_form.html:73
+msgid "No action items configured. Click “+ Add Action Item” to create one."
+msgstr ""
+"Nessuna azione configurata. Fai clic su «+ Aggiungi azione» per crearne una."
+
+#: templates/admin_dashboard/questionnaire_form.html:74
+msgid "Action Item"
+msgstr "Azione"
+
+#: templates/admin_dashboard/questionnaire_form.html:75
+msgid "Action Item Text"
+msgstr "Testo dell’azione"
+
+#: templates/admin_dashboard/questionnaire_form.html:76
+msgid "Threshold Score"
+msgstr "Punteggio soglia"
+
+#: templates/admin_dashboard/questionnaire_form.html:77
+msgid "Show if score is below this value"
+msgstr "Mostra se il punteggio è inferiore a questo valore"
+
+#: templates/admin_dashboard/questionnaire_form.html:78
+msgid "Relevant Stages (Optional)"
+msgstr "Fasi interessate (facoltativo)"
+
+#: templates/admin_dashboard/questionnaire_form.html:79
+msgid "Stage"
+msgstr "Fase"
+
+#: templates/admin_dashboard/questionnaire_form.html:80
+msgid "Leave unchecked for all stages"
+msgstr "Lascia deselezionato per includere tutte le fasi"
+
+#: templates/admin_dashboard/questionnaire_form.html:81
+msgid "e.g., Practice pair programming with senior developers"
+msgstr "ad es. fare programmazione in coppia con sviluppatori esperti"
+
+#: templates/admin_dashboard/questionnaire_form.html:87
+#: templates/admin_dashboard/reviewee_form.html:64
+#| msgid "Create Account"
+msgid "Create"
+msgstr "Crea"
+
+#: templates/admin_dashboard/questionnaire_form.html:91
+#, python-format
+msgid "Edit questionnaire \"%(name)s\""
+msgstr "Modifica il questionario «%(name)s»"
+
+#: templates/admin_dashboard/questionnaire_form.html:93
+msgid "Create a new feedback questionnaire"
+msgstr "Crea un nuovo questionario di feedback"
+
+#: templates/admin_dashboard/questionnaire_form.html:103
+#: templates/admin_dashboard/review_cycle_detail.html:106
+#| msgid "Questionnaire"
+msgid "Questionnaire content language"
+msgstr "Lingua dei contenuti del questionario"
+
+#: templates/admin_dashboard/questionnaire_form.html:106
+#, python-format
+msgid "%(language)s (Primary)"
+msgstr "%(language)s (principale)"
+
+#: templates/admin_dashboard/questionnaire_form.html:124
+#| msgid "Language"
+msgid "Languages"
+msgstr "Lingue"
+
+#: templates/admin_dashboard/questionnaire_form.html:134
+#| msgid "Questionnaire"
+msgid "Questionnaire Languages"
+msgstr "Lingue del questionario"
+
+#: templates/admin_dashboard/questionnaire_form.html:139
+msgid "Primary / Source"
+msgstr "Principale / Originale"
+
+#: templates/admin_dashboard/questionnaire_form.html:142
+msgid "Available translations"
+msgstr "Traduzioni disponibili"
+
+#: templates/admin_dashboard/questionnaire_form.html:156
+msgid "Edit translation"
+msgstr "Modifica traduzione"
+
+#: templates/admin_dashboard/questionnaire_form.html:157
+#, python-format
+msgid ""
+"Remove %(language)s and delete all questionnaire, section, and question "
+"translations for this language? Canonical content, responses, cycles, and "
+"reports will not be changed."
+msgstr "Rimuovere %(language)s ed eliminare tutte le traduzioni del questionario, delle sezioni e delle domande in questa lingua? I contenuti canonici, le risposte, i cicli e i report non verranno modificati."
+
+#: templates/admin_dashboard/questionnaire_form.html:162
+msgid "Remove"
+msgstr "Rimuovi"
+
+#: templates/admin_dashboard/questionnaire_form.html:170
+msgid "No additional languages have been added yet."
+msgstr "Non sono ancora state aggiunte altre lingue."
+
+#: templates/admin_dashboard/questionnaire_form.html:178
+#| msgid "Change language"
+msgid "Add a language"
+msgstr "Aggiungi una lingua"
+
+#: templates/admin_dashboard/questionnaire_form.html:180
+msgid "Select a supported language"
+msgstr "Seleziona una lingua supportata"
+
+#: templates/admin_dashboard/questionnaire_form.html:188
+#| msgid "Language"
+msgid "Add language"
+msgstr "Aggiungi lingua"
+
+#: templates/admin_dashboard/questionnaire_form.html:205
+#: templates/admin_dashboard/review_cycle_form.html:60
+#| msgid "Personal Information"
+msgid "Basic Information"
+msgstr "Informazioni di base"
+
+#: templates/admin_dashboard/questionnaire_form.html:212
+#: templates/admin_dashboard/reviewee_form.html:25
+#: templates/admin_dashboard/reviewee_list.html:31
+#: templates/admin_dashboard/settings.html:36
+#: templates/admin_dashboard/team.html:66
+msgid "Name"
+msgstr "Nome"
+
+#: templates/admin_dashboard/questionnaire_form.html:220
+msgid "Description"
+msgstr "Descrizione"
+
+#: templates/admin_dashboard/questionnaire_form.html:231
+#| msgid "Questionnaire"
+msgid "Questionnaire Name"
+msgstr "Nome del questionario"
+
+#: templates/admin_dashboard/questionnaire_form.html:244
+msgid "Description (Optional)"
+msgstr "Descrizione (facoltativa)"
+
+#: templates/admin_dashboard/questionnaire_form.html:261
+msgid "Set as default questionnaire"
+msgstr "Imposta come questionario predefinito"
+
+#: templates/admin_dashboard/questionnaire_form.html:267
+#| msgid "Personal Information"
+msgid "Update Information"
+msgstr "Aggiorna informazioni"
+
+#: templates/admin_dashboard/questionnaire_form.html:269
+#: templates/admin_dashboard/questionnaire_list.html:12
+#: templates/admin_dashboard/questionnaire_list.html:72
+msgid "Create Questionnaire"
+msgstr "Crea questionario"
+
+#: templates/admin_dashboard/questionnaire_form.html:271
+#: templates/admin_dashboard/review_cycle_form.html:189
+#: templates/admin_dashboard/reviewee_form.html:66
+#: templates/admin_dashboard/team.html:47
+#: templates/admin_dashboard/team.html:333
+msgid "Cancel"
+msgstr "Annulla"
+
+#: templates/admin_dashboard/questionnaire_form.html:565
+#| msgid "Select an option"
+msgid "Sections and Questions"
+msgstr "Sezioni e domande"
+
+#: templates/admin_dashboard/questionnaire_form.html:584
+msgid "Delete section and all its questions?"
+msgstr "Eliminare la sezione e tutte le sue domande?"
+
+#: templates/admin_dashboard/questionnaire_form.html:588
+#| msgid "Select an option"
+msgid "Delete Section"
+msgstr "Elimina sezione"
+
+#: templates/admin_dashboard/questionnaire_form.html:600
+msgid "No questions in this section yet."
+msgstr "Questa sezione non contiene ancora domande."
+
+#: templates/admin_dashboard/questionnaire_form.html:606
+msgid "Add Question to This Section"
+msgstr "Aggiungi una domanda a questa sezione"
+
+#: templates/admin_dashboard/questionnaire_form.html:613
+#| msgid "Questionnaire"
+msgid "Question Text"
+msgstr "Testo della domanda"
+
+#: templates/admin_dashboard/questionnaire_form.html:625
+#| msgid "Questionnaire"
+msgid "Question Type"
+msgstr "Tipo di domanda"
+
+#: templates/admin_dashboard/questionnaire_form.html:632
+#| msgid "Rating scale (1-5):"
+msgid "Rating Scale (1-5)"
+msgstr "Scala di valutazione (1-5)"
+
+#: templates/admin_dashboard/questionnaire_form.html:633
+#| msgid "Likert scale options:"
+msgid "Likert Scale"
+msgstr "Scala Likert"
+
+#: templates/admin_dashboard/questionnaire_form.html:634
+msgid "Free Text"
+msgstr "Testo libero"
+
+#: templates/admin_dashboard/questionnaire_form.html:635
+#| msgid "Single choice (select one):"
+msgid "Single Choice (Dropdown)"
+msgstr "Scelta singola (menu a discesa)"
+
+#: templates/admin_dashboard/questionnaire_form.html:636
+msgid "Multiple Choice (Checkboxes)"
+msgstr "Scelta multipla (caselle di controllo)"
+
+#: templates/admin_dashboard/questionnaire_form.html:637
+msgid "Numeric Scale"
+msgstr "Scala numerica"
+
+#: templates/admin_dashboard/questionnaire_form.html:642
+msgid "Likert Scale Items (one per line)"
+msgstr "Elementi della scala Likert (uno per riga)"
+
+#: templates/admin_dashboard/questionnaire_form.html:654
+msgid "Default 5-point scale provided. Customize or use 3-point, 7-point, etc."
+msgstr "È disponibile una scala predefinita a 5 punti. Personalizzala o usa una scala a 3, 7 punti, ecc."
+
+#: templates/admin_dashboard/questionnaire_form.html:658
+#| msgid "Email Configuration"
+msgid "Scale Configuration"
+msgstr "Configurazione della scala"
+
+#: templates/admin_dashboard/questionnaire_form.html:661
+msgid "Min"
+msgstr "Min"
+
+#: templates/admin_dashboard/questionnaire_form.html:665
+msgid "Max"
+msgstr "Max"
+
+#: templates/admin_dashboard/questionnaire_form.html:669
+msgid "Step"
+msgstr "Passo"
+
+#: templates/admin_dashboard/questionnaire_form.html:674
+msgid "Min Label (Optional)"
+msgstr "Etichetta min (facoltativa)"
+
+#: templates/admin_dashboard/questionnaire_form.html:678
+msgid "Max Label (Optional)"
+msgstr "Etichetta max (facoltativa)"
+
+#: templates/admin_dashboard/questionnaire_form.html:687
+msgid "Choices (one per line)"
+msgstr "Opzioni (una per riga)"
+
+#: templates/admin_dashboard/questionnaire_form.html:705
+msgid "Enable numeric scoring for analytics"
+msgstr "Abilita la valutazione numerica per le analisi"
+
+#: templates/admin_dashboard/questionnaire_form.html:714
+#| msgid "Learn more about Agency Levels"
+msgid "Learn more about scoring"
+msgstr "Scopri di più sul punteggio"
+
+#: templates/admin_dashboard/questionnaire_form.html:720
+msgid "Assign weights to each option (for scoring)"
+msgstr "Assegna un peso a ogni opzione (per il punteggio)"
+
+#: templates/admin_dashboard/questionnaire_form.html:731
+msgid "Required question"
+msgstr "Domanda obbligatoria"
+
+#: templates/admin_dashboard/questionnaire_form.html:738
+msgid "Dreyfus/Agency Configuration (Optional)"
+msgstr "Configurazione Dreyfus/Agency (facoltativa)"
+
+#: templates/admin_dashboard/questionnaire_form.html:790
+#| msgid "Questionnaire"
+msgid "Add Question"
+msgstr "Aggiungi domanda"
+
+#: templates/admin_dashboard/questionnaire_form.html:1082
+msgid "No sections yet. Add a section to start building your questionnaire."
+msgstr "Non ci sono ancora sezioni. Aggiungi una sezione per iniziare a creare il questionario."
+
+#: templates/admin_dashboard/questionnaire_form.html:1090
+#: templates/admin_dashboard/questionnaire_form.html:1120
+#| msgid "Action:"
+msgid "Add Section"
+msgstr "Aggiungi sezione"
+
+#: templates/admin_dashboard/questionnaire_form.html:1098
+#| msgid "Action Items"
+msgid "Section Title"
+msgstr "Titolo della sezione"
+
+#: templates/admin_dashboard/questionnaire_form.html:1110
+msgid "Section Description (Optional)"
+msgstr "Descrizione della sezione (facoltativa)"
+
+#: templates/admin_dashboard/questionnaire_list.html:10
+#| msgid "Your 360-degree feedback platform"
+msgid "Manage 360-degree feedback questionnaires"
+msgstr "Gestisci i questionari di valutazione a 360°"
+
+#: templates/admin_dashboard/questionnaire_list.html:24
+#: templates/admin_dashboard/questionnaire_preview.html:13
+#: templates/admin_dashboard/review_cycle_form.html:86
+#: templates/admin_dashboard/review_cycle_list.html:131
+#: templates/admin_dashboard/reviewee_list.html:146
+msgid "Default"
+msgstr "Predefinito"
+
+#: templates/admin_dashboard/questionnaire_list.html:35
+msgid "Preview Questions"
+msgstr "Anteprima delle domande"
+
+#: templates/admin_dashboard/questionnaire_list.html:36
+#| msgid "View Report"
+msgid "Sample Report"
+msgstr "Report di esempio"
+
+#: templates/admin_dashboard/questionnaire_list.html:43
+#| msgid "Questionnaire"
+msgid "Questions"
+msgstr "Domande"
+
+#: templates/admin_dashboard/questionnaire_list.html:49
+#| msgid "My Review Cycles"
+msgid "Used in Cycles"
+msgstr "Usato nei cicli"
+
+#: templates/admin_dashboard/questionnaire_list.html:69
+#| msgid "Questionnaire"
+msgid "No questionnaires yet"
+msgstr "Nessun questionario"
+
+#: templates/admin_dashboard/questionnaire_list.html:70
+msgid "Load the default questionnaire or create a custom one"
+msgstr "Carica il questionario predefinito o creane uno personalizzato"
+
+#: templates/admin_dashboard/questionnaire_preview.html:20
+#: templates/admin_dashboard/review_cycle_detail.html:45
+#| msgid "Back to Login"
+msgid "Back to List"
+msgstr "Torna all’elenco"
+
+#: templates/admin_dashboard/questionnaire_preview.html:47
+msgid "Rating scale:"
+msgstr "Scala di valutazione:"
+
+#: templates/admin_dashboard/questionnaire_preview.html:49
+msgid "1 (Strongly Disagree) to 5 (Strongly Agree)"
+msgstr "Da 1 (per niente d’accordo) a 5 (completamente d’accordo)"
+
+#: templates/admin_dashboard/questionnaire_preview.html:51
+msgid "1 (Needs Improvement) to 5 (Exceptional)"
+msgstr "Da 1 (da migliorare) a 5 (eccezionale)"
+
+#: templates/admin_dashboard/questionnaire_preview.html:53
+msgid "1 (Never) to 5 (Always)"
+msgstr "Da 1 (mai) a 5 (sempre)"
+
+#: templates/admin_dashboard/questionnaire_preview.html:60
+msgid "Likert scale options:"
+msgstr "Opzioni della scala Likert:"
+
+#: templates/admin_dashboard/questionnaire_preview.html:71
+#| msgid "Action:"
+msgid "Options:"
+msgstr "Opzioni:"
+
+#: templates/admin_dashboard/questionnaire_preview.html:80
+msgid "Open-ended text response"
+msgstr "Risposta testuale aperta"
+
+#: templates/admin_dashboard/questionnaire_preview.html:87
+msgid "No questions in this section"
+msgstr "Nessuna domanda in questa sezione"
+
+#: templates/admin_dashboard/questionnaire_preview.html:97
+msgid "No sections yet"
+msgstr "Non ci sono ancora sezioni"
+
+#: templates/admin_dashboard/questionnaire_preview.html:98
+msgid "This questionnaire doesn't have any sections or questions yet."
+msgstr "Questo questionario non contiene ancora sezioni o domande."
+
+#: templates/admin_dashboard/review_cycle_detail.html:19
+#| msgid "Questionnaire"
+msgid "Questionnaire:"
+msgstr "Questionario:"
+
+#: templates/admin_dashboard/review_cycle_detail.html:25
+msgid "API Identifiers"
+msgstr "Identificativi API"
+
+#: templates/admin_dashboard/review_cycle_detail.html:29
+msgid "Cycle UUID:"
+msgstr "UUID del ciclo:"
+
+#: templates/admin_dashboard/review_cycle_detail.html:32
+#: templates/admin_dashboard/review_cycle_detail.html:39
+msgid "Copy"
+msgstr "Copia"
+
+#: templates/admin_dashboard/review_cycle_detail.html:36
+#| msgid "Review Date"
+msgid "Reviewee UUID:"
+msgstr "UUID della persona valutata:"
+
+#: templates/admin_dashboard/review_cycle_detail.html:56
+msgid "Report Available"
+msgstr "Report disponibile"
+
+#: templates/admin_dashboard/review_cycle_detail.html:61
+#, python-format
+msgid ""
+"The 360-degree feedback report for <strong>%(name)s</strong> has been "
+"generated and is ready to view."
+msgstr "Il report di feedback a 360° per <strong>%(name)s</strong> è stato generato ed è pronto per essere visualizzato."
+
+#: templates/admin_dashboard/review_cycle_detail.html:68
+msgid "Report Access Token"
+msgstr "Token di accesso al report"
+
+#: templates/admin_dashboard/review_cycle_detail.html:72
+#, python-format
+msgid "Expired on %(date)s at %(time)s"
+msgstr "Scaduto il %(date)s alle %(time)s"
+
+#: templates/admin_dashboard/review_cycle_detail.html:74
+#, python-format
+msgid "Expires in %(remaining)s (%(date)s at %(time)s)"
+msgstr "Scade tra %(remaining)s (%(date)s alle %(time)s)"
+
+#: templates/admin_dashboard/review_cycle_detail.html:79
+#, python-format
+msgid "Last accessed %(ago)s ago • Viewed %(count)s times"
+msgstr "Ultimo accesso %(ago)s fa • visualizzato %(count)s volte"
+
+#: templates/admin_dashboard/review_cycle_detail.html:89
+#| msgid "View Report"
+msgid "View Report (Admin)"
+msgstr "Visualizza report (vista amministratore)"
+
+#: templates/admin_dashboard/review_cycle_detail.html:94
+msgid "View Report (Reviewee View)"
+msgstr "Visualizza report (vista persona valutata)"
+
+#: templates/admin_dashboard/review_cycle_detail.html:100
+#, python-format
+msgid "Send Report to %(name)s"
+msgstr "Invia il report a %(name)s"
+
+#: templates/admin_dashboard/review_cycle_detail.html:112
+msgid "Regenerating replaces the current report snapshot and language."
+msgstr "La rigenerazione sostituisce l’istantanea attuale del report e la relativa lingua."
+
+#: templates/admin_dashboard/review_cycle_detail.html:115
+msgid "Regenerate Report"
+msgstr "Rigeneri il report"
+
+#: templates/admin_dashboard/review_cycle_detail.html:127
+msgid "Review Completion Details"
+msgstr "Dettagli sul completamento della valutazione"
+
+#: templates/admin_dashboard/review_cycle_detail.html:128
+#, python-format
+msgid "%(completed)s of %(total)s completed (%(rate)s%%)"
+msgstr "%(completed)s di %(total)s completati (%(rate)s%%)"
+
+#: templates/admin_dashboard/review_cycle_detail.html:135
+#: templates/admin_dashboard/review_cycle_detail.html:160
+#| msgid "Total Responses"
+msgid "Total Reviewers"
+msgstr "Numero totale di valutatori"
+
+#: templates/admin_dashboard/review_cycle_detail.html:147
+#: templates/admin_dashboard/review_cycle_detail.html:181
+#| msgid "Completed"
+msgid "Completion Rate"
+msgstr "Percentuale di completamento"
+
+#: templates/admin_dashboard/review_cycle_detail.html:174
+msgid "Pending"
+msgstr "In attesa"
+
+#: templates/admin_dashboard/review_cycle_form.html:9
+msgid "Set up a new 360-degree feedback review cycle"
+msgstr "Configura un nuovo ciclo di valutazione a 360°"
+
+#: templates/admin_dashboard/review_cycle_form.html:14
+msgid "Create Cycles (no emails yet)"
+msgstr "Crea cicli (nessuna e-mail per ora)"
+
+#: templates/admin_dashboard/review_cycle_form.html:23
+msgid "Creation Mode"
+msgstr "Modalità di creazione"
+
+#: templates/admin_dashboard/review_cycle_form.html:30
+#| msgid "Loading Review..."
+msgid "Single Reviewee"
+msgstr "Una persona valutata"
+
+#: templates/admin_dashboard/review_cycle_form.html:31
+#| msgid "Can create cycles for others"
+msgid "Create cycle for one person"
+msgstr "Crea un ciclo per una persona"
+
+#: templates/admin_dashboard/review_cycle_form.html:37
+msgid "Bulk Create"
+msgstr "Creazione in blocco"
+
+#: templates/admin_dashboard/review_cycle_form.html:38
+#| msgid "Create your first reviewee:"
+msgid "Create for all active reviewees"
+msgstr "Crea per tutte le persone valutate attive"
+
+#: templates/admin_dashboard/review_cycle_form.html:43
+msgid ""
+"Bulk creation does not send any emails. You'll review the new cycles and "
+"send invitations in the next step."
+msgstr "La creazione in blocco non invia e-mail. Potrai controllare i nuovi cicli e inviare gli inviti nel passaggio successivo."
+
+#: templates/admin_dashboard/review_cycle_form.html:52
+msgid "Note:"
+msgstr "Nota:"
+
+#: templates/admin_dashboard/review_cycle_form.html:52
+msgid ""
+"You can only create review cycles for yourself. Contact an administrator to "
+"create cycles for other team members."
+msgstr "Puoi creare cicli di valutazione solo per te. Contatta un amministratore per creare cicli per altri membri del team."
+
+#: templates/admin_dashboard/review_cycle_form.html:66
+msgid "Select a reviewee..."
+msgstr "Seleziona una persona da valutare..."
+
+#: templates/admin_dashboard/review_cycle_form.html:72
+#| msgid "People who will receive 360° feedback"
+msgid "Person who will receive 360-degree feedback"
+msgstr "Persona che riceverà una valutazione a 360°"
+
+#: templates/admin_dashboard/review_cycle_form.html:79
+#| msgid "Select an option"
+msgid "Select a questionnaire..."
+msgstr "Seleziona un questionario..."
+
+#: templates/admin_dashboard/review_cycle_form.html:91
+msgid "Questions that reviewers will answer"
+msgstr "Domande a cui risponderanno i valutatori"
+
+#: templates/admin_dashboard/review_cycle_form.html:97
+#| msgid "Report Not Ready"
+msgid "Report type:"
+msgstr "Tipo di report:"
+
+#: templates/admin_dashboard/review_cycle_form.html:103
+#| msgid "Review the report"
+msgid "Preview sample report"
+msgstr "Visualizza l’anteprima del report di esempio"
+
+#: templates/admin_dashboard/review_cycle_form.html:114
+msgid "Invite Reviewers (Optional)"
+msgstr "Invita valutatori (facoltativo)"
+
+#: templates/admin_dashboard/review_cycle_form.html:122
+msgid ""
+"Enter email addresses for reviewers now, or skip and add them later. "
+"Separate multiple emails with commas or newlines."
+msgstr "Inserisci ora gli indirizzi e-mail dei valutatori oppure salta e aggiungili in seguito. Separa più indirizzi con virgole o a capo."
+
+#: templates/admin_dashboard/review_cycle_form.html:126
+#| msgid "Self-assessment"
+msgid "Self Assessment"
+msgstr "Autovalutazione"
+
+#: templates/admin_dashboard/review_cycle_form.html:135
+msgid "Usually the reviewee's own email (auto-filled when reviewee selected)"
+msgstr "Di solito l’e-mail della persona valutata (inserita automaticamente dopo la selezione)"
+
+#: templates/admin_dashboard/review_cycle_form.html:140
+msgid "Manager/Supervisor"
+msgstr "Responsabile/Supervisore"
+
+#: templates/admin_dashboard/review_cycle_form.html:148
+msgid "Direct manager or supervisor"
+msgstr "Responsabile diretto o supervisore"
+
+#: templates/admin_dashboard/review_cycle_form.html:153
+msgid "Peers"
+msgstr "Pari"
+
+#: templates/admin_dashboard/review_cycle_form.html:161
+msgid "Colleagues at the same level"
+msgstr "Colleghi allo stesso livello"
+
+#: templates/admin_dashboard/review_cycle_form.html:166
+#| msgid "Direct Report"
+msgid "Direct Reports"
+msgstr "Collaboratori diretti"
+
+#: templates/admin_dashboard/review_cycle_form.html:174
+msgid "People who report to this reviewee"
+msgstr "Persone che riportano a questa persona"
+
+#: templates/admin_dashboard/review_cycle_form.html:181
+msgid "Send invitation emails immediately after creating cycle"
+msgstr "Invia le e-mail di invito subito dopo la creazione del ciclo"
+
+#: templates/admin_dashboard/review_cycle_list.html:10
+#| msgid "Your 360-degree feedback platform"
+msgid "Manage 360-degree feedback review cycles"
+msgstr "Gestisci i cicli di valutazione a 360°"
+
+#: templates/admin_dashboard/review_cycle_list.html:28
+#: templates/admin_dashboard/review_cycle_list.html:149
+msgid "Show API Identifiers"
+msgstr "Mostra identificativi API"
+
+#: templates/admin_dashboard/review_cycle_list.html:53
+#, python-format
+msgid "%(completed)s / %(total)s responses"
+msgstr "%(completed)s / %(total)s risposte"
+
+#: templates/admin_dashboard/review_cycle_list.html:81
+#: templates/admin_dashboard/reviewee_list.html:98
+#| msgid "My Review Cycles"
+msgid "New Cycle"
+msgstr "Nuovo ciclo"
+
+#: templates/admin_dashboard/review_cycle_list.html:91
+#: templates/admin_dashboard/reviewee_list.html:108
+msgid "Select a different questionnaire"
+msgstr "Seleziona un altro questionario"
+
+#: templates/admin_dashboard/review_cycle_list.html:100
+#: templates/admin_dashboard/reviewee_list.html:117
+#| msgid "Questionnaire"
+msgid "Select Questionnaire"
+msgstr "Seleziona questionario"
+
+#: templates/admin_dashboard/review_cycle_list.html:104
+#: templates/admin_dashboard/reviewee_list.html:121
+msgid "✓ = Quick create (button action)"
+msgstr "✓ = Creazione rapida (azione del pulsante)"
+
+#: templates/admin_dashboard/review_cycle_list.html:119
+#: templates/admin_dashboard/reviewee_list.html:135
+msgid "Quick create"
+msgstr "Creazione rapida"
+
+#: templates/admin_dashboard/review_cycle_list.html:163
+#: templates/admin_dashboard/reviewee_list.html:172
+#: templates/admin_dashboard/team.html:181
+msgid "Items per page:"
+msgstr "Elementi per pagina:"
+
+#: templates/admin_dashboard/review_cycle_list.html:172
+#: templates/admin_dashboard/reviewee_list.html:181
+#: templates/admin_dashboard/team.html:190
+#| msgid "First name"
+msgid "First"
+msgstr "Nome"
+
+#: templates/admin_dashboard/review_cycle_list.html:173
+#: templates/admin_dashboard/reviewee_list.html:182
+#: templates/admin_dashboard/team.html:191
+msgid "Previous"
+msgstr "Precedente"
+
+#: templates/admin_dashboard/review_cycle_list.html:177
+#: templates/admin_dashboard/reviewee_list.html:186
+#: templates/admin_dashboard/team.html:195
+#, python-format
+msgid "Page %(number)s of %(pages)s"
+msgstr "Pagina %(number)s di %(pages)s"
+
+#: templates/admin_dashboard/review_cycle_list.html:181
+#: templates/admin_dashboard/reviewee_list.html:190
+#: templates/admin_dashboard/team.html:199
+msgid "Next"
+msgstr "Successivo"
+
+#: templates/admin_dashboard/review_cycle_list.html:182
+#: templates/admin_dashboard/reviewee_list.html:191
+#: templates/admin_dashboard/team.html:200
+#| msgid "Last name"
+msgid "Last"
+msgstr "Cognome"
+
+#: templates/admin_dashboard/review_cycle_list.html:193
+#| msgid "Create your first reviewee:"
+msgid "Create your first review cycle to start collecting feedback"
+msgstr "Crea il tuo primo ciclo di valutazione per iniziare a raccogliere feedback"
+
+#: templates/admin_dashboard/reviewee_form.html:4
+#: templates/admin_dashboard/reviewee_form.html:8
+msgid "Add"
+msgstr "Aggiungi"
+
+#: templates/admin_dashboard/reviewee_form.html:11
+#, python-format
+msgid "Update information for %(name)s"
+msgstr "Aggiorna le informazioni di %(name)s"
+
+#: templates/admin_dashboard/reviewee_form.html:13
+#| msgid "Add people who will receive 360-degree feedback from the dashboard"
+msgid "Add a new person who will receive 360-degree feedback"
+msgstr "Aggiungi una persona che riceverà una valutazione a 360°"
+
+#: templates/admin_dashboard/reviewee_form.html:51
+msgid "Department (Optional)"
+msgstr "Reparto (facoltativo)"
+
+#: templates/admin_dashboard/reviewee_form.html:64
+#| msgid "Update Profile"
+msgid "Update"
+msgstr "Aggiorna"
+
+#: templates/admin_dashboard/reviewee_list.html:10
+#| msgid "People who will receive 360° feedback"
+msgid "Manage people who receive 360-degree feedback"
+msgstr "Gestisci le persone che ricevono feedback a 360°"
+
+#: templates/admin_dashboard/reviewee_list.html:13
+#, python-format
+msgid "%(current)s / %(maximum)s reviewees (%(remaining)s remaining)"
+msgstr "%(current)s / %(maximum)s persone valutate (%(remaining)s rimanenti)"
+
+#: templates/admin_dashboard/reviewee_list.html:20
+#: templates/admin_dashboard/reviewee_list.html:207
+msgid "Add Myself"
+msgstr "Aggiungi me stesso"
+
+#: templates/admin_dashboard/reviewee_list.html:72
+#| msgid "View Report"
+msgid "Report"
+msgstr "Report"
+
+#: templates/admin_dashboard/reviewee_list.html:80
+#| msgid "My Review Cycles"
+msgid "View Cycle"
+msgstr "Visualizza ciclo"
+
+#: templates/admin_dashboard/reviewee_list.html:201
+#| msgid "Add reviewees"
+msgid "No reviewees yet"
+msgstr "Nessuna persona valutata"
+
+#: templates/admin_dashboard/reviewee_list.html:203
+#| msgid "to manage reviewees, questionnaires, and review cycles"
+msgid "Add your first reviewee to start creating review cycles"
+msgstr "Aggiungi la prima persona valutata per iniziare a creare cicli"
+
+#: templates/admin_dashboard/reviewee_list.html:206
+msgid "Add yourself as a reviewee to start receiving feedback"
+msgstr "Aggiungiti come persona valutata per iniziare a ricevere feedback"
+
+#: templates/admin_dashboard/settings.html:10
+msgid "Organization configuration and preferences"
+msgstr "Configurazione e preferenze dell’organizzazione"
+
+#: templates/admin_dashboard/settings.html:16
+msgid "View-only mode:"
+msgstr "Modalità di sola lettura:"
+
+#: templates/admin_dashboard/settings.html:16
+msgid "Only organization administrators can modify these settings."
+msgstr "Solo gli amministratori dell’organizzazione possono modificare queste impostazioni."
+
+#: templates/admin_dashboard/settings.html:47
+#: templates/admin_dashboard/settings.html:62
+#, python-format
+msgid "Managed by %(name)s in the environment"
+msgstr "Gestito da %(name)s nell’ambiente"
+
+#: templates/admin_dashboard/settings.html:51
+#| msgid "Continue to Email Setup"
+msgid "Contact Email"
+msgstr "E-mail di contatto"
+
+#: templates/admin_dashboard/settings.html:67
+#: templates/admin_dashboard/settings.html:118
+#: templates/admin_dashboard/settings.html:170
+#: templates/admin_dashboard/settings.html:361
+msgid "Save Changes"
+msgstr "Salva modifiche"
+
+#: templates/admin_dashboard/settings.html:77
+msgid "Report Settings"
+msgstr "Impostazioni del report"
+
+#: templates/admin_dashboard/settings.html:84
+msgid "Minimum Responses for Anonymity"
+msgstr "Numero minimo di risposte per garantire l’anonimato"
+
+#: templates/admin_dashboard/settings.html:96
+msgid ""
+"Minimum responses required to display results. Set to 1 for small teams, 3+ "
+"for larger teams. Self-assessments always shown."
+msgstr "Numero minimo di risposte richiesto per mostrare i risultati. Imposta 1 per i team piccoli e almeno 3 per quelli più grandi. Le autovalutazioni vengono sempre mostrate."
+
+#: templates/admin_dashboard/settings.html:110
+msgid "Automatically send report email when generated"
+msgstr "Invia automaticamente il report via e-mail al termine della generazione"
+
+#: templates/admin_dashboard/settings.html:113
+msgid ""
+"When enabled, reviewees automatically receive an email with a link to their "
+"report when all feedback is collected."
+msgstr "Se attivata, le persone valutate ricevono automaticamente un’e-mail con il link al report quando sono stati raccolti tutti i feedback."
+
+#: templates/admin_dashboard/settings.html:128
+msgid "User Registration"
+msgstr "Registrazione utenti"
+
+#: templates/admin_dashboard/settings.html:145
+msgid "Allow user registration"
+msgstr "Consenti la registrazione degli utenti"
+
+#: templates/admin_dashboard/settings.html:148
+msgid "When enabled, new users can register at /accounts/register/"
+msgstr "Se attivata, i nuovi utenti possono registrarsi all’indirizzo /accounts/register/"
+
+#: templates/admin_dashboard/settings.html:162
+#| msgid "Can create cycles for others"
+msgid "New users can create cycles for others"
+msgstr "I nuovi utenti possono creare cicli per altre persone"
+
+#: templates/admin_dashboard/settings.html:165
+msgid "If disabled, new users can only create cycles for themselves"
+msgstr "Se disattivata, i nuovi utenti possono creare cicli solo per sé."
+
+#: templates/admin_dashboard/settings.html:186
+msgid "Subscription & Billing"
+msgstr "Abbonamento e fatturazione"
+
+#: templates/admin_dashboard/settings.html:204
+msgid "Trial"
+msgstr "Prova"
+
+#: templates/admin_dashboard/settings.html:206
+msgid "Past Due"
+msgstr "Scaduto"
+
+#: templates/admin_dashboard/settings.html:208
+msgid "Canceled"
+msgstr "Annullato"
+
+#: templates/admin_dashboard/settings.html:218
+msgid "Trial Ends"
+msgstr "Fine del periodo di prova"
+
+#: templates/admin_dashboard/settings.html:223
+msgid "Max Employees"
+msgstr "Numero massimo di dipendenti"
+
+#: templates/admin_dashboard/settings.html:229
+msgid "Current Period"
+msgstr "Periodo corrente"
+
+#: templates/admin_dashboard/settings.html:236
+msgid "Subscription Canceling:"
+msgstr "Abbonamento in fase di annullamento:"
+
+#: templates/admin_dashboard/settings.html:236
+#, python-format
+msgid "Ends %(date)s"
+msgstr "Termina il %(date)s"
+
+#: templates/admin_dashboard/settings.html:242
+msgid "Manage Billing"
+msgstr "Gestisci la fatturazione"
+
+#: templates/admin_dashboard/settings.html:251
+msgid "Email (SMTP) Settings"
+msgstr "Impostazioni e-mail (SMTP)"
+
+#: templates/admin_dashboard/settings.html:259
+#| msgid "Recommended: Use Blik's Email Service"
+msgid "Using Blik's Email Service?"
+msgstr "Usare il servizio e-mail di Blik?"
+
+#: templates/admin_dashboard/settings.html:261
+msgid ""
+"Leave all fields empty to use our managed email service. Fill in to use your "
+"own SMTP."
+msgstr "Lascia tutti i campi vuoti per usare il nostro servizio e-mail gestito. Compilali per usare il tuo SMTP."
+
+#: templates/admin_dashboard/settings.html:268
+#| msgid "SMTP Host"
+msgid "Host"
+msgstr "Host"
+
+#: templates/admin_dashboard/settings.html:282
+#| msgid "SMTP Port"
+msgid "Port"
+msgstr "Porta"
+
+#: templates/admin_dashboard/settings.html:313
+msgid "Password"
+msgstr "Password"
+
+#: templates/admin_dashboard/settings.html:321
+msgid "Leave blank to keep current"
+msgstr "Lascia vuoto per mantenere il valore attuale"
+
+#: templates/admin_dashboard/settings.html:327
+#| msgid "From Email Address"
+msgid "From Address"
+msgstr "Indirizzo mittente"
+
+#: templates/admin_dashboard/settings.html:354
+#| msgid "Enable TLS encryption (recommended for port 587)"
+msgid "Use TLS encryption (port 587)"
+msgstr "Usa la crittografia TLS (porta 587)"
+
+#: templates/admin_dashboard/settings.html:371
+#| msgid "Email Configuration"
+msgid "API Configuration"
+msgstr "Configurazione API"
+
+#: templates/admin_dashboard/settings.html:377
+msgid "API Access"
+msgstr "Accesso API"
+
+#: templates/admin_dashboard/settings.html:379
+msgid "Generate tokens for plugin integrations"
+msgstr "Genera token per le integrazioni dei plugin"
+
+#: templates/admin_dashboard/settings.html:384
+msgid "API Docs"
+msgstr "Documentazione API"
+
+#: templates/admin_dashboard/settings.html:421
+#| msgid "No report generated yet"
+msgid "No API tokens created yet"
+msgstr "Nessun token API creato"
+
+#: templates/admin_dashboard/settings.html:428
+#| msgid "Create Account"
+msgid "Create New Token"
+msgstr "Crea nuovo token"
+
+#: templates/admin_dashboard/settings.html:435
+msgid "Webhooks"
+msgstr "Webhook"
+
+#: templates/admin_dashboard/settings.html:437
+msgid "Receive event notifications for cycle creation, completion, etc."
+msgstr "Ricevi notifiche per eventi come la creazione e il completamento dei cicli"
+
+#: templates/admin_dashboard/settings.html:477
+#| msgid "Not yet configured"
+msgid "No webhooks configured"
+msgstr "Nessun webhook configurato"
+
+#: templates/admin_dashboard/settings.html:484
+msgid "Add Webhook"
+msgstr "Aggiungi webhook"
+
+#: templates/admin_dashboard/settings.html:553
+msgid ""
+"Cancel subscription? You will retain access until the end of the billing "
+"period."
+msgstr "Annullare l’abbonamento? L’accesso resterà disponibile fino alla fine del periodo di fatturazione."
+
+#: templates/admin_dashboard/team.html:9
+msgid "Team Management"
+msgstr "Gestione del team"
+
+#: templates/admin_dashboard/team.html:10
+#| msgid "Configure email settings for sending invitations"
+msgid "Manage users and send invitations"
+msgstr "Gestisci gli utenti e invia gli inviti"
+
+#: templates/admin_dashboard/team.html:13
+#, python-format
+msgid "%(count)s team members (unlimited)"
+msgstr "%(count)s membri del team (illimitati)"
+
+#: templates/admin_dashboard/team.html:24
+msgid "GDPR Data Management"
+msgstr "Gestione dei dati GDPR"
+
+#: templates/admin_dashboard/team.html:29
+msgid "Invite User"
+msgstr "Invita utente"
+
+#: templates/admin_dashboard/team.html:38
+#: templates/admin_dashboard/team.html:48
+msgid "Send Invitation"
+msgstr "Invia invito"
+
+#: templates/admin_dashboard/team.html:42
+#| msgid "Email address"
+msgid "Email Address"
+msgstr "Indirizzo e-mail"
+
+#: templates/admin_dashboard/team.html:44
+msgid "The user will receive an email with instructions to join"
+msgstr "L’utente riceverà un’e-mail con le istruzioni per partecipare"
+
+#: templates/admin_dashboard/team.html:57
+#, python-format
+msgid "Active Users (%(count)s)"
+msgstr "Utenti attivi (%(count)s)"
+
+#: templates/admin_dashboard/team.html:68
+#: templates/admin_dashboard/team.html:296
+msgid "Role"
+msgstr "Ruolo"
+
+#: templates/admin_dashboard/team.html:69
+#: templates/admin_dashboard/team.html:149
+msgid "Joined"
+msgstr "Iscritto"
+
+#: templates/admin_dashboard/team.html:83
+msgid "You"
+msgstr "Tu"
+
+#: templates/admin_dashboard/team.html:89
+msgid "Super Admin"
+msgstr "Super amministratore"
+
+#: templates/admin_dashboard/team.html:91
+#: templates/admin_dashboard/team.html:301
+#| msgid "Organization"
+msgid "Organization Admin"
+msgstr "Amministratore dell’organizzazione"
+
+#: templates/admin_dashboard/team.html:93
+#: templates/admin_dashboard/team.html:310
+msgid "Member"
+msgstr "Membro"
+
+#: templates/admin_dashboard/team.html:99
+#: templates/admin_dashboard/team.html:156
+msgid "Can manage cycles"
+msgstr "Può gestire i cicli"
+
+#: templates/admin_dashboard/team.html:101
+#: templates/admin_dashboard/team.html:158
+#| msgid "Self cycles only"
+msgid "Self-only"
+msgstr "Solo per sé"
+
+#: templates/admin_dashboard/team.html:108
+msgid "Manage"
+msgstr "Gestisci"
+
+#: templates/admin_dashboard/team.html:165
+#| msgid "Permissions"
+msgid "Manage Permissions"
+msgstr "Gestisci autorizzazioni"
+
+#: templates/admin_dashboard/team.html:174
+msgid "No users found"
+msgstr "Nessun utente trovato"
+
+#: templates/admin_dashboard/team.html:210
+#, python-format
+msgid "Pending Invitations (%(count)s)"
+msgstr "Inviti in attesa (%(count)s)"
+
+#: templates/admin_dashboard/team.html:220
+#: templates/admin_dashboard/team.html:262
+msgid "Invited By"
+msgstr "Invitato da"
+
+#: templates/admin_dashboard/team.html:221
+#: templates/admin_dashboard/team.html:266
+msgid "Sent"
+msgstr "Inviato"
+
+#: templates/admin_dashboard/team.html:222
+#: templates/admin_dashboard/team.html:270
+msgid "Expires"
+msgstr "Scade"
+
+#: templates/admin_dashboard/team.html:237
+msgid "Expired"
+msgstr "Scaduto"
+
+#: templates/admin_dashboard/team.html:278
+msgid "No pending invitations"
+msgstr "Nessun invito in attesa"
+
+#: templates/admin_dashboard/team.html:287
+#| msgid "Permissions"
+msgid "Manage User Permissions"
+msgstr "Gestisci le autorizzazioni degli utenti"
+
+#: templates/admin_dashboard/team.html:289
+#| msgid "Permissions"
+msgid "Update permissions for"
+msgstr "Aggiorna le autorizzazioni di"
+
+#: templates/admin_dashboard/team.html:303
+msgid ""
+"Can invite members, manage organization settings, and delete organization"
+msgstr "Può invitare membri, gestire le impostazioni dell’organizzazione ed eliminare l’organizzazione"
+
+#: templates/admin_dashboard/team.html:312
+msgid "Regular team member with limited permissions"
+msgstr "Membro del team con autorizzazioni limitate"
+
+#: templates/admin_dashboard/team.html:320
+#| msgid "Permissions"
+msgid "Additional Permissions"
+msgstr "Autorizzazioni aggiuntive"
+
+#: templates/admin_dashboard/team.html:324
+#| msgid "Can create cycles for others"
+msgid "Can create review cycles for others"
+msgstr "Può creare cicli di valutazione per altre persone"
+
+#: templates/admin_dashboard/team.html:326
+msgid "Without this, user can only create cycles for themselves"
+msgstr "Senza questa autorizzazione, l’utente può creare cicli solo per sé"
+
+#: templates/admin_dashboard/team.html:334
+#| msgid "Permissions"
+msgid "Update Permissions"
+msgstr "Aggiorna autorizzazioni"
+
+#: templates/components/language_selector.html:5
+msgid "Blik interface language"
+msgstr "Lingua dell’interfaccia Blik"
+
+#: templates/components/language_selector.html:11
+msgid "Apply"
+msgstr "Applica"
+
+#~ msgid "Email address for the administrator"
+#~ msgstr "Indirizzo e-mail dell'amministratore"
+
+#~ msgid "Password must be at least 8 characters"
+#~ msgstr "La password deve contenere almeno 8 caratteri"
+
+#~ msgid "Enter the same password again for verification"
+#~ msgstr "Inserisca nuovamente la stessa password per verificarla"
+
+#~ msgid "This email is already registered."
+#~ msgstr "Questo indirizzo e-mail è già registrato."
+
+#~ msgid "Your organization or company name"
+#~ msgstr "Nome dell'organizzazione o dell'azienda"
+
+#~ msgid "Main contact email for your organization"
+#~ msgstr "Indirizzo e-mail di contatto principale dell'organizzazione"
+
+#~ msgid "Your SMTP server hostname"
+#~ msgstr "Nome host del server SMTP"
+
+#~ msgid "Common ports: 587 (TLS), 465 (SSL), 25 (Plain)"
+#~ msgstr "Porte comuni: 587 (TLS), 465 (SSL), 25 (non crittografata)"
+
+#~ msgid "SMTP Username"
+#~ msgstr "Nome utente SMTP"
+
+#~ msgid "Username for SMTP authentication (usually your email)"
+#~ msgstr ""
+#~ "Nome utente per l'autenticazione SMTP (di solito il Suo indirizzo e-mail)"
+
+#~ msgid "SMTP Password"
+#~ msgstr "Password SMTP"
+
+#~ msgid "Password or app-specific password for SMTP"
+#~ msgstr "Password o password specifica per l'applicazione per SMTP"
+
+#~ msgid "Use TLS"
+#~ msgstr "Usi TLS"
+
+#~ msgid "Email address that appears as sender"
+#~ msgstr "Indirizzo e-mail visualizzato come mittente"
+
+#~ msgid "Skip email setup (configure later)"
+#~ msgstr "Salta la configurazione e-mail (da completare in seguito)"
+
+#~ msgid "You can configure email settings later in the admin panel"
+#~ msgstr ""
+#~ "Può configurare le impostazioni e-mail in seguito nel pannello di "
+#~ "amministrazione"
+
+#~ msgid "SMTP Host is required when not skipping email setup."
+#~ msgstr ""
+#~ "L'host SMTP è obbligatorio se non si salta la configurazione e-mail."
+
+#~ msgid "SMTP Port is required when not skipping email setup."
+#~ msgstr ""
+#~ "La porta SMTP è obbligatoria se non si salta la configurazione e-mail."
+
+#~ msgid "From Email is required when not skipping email setup."
+#~ msgstr ""
+#~ "L'indirizzo e-mail del mittente è obbligatorio se non si salta la "
+#~ "configurazione e-mail."
+
+#, python-format
+#~ msgid "360 Feedback Request: %(reviewee_name)s"
+#~ msgstr "Richiesta di feedback a 360°: %(reviewee_name)s"
+
+#, python-format
+#~ msgid "Reminder: 360 Feedback Request for %(reviewee_name)s"
+#~ msgstr "Promemoria: richiesta di feedback a 360° per %(reviewee_name)s"
+
+#~ msgid "Forgot Password"
+#~ msgstr "Password dimenticata"
+
+#~ msgid "Enter your email to receive a password reset link"
+#~ msgstr ""
+#~ "Inserisca il Suo indirizzo e-mail per ricevere il link di reimpostazione "
+#~ "della password"
+
+#~ msgid "Send Reset Link"
+#~ msgstr "Invii il link di reimpostazione"
+
+#~ msgid "Login"
+#~ msgstr "Accesso"
+
+#~ msgid "Welcome Back"
+#~ msgstr "Felice di rivederLa"
+
+#~ msgid "Sign in to your account"
+#~ msgstr "Acceda al Suo account"
+
+#~ msgid "Sign In"
+#~ msgstr "Acceda"
+
+#~ msgid "Forgot your password?"
+#~ msgstr "Ha dimenticato la password?"
+
+#, python-format
+#~ msgid "Don't have an account? <a href=\"%(signup_url)s\">Create one</a>"
+#~ msgstr "Non ha un account? <a href=\"%(signup_url)s\">Ne crei uno</a>"
+
+#~ msgid "Register"
+#~ msgstr "Si registri"
+
+#, python-format
+#~ msgid "Join %(organization_name)s"
+#~ msgstr "Entri a far parte di %(organization_name)s"
+
+#~ msgid "Create your account"
+#~ msgstr "Crei il Suo account"
+
+#~ msgid "At least 8 characters"
+#~ msgstr "Almeno 8 caratteri"
+
+#~ msgid "Re-enter your password"
+#~ msgstr "Inserisca nuovamente la password"
+
+#, python-format
+#~ msgid "Already have an account? <a href=\"%(login_url)s\">Sign in</a>"
+#~ msgstr "Ha già un account? <a href=\"%(login_url)s\">Acceda</a>"
+
+#~ msgid "Reset Password"
+#~ msgstr "Reimposti la password"
+
+#~ msgid "Set New Password"
+#~ msgstr "Imposta una nuova password"
+
+#~ msgid "Enter your new password below"
+#~ msgstr "Inserisca qui sotto la Sua nuova password"
+
+#~ msgid "Password must be at least 8 characters and not too common."
+#~ msgstr ""
+#~ "La password deve contenere almeno 8 caratteri e non essere troppo comune."
+
+#~ msgid "Blik - 360 Feedback System"
+#~ msgstr "Blik - Sistema di feedback a 360°"
+
+#~ msgid "360 Feedback & Performance Review System"
+#~ msgstr "Sistema di feedback a 360° e valutazione delle prestazioni"
+
+#~ msgid "System Running"
+#~ msgstr "Sistema in funzione"
+
+#~ msgid "Setup Complete"
+#~ msgstr "Configurazione completata"
+
+#~ msgid "Django application is running"
+#~ msgstr "L'applicazione Django è in esecuzione"
+
+#~ msgid "Static files configured"
+#~ msgstr "File statici configurati"
+
+#~ msgid "Ready for development"
+#~ msgstr "Pronto per lo sviluppo"
+
+#~ msgid "Django Admin"
+#~ msgstr "Amministrazione Django"
+
+#~ msgid "Version 0.1.0 (Pre-Alpha)"
+#~ msgstr "Versione 0.1.0 (pre-alpha)"
+
+#~ msgid "Self-hosted | Open Source | Privacy-First"
+#~ msgstr "Self-hosted | Open source | Privacy al primo posto"
+
+#~ msgid "Your Development Path"
+#~ msgstr "Il Suo percorso di sviluppo"
+
+#~ msgid "Skill Level"
+#~ msgstr "Livello di competenza"
+
+#~ msgid "Learn more about the Dreyfus Model"
+#~ msgstr "Maggiori informazioni sul modello di Dreyfus"
+
+#~ msgid "Agency & Initiative"
+#~ msgstr "Autonomia e iniziativa"
+
+#, python-format
+#~ msgid "Level %(level)s/5.0"
+#~ msgstr "Livello %(level)s/5,0"
+
+#, python-format
+#~ msgid "To Reach %(next_stage)s"
+#~ msgstr "Per raggiungere il livello %(next_stage)s"
+
+#, python-format
+#~ msgid "To Reach Level %(level)s:"
+#~ msgstr "Per raggiungere il livello %(level)s:"
+
+#~ msgid "Assisted"
+#~ msgstr "Con supporto"
+
+#~ msgid "Independent"
+#~ msgstr "Autonomo"
+
+#~ msgid "Proactive"
+#~ msgstr "Proattivo"
+
+#~ msgid "Self-Driven"
+#~ msgstr "Autodiretto"
+
+#~ msgid "When reporting problems, investigate root causes"
+#~ msgstr "Quando segnala un problema, ne indaghi le cause alla radice"
+
+#~ msgid "Respond to guidance with thoughtful analysis"
+#~ msgstr "Risponda alle indicazioni con un'analisi ponderata"
+
+#~ msgid "Ask clarifying questions before escalating"
+#~ msgstr "Ponga domande di chiarimento prima di procedere con un'escalation"
+
+#~ msgid "Research multiple solution options before asking for help"
+#~ msgstr "Esamini diverse possibili soluzioni prima di chiedere aiuto"
+
+#~ msgid "Take ownership of problems you discover"
+#~ msgstr "Si assuma la responsabilità dei problemi che individua"
+
+#~ msgid "Present tradeoffs of different approaches"
+#~ msgstr "Esponga vantaggi e svantaggi dei diversi approcci"
+
+#~ msgid "Make clear recommendations backed by reasoning"
+#~ msgstr "Formuli raccomandazioni chiare e motivate"
+
+#~ msgid "Proactively identify improvements before issues arise"
+#~ msgstr ""
+#~ "Individui proattivamente possibili miglioramenti prima che emergano "
+#~ "problemi"
+
+#~ msgid ""
+#~ "Build confidence in decision-making through successful recommendations"
+#~ msgstr ""
+#~ "Rafforzi la fiducia nelle Sue capacità decisionali formulando "
+#~ "raccomandazioni efficaci"
+
+#~ msgid "Execute solutions autonomously within your domain"
+#~ msgstr "Attui soluzioni in autonomia nell'ambito di Sua competenza"
+
+#~ msgid "Inform stakeholders after implementing fixes"
+#~ msgstr "Informi le parti interessate dopo aver attuato le correzioni"
+
+#~ msgid "Drive systemic improvements, not just point solutions"
+#~ msgstr "Promuova miglioramenti sistemici, non solo soluzioni puntuali"
+
+#~ msgid ""
+#~ "Next time you spot an issue, spend 10 minutes investigating before "
+#~ "reporting"
+#~ msgstr ""
+#~ "La prossima volta che individua un problema, dedichi 10 minuti a "
+#~ "esaminarlo prima di segnalarlo"
+
+#~ msgid "When given a task, propose at least one way to approach it"
+#~ msgstr ""
+#~ "Quando Le viene assegnato un compito, proponga almeno un modo per "
+#~ "affrontarlo"
+
+#~ msgid ""
+#~ "When facing a problem, list 2-3 possible solutions before asking for help"
+#~ msgstr ""
+#~ "Di fronte a un problema, elenchi 2-3 possibili soluzioni prima di "
+#~ "chiedere aiuto"
+
+#~ msgid "Volunteer to own a small problem end-to-end this sprint"
+#~ msgstr ""
+#~ "Si proponga di gestire integralmente un problema di piccola entità in "
+#~ "questo sprint"
+
+#~ msgid ""
+#~ "Present your next problem-solution with a specific recommendation and why"
+#~ msgstr ""
+#~ "Presenti la prossima soluzione a un problema con una raccomandazione "
+#~ "specifica e le relative motivazioni"
+
+#~ msgid "Identify one process improvement opportunity this week"
+#~ msgstr ""
+#~ "Individui questa settimana un'opportunità per migliorare un processo"
+
+#~ msgid ""
+#~ "Fix the next issue you discover without asking permission (inform after)"
+#~ msgstr ""
+#~ "Risolva il prossimo problema che individua senza chiedere autorizzazione "
+#~ "(e informi in seguito)"
+
+#~ msgid "Document your decision-making process for others to learn from"
+#~ msgstr ""
+#~ "Documenti il Suo processo decisionale affinché gli altri possano trarne "
+#~ "insegnamento"
+
+#~ msgid "Learn more about the Performance Matrix"
+#~ msgstr "Maggiori informazioni sulla matrice delle prestazioni"
+
+#~ msgid "Question Format:"
+#~ msgstr "Formato della domanda:"
+
+#~ msgid "to"
+#~ msgstr "a"
+
+#~ msgid "DEBUG: Config="
+#~ msgstr "DEBUG: Configurazione="
+
+#~ msgid "Multiple choice (select all that apply):"
+#~ msgstr "Scelta multipla (selezioni tutte le opzioni pertinenti):"
+
+#, python-format
+#~ msgid "%(response_count)s response"
+#~ msgid_plural "%(response_count)s responses"
+#~ msgstr[0] "%(response_count)s risposta"
+#~ msgstr[1] "%(response_count)s risposte"
+
+#, python-format
+#~ msgid ""
+#~ "Strong consensus: %(percentage)s%% positive (%(positive)s of %(total)s "
+#~ "respondents)"
+#~ msgstr ""
+#~ "Ampio consenso: %(percentage)s%% di risposte positive (%(positive)s su "
+#~ "%(total)s rispondenti)"
+
+#, python-format
+#~ msgid ""
+#~ "Mostly positive: %(percentage)s%% (%(positive)s of %(total)s respondents)"
+#~ msgstr ""
+#~ "Prevalentemente positivo: %(percentage)s%% (%(positive)s su %(total)s "
+#~ "rispondenti)"
+
+#, python-format
+#~ msgid "%(response_count)s respondent (%(percentage)s%%)"
+#~ msgid_plural "%(response_count)s respondents (%(percentage)s%%)"
+#~ msgstr[0] "%(response_count)s rispondente (%(percentage)s%%)"
+#~ msgstr[1] "%(response_count)s rispondenti (%(percentage)s%%)"
+
+#~ msgid "weighted avg"
+#~ msgstr "media ponderata"
+
+#, python-format
+#~ msgid ""
+#~ "%(selected_count)s of %(response_count)s respondent (%(percentage)s%%)"
+#~ msgid_plural ""
+#~ "%(selected_count)s of %(response_count)s respondents (%(percentage)s%%)"
+#~ msgstr[0] ""
+#~ "%(selected_count)s su %(response_count)s rispondente (%(percentage)s%%)"
+#~ msgstr[1] ""
+#~ "%(selected_count)s su %(response_count)s rispondenti (%(percentage)s%%)"
+
+#~ msgid "Overall Performance"
+#~ msgstr "Prestazioni complessive"
+
+#~ msgid "Based on feedback from peers, managers, and direct reports"
+#~ msgstr ""
+#~ "Sulla base dei feedback di colleghi, responsabili e collaboratori diretti"
+
+#, python-format
+#~ msgid "Compared to %(previous_cycle_date)s"
+#~ msgstr "Rispetto al ciclo precedente (%(previous_cycle_date)s)"
+
+#~ msgid "Self-assessment:"
+#~ msgstr "Autovalutazione:"
+
+#~ msgid "Your self-assessment:"
+#~ msgstr "La Sua autovalutazione:"
+
+#~ msgid "compared to others"
+#~ msgstr "rispetto agli altri"
+
+#~ msgid "Blind Spot:"
+#~ msgstr "Area di miglioramento non rilevata:"
+
+#~ msgid "Better Than Self-Perception"
+#~ msgstr "Migliore della percezione di sé"
+
+#~ msgid "You're Better Than You Think"
+#~ msgstr "Le Sue prestazioni sono migliori di quanto pensa"
+
+#~ msgid "Calibration Opportunity"
+#~ msgstr "Opportunità di riallineamento"
+
+#~ msgid "You see yourself"
+#~ msgstr "Come si vede"
+
+#~ msgid "Others' assessment"
+#~ msgstr "Valutazione degli altri"
+
+#~ msgid "Others see you"
+#~ msgstr "Come La vedono gli altri"
+
+#~ msgid ""
+#~ "Consider acknowledging your strengths more openly. Your team already "
+#~ "recognizes your capabilities."
+#~ msgstr ""
+#~ "Valuti di riconoscere più apertamente i Suoi punti di forza. Il Suo team "
+#~ "ne riconosce già le capacità."
+
+#~ msgid ""
+#~ "Seek specific feedback on areas where you rated yourself highly to "
+#~ "understand others' perspectives."
+#~ msgstr ""
+#~ "Richieda feedback specifici sugli ambiti in cui si è valutato "
+#~ "positivamente, per comprendere il punto di vista degli altri."
+
+#~ msgid "Key Strengths"
+#~ msgstr "Punti di forza principali"
+
+#~ msgid "Others' avg:"
+#~ msgstr "Media degli altri:"
+
+#~ msgid "Self:"
+#~ msgstr "Autovalutazione:"
+
+#~ msgid "Gap:"
+#~ msgstr "Scostamento:"
+
+#~ msgid "Development Opportunities"
+#~ msgstr "Opportunità di sviluppo"
+
+#, python-format
+#~ msgid "%(priority)s priority"
+#~ msgstr "Priorità %(priority)s"
+
+#~ msgid "Performance Overview"
+#~ msgstr "Panoramica delle prestazioni"
+
+#~ msgid "Visual comparison of performance across all competency areas"
+#~ msgstr "Confronto visivo delle prestazioni in tutte le aree di competenza"
+
+#~ msgid "Visual comparison of your performance across all competency areas"
+#~ msgstr ""
+#~ "Confronto visivo delle Sue prestazioni in tutte le aree di competenza"
+
+#~ msgid "Self vs Others Comparison"
+#~ msgstr "Confronto tra autovalutazione e valutazioni altrui"
+
+#~ msgid ""
+#~ "How self-assessment compares to others' feedback (sorted by gap size)"
+#~ msgstr ""
+#~ "Confronto tra autovalutazione e feedback altrui (ordinato per entità "
+#~ "dello scostamento)"
+
+#~ msgid ""
+#~ "How your self-assessment compares to others' feedback (sorted by gap size)"
+#~ msgstr ""
+#~ "Confronto tra la Sua autovalutazione e il feedback altrui (ordinato per "
+#~ "entità dello scostamento)"
+
+#~ msgid "Section-Level Performance"
+#~ msgstr "Prestazioni per area"
+
+#~ msgid "Performance breakdown by competency area"
+#~ msgstr "Dettaglio delle prestazioni per area di competenza"
+
+#~ msgid "Overall score (excluding self-assessment)"
+#~ msgstr "Punteggio complessivo (esclusa l'autovalutazione)"
+
+#~ msgid "Excellent (4.5+)"
+#~ msgstr "Eccellente (4,5+)"
+
+#~ msgid "Strong (3.5-4.4)"
+#~ msgstr "Molto buono (3,5-4,4)"
+
+#~ msgid "Good (2.6-3.4)"
+#~ msgstr "Buono (2,6-3,4)"
+
+#~ msgid "Developing (2.0-2.5)"
+#~ msgstr "In fase di sviluppo (2,0-2,5)"
+
+#~ msgid "Needs Development (<2.0)"
+#~ msgstr "Da migliorare (<2,0)"
+
+#, python-format
+#~ msgid "Comparison vs %(peer_count)s peers"
+#~ msgstr "Confronto con %(peer_count)s colleghi"
+
+#, python-format
+#~ msgid "Top performer - %(percentile)sth percentile"
+#~ msgstr "Tra i migliori: %(percentile)s° percentile"
+
+#, python-format
+#~ msgid "Org median: %(peer_median)s/5.0 | This score: %(current_score)s/5.0"
+#~ msgstr ""
+#~ "Mediana aziendale: %(peer_median)s/5,0 | Questo punteggio: "
+#~ "%(current_score)s/5,0"
+
+#~ msgid "Above median"
+#~ msgstr "Sopra la mediana"
+
+#~ msgid "Below median"
+#~ msgstr "Sotto la mediana"
+
+#~ msgid "Strong performance"
+#~ msgstr "Prestazioni elevate"
+
+#, python-format
+#~ msgid "Top %(percentile)s%% in organization"
+#~ msgstr "Nel %(percentile)s%% più alto dell'organizzazione"
+
+#, python-format
+#~ msgid ""
+#~ "You scored %(current_score)s/5.0, higher than %(percentile)s%% of peers"
+#~ msgstr ""
+#~ "Lei ha ottenuto %(current_score)s/5,0, superando il %(percentile)s%% dei "
+#~ "colleghi"
+
+#~ msgid "direct report"
+#~ msgstr "collaboratore diretto"
+
+#~ msgid "Privacy Notice:"
+#~ msgstr "Informativa sulla privacy:"
+
+#, python-format
+#~ msgid ""
+#~ "All responses are anonymous and aggregated. Individual reviewers cannot "
+#~ "be identified. Results are only shown when there are at least "
+#~ "%(response_count)s response per category to protect anonymity."
+#~ msgid_plural ""
+#~ "All responses are anonymous and aggregated. Individual reviewers cannot "
+#~ "be identified. Results are only shown when there are at least "
+#~ "%(response_count)s responses per category to protect anonymity."
+#~ msgstr[0] ""
+#~ "Tutte le risposte sono anonime e aggregate. Non è possibile identificare "
+#~ "i singoli valutatori. Per tutelare l'anonimato, i risultati vengono "
+#~ "mostrati solo quando sono presenti almeno %(response_count)s risposta per "
+#~ "categoria."
+#~ msgstr[1] ""
+#~ "Tutte le risposte sono anonime e aggregate. Non è possibile identificare "
+#~ "i singoli valutatori. Per tutelare l'anonimato, i risultati vengono "
+#~ "mostrati solo quando sono presenti almeno %(response_count)s risposte per "
+#~ "categoria."
+
+#~ msgid "Detailed Feedback"
+#~ msgstr "Feedback dettagliato"
+
+#~ msgid ""
+#~ "If you have questions about this report, please contact your manager or "
+#~ "HR department."
+#~ msgstr ""
+#~ "Per eventuali domande su questo report, contatti il Suo responsabile o "
+#~ "l'ufficio Risorse umane."
+
+#~ msgid "Access Denied"
+#~ msgstr "Accesso negato"
+
+#~ msgid ""
+#~ "You don't have permission to view this report. Please check your email "
+#~ "for the correct access link, or contact your administrator."
+#~ msgstr ""
+#~ "Non dispone dell'autorizzazione per visualizzare questo report. Verifichi "
+#~ "di aver ricevuto il link di accesso corretto via e-mail oppure contatti "
+#~ "l'amministratore."
+
+#~ msgid "Go Home"
+#~ msgstr "Torni alla pagina iniziale"
+
+#~ msgid "Feedback Report"
+#~ msgstr "Report di feedback"
+
+#~ msgid "360 Feedback Report"
+#~ msgstr "Report di feedback a 360°"
+
+#~ msgid "Toggle Theme"
+#~ msgstr "Cambi tema"
+
+#~ msgid "Overall Rating"
+#~ msgstr "Valutazione complessiva"
+
+#~ msgid "Back to Cycle"
+#~ msgstr "Torni al ciclo"
+
+#~ msgid ""
+#~ "Your 360 feedback report is not yet available. This could be because:"
+#~ msgstr ""
+#~ "Il Suo report di feedback a 360° non è ancora disponibile. Le cause "
+#~ "potrebbero essere:"
+
+#~ msgid "The review cycle is still active and waiting for responses"
+#~ msgstr "Il ciclo di valutazione è ancora attivo e in attesa di risposte"
+
+#~ msgid "The report has not been generated yet"
+#~ msgstr "Il report non è ancora stato generato"
+
+#~ msgid ""
+#~ "Please check back later or contact your administrator for more "
+#~ "information."
+#~ msgstr ""
+#~ "Riprovi più tardi oppure contatti l'amministratore per ulteriori "
+#~ "informazioni."
+
+#~ msgid "Unable to Claim Token"
+#~ msgstr "Impossibile acquisire il token"
+
+#~ msgid "Unable to Access Review"
+#~ msgstr "Impossibile accedere alla valutazione"
+
+#~ msgid "If you believe this is an error, please contact your administrator."
+#~ msgstr "Se ritiene che si tratti di un errore, contatti l'amministratore."
+
+#~ msgid "Checking for existing review..."
+#~ msgstr "Verifica di una valutazione esistente..."
+
+#~ msgid "Please wait while we locate your feedback session."
+#~ msgstr "Attenda mentre individuiamo la Sua sessione di feedback."
+
+#~ msgid "Feedback Submitted"
+#~ msgstr "Feedback inviato"
+
+#, python-format
+#~ msgid ""
+#~ "Thank you for completing the 360 degree feedback for %(reviewee_name)s."
+#~ msgstr ""
+#~ "Grazie per aver completato il feedback a 360° per %(reviewee_name)s."
+
+#~ msgid ""
+#~ "Your anonymous feedback has been recorded and will contribute to their "
+#~ "performance review."
+#~ msgstr ""
+#~ "Il Suo feedback anonimo è stato registrato e contribuirà alla valutazione "
+#~ "delle prestazioni della persona interessata."
+
+#~ msgid "You may now close this window."
+#~ msgstr "Ora può chiudere questa finestra."
+
+#, python-format
+#~ msgid "Feedback - %(reviewee_name)s"
+#~ msgstr "Feedback - %(reviewee_name)s"
+
+#~ msgid "360 Feedback"
+#~ msgstr "Feedback a 360°"
+
+#, python-format
+#~ msgid "Step 1 of %(section_count)s"
+#~ msgstr "Passaggio 1 di %(section_count)s"
+
+#~ msgid "Share your thoughts..."
+#~ msgstr "Condivida le Sue osservazioni..."
+
+#~ msgid "Create Admin Account"
+#~ msgstr "Crei un account amministratore"
+
+#~ msgid "Create your administrator account"
+#~ msgstr "Crei il Suo account amministratore"
+
+#~ msgid "Create Administrator Account"
+#~ msgstr "Crei un account amministratore"
+
+#~ msgid ""
+#~ "This account will have full access to configure and manage your Blik "
+#~ "instance."
+#~ msgstr ""
+#~ "Questo account avrà accesso completo per configurare e gestire la Sua "
+#~ "istanza Blik."
+
+#~ msgid "Create Account & Continue"
+#~ msgstr "Crei un account e continui"
+
+#~ msgid "Setup Wizard"
+#~ msgstr "Procedura guidata di configurazione"
+
+#~ msgid "Blik Setup Wizard"
+#~ msgstr "Procedura guidata di configurazione di Blik"
+
+#~ msgid "Let's get your 360 feedback system ready"
+#~ msgstr "Prepariamo il Suo sistema di feedback a 360°"
+
+#, python-format
+#~ msgid "Step %(current_step)s of %(steps)s"
+#~ msgstr "Passaggio %(current_step)s di %(steps)s"
+
+#~ msgid "Your Blik instance is ready to use!"
+#~ msgstr "La Sua istanza Blik è pronta per l'uso!"
+
+#~ msgid "Setup Complete!"
+#~ msgstr "Configurazione completata!"
+
+#~ msgid ""
+#~ "Congratulations! Your Blik 360-degree feedback system is now configured "
+#~ "and ready to use."
+#~ msgstr ""
+#~ "Congratulazioni! Il Suo sistema Blik di feedback a 360° è configurato e "
+#~ "pronto all'uso."
+
+#~ msgid "Configuration Summary"
+#~ msgstr "Riepilogo della configurazione"
+
+#~ msgid "Administrator:"
+#~ msgstr "Amministratore:"
+
+#~ msgid "Email:"
+#~ msgstr "E-mail:"
+
+#~ msgid "Organization:"
+#~ msgstr "Organizzazione:"
+
+#~ msgid "Email Configured:"
+#~ msgstr "E-mail configurata:"
+
+#, python-format
+#~ msgid "Yes (%(smtp_host)s)"
+#~ msgstr "Sì (%(smtp_host)s)"
+
+#~ msgid "Next Steps"
+#~ msgstr "Passaggi successivi"
+
+#~ msgid "Access admin dashboard:"
+#~ msgstr "Acceda alla dashboard di amministrazione:"
+
+#~ msgid "Go to Admin Dashboard"
+#~ msgstr "Vada alla dashboard di amministrazione"
+
+#~ msgid "Start a review cycle:"
+#~ msgstr "Avvii un ciclo di valutazione:"
+
+#~ msgid "Create a new review cycle and send invitations to reviewers"
+#~ msgstr "Crei un nuovo ciclo di valutazione e invii gli inviti ai valutatori"
+
+#~ msgid "Want to explore first?"
+#~ msgstr "Desidera prima esplorare il sistema?"
+
+#~ msgid ""
+#~ "Generate test data to explore the system without affecting your "
+#~ "production data. This creates sample reviewees and a review cycle with "
+#~ "tokens."
+#~ msgstr ""
+#~ "Generi dati di prova per esplorare il sistema senza modificare i dati di "
+#~ "produzione. Verranno create persone di esempio da valutare e un ciclo di "
+#~ "valutazione con i relativi token."
+
+#~ msgid "Generate Test Data"
+#~ msgstr "Generi dati di prova"
+
+#~ msgid "Need help? Check out the"
+#~ msgstr "Ha bisogno di aiuto? Consulti la"
+
+#~ msgid "documentation"
+#~ msgstr "documentazione"
+
+#~ msgid "or"
+#~ msgstr "oppure"
+
+#~ msgid "report an issue"
+#~ msgstr "segnali un problema"
+
+#~ msgid ""
+#~ "Choose how Blik will send emails for review invitations and notifications."
+#~ msgstr ""
+#~ "Scelga come Blik invierà le e-mail di invito alla valutazione e le "
+#~ "notifiche."
+
+#~ msgid ""
+#~ "As a SaaS customer, you can use Blik's managed email service. All emails "
+#~ "will be sent reliably with no configuration needed."
+#~ msgstr ""
+#~ "In qualità di cliente SaaS, può utilizzare il servizio e-mail gestito da "
+#~ "Blik. Le e-mail verranno inviate in modo affidabile senza bisogno di "
+#~ "configurazione."
+
+#~ msgid "You can always switch to your own SMTP server later in settings."
+#~ msgstr ""
+#~ "Potrà sempre passare in seguito al Suo server SMTP dalle impostazioni."
+
+#~ msgid "Use Blik's Email Service (Recommended)"
+#~ msgstr "Utilizzi il servizio e-mail di Blik (consigliato)"
+
+#~ msgid "or configure your own SMTP server below"
+#~ msgstr "oppure configuri qui sotto il Suo server SMTP"
+
+#~ msgid "Complete Setup"
+#~ msgstr "Completi la configurazione"
+
+#~ msgid "Organization Setup"
+#~ msgstr "Configurazione dell'organizzazione"
+
+#~ msgid "Configure your organization details"
+#~ msgstr "Configuri i dati della Sua organizzazione"
+
+#~ msgid "Organization Details"
+#~ msgstr "Dati dell'organizzazione"
+
+#~ msgid ""
+#~ "Tell us about your organization. This information will be used in emails "
+#~ "and reports."
+#~ msgstr ""
+#~ "Ci descriva la Sua organizzazione. Queste informazioni verranno "
+#~ "utilizzate nelle e-mail e nei report."
+
+#~ msgid "Your organization's name (e.g., 'Acme Corporation')"
+#~ msgstr "Nome della Sua organizzazione (ad es. 'Acme Corporation')"

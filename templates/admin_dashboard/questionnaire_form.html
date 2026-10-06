@@ -1,5 +1,5 @@
 {% extends "admin_dashboard/base.html" %}
-{% load json_filters %}
+{% load i18n json_filters %}
 
 {% block title %}{{ action }} Questionnaire{% endblock %}
 
@@ -50,13 +50,47 @@
         }
     }
 </style>
+<div id="questionnaire-ui-labels" hidden
+    data-save-translations="{% translate 'Save translations' %}"
+    data-saving-translations="{% translate 'Saving translations…' %}"
+    data-unsaved-translations="{% translate 'Unsaved translation changes.' %}"
+    data-no-unsaved-translations="{% translate 'No unsaved translation changes.' %}"
+    data-translations-saved="{% translate 'Translations saved successfully.' %}"
+    data-saved="{% translate 'Saved' %}"
+    data-complete="{% translate 'Complete' %}"
+    data-incomplete="{% translate 'Incomplete' %}"
+    data-save-failed="{% translate 'Save failed — retry' %}"
+    data-save-error="{% translate 'Save failed. Your edits remain on this page.' %}"
+    data-http-error="{% translate 'Translations could not be saved (HTTP %(status)s).' %}"
+    data-confirm-leave="{% translate 'You have unsaved translations. Leave this language without saving?' %}"
+    data-confirm-remove-unsaved="{% translate 'You also have unsaved translations. Continue without saving them?' %}"
+    data-request-failed="{% translate 'Request failed.' %}"
+    data-saving="{% translate 'Saving…' %}"
+    data-adding="{% translate 'Adding…' %}"
+    data-question-list-missing="{% translate 'Question list container not found.' %}"
+    data-update-question-failed="{% translate 'Failed to update question.' %}"
+    data-add-question-failed="{% translate 'Failed to add question.' %}"
+    data-no-action-items="{% translate 'No action items configured. Click “+ Add Action Item” to create one.' %}"
+    data-action-item="{% translate 'Action Item' %}"
+    data-action-item-text="{% translate 'Action Item Text' %}"
+    data-threshold-score="{% translate 'Threshold Score' %}"
+    data-show-if-score="{% translate 'Show if score is below this value' %}"
+    data-relevant-stages="{% translate 'Relevant Stages (Optional)' %}"
+    data-stage="{% translate 'Stage' %}"
+    data-leave-all-stages="{% translate 'Leave unchecked for all stages' %}"
+    data-action-item-placeholder="{% translate 'e.g., Practice pair programming with senior developers' %}"
+    data-leave-unsaved-warning="{% translate 'You have unsaved translations. Leave this language without saving?' %}"
+    data-remove-unsaved-warning="{% translate 'You also have unsaved translations. Continue without saving them?' %}">
+</div>
 <div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">{{ action }} Questionnaire</h1>
+    <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">
+        {% if questionnaire %}{% translate "Edit" %}{% else %}{% translate "Create" %}{% endif %} {% translate "Questionnaire" %}
+    </h1>
     <p style="color: var(--text-secondary);">
         {% if questionnaire %}
-        Edit questionnaire "{{ questionnaire.name }}"
+        {% blocktranslate with name=questionnaire.name %}Edit questionnaire "{{ name }}"{% endblocktranslate %}
         {% else %}
-        Create a new feedback questionnaire
+        {% translate "Create a new feedback questionnaire" %}
         {% endif %}
     </p>
 </div>
@@ -66,10 +100,10 @@
     <div class="card-body" style="display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem;">
         <form id="questionnaire-language-form" method="get" style="display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; margin: 0;">
             <div class="form-group" style="margin: 0;">
-                <label for="questionnaire_language" class="form-label">Editing language</label>
+                <label for="questionnaire_language" class="form-label">{% translate "Questionnaire content language" %}</label>
                 <select id="questionnaire_language" name="lang" class="form-control">
                     <option value="{{ source_language }}" {% if not translation_mode %}selected{% endif %}>
-                        {{ source_language_label }} (Primary)
+                        {% blocktranslate with language=source_language_label %}{{ language }} (Primary){% endblocktranslate %}
                     </option>
                     {% for language in language_completeness %}
                     <option value="{{ language.code }}" data-completeness-option="{{ language.code }}" {% if selected_language == language.code %}selected{% endif %}>
@@ -81,13 +115,13 @@
             {% if translation_mode %}
             <span id="selected-translation-completeness" class="badge {% if selected_language_complete %}badge-success{% else %}badge-warning{% endif %}">
                 {{ selected_language_label }} · {{ selected_language_completion.translated_count }}/{{ selected_language_completion.total_count }}
-                {% if selected_language_completion.complete %}Complete{% else %}Incomplete{% endif %}
+                {% if selected_language_completion.complete %}{% translate "Complete" %}{% else %}{% translate "Incomplete" %}{% endif %}
             </span>
             {% endif %}
         </form>
         <div style="display: flex; gap: 0.5rem;">
             <button type="button" class="btn btn-secondary" onclick="document.getElementById('language_management_modal').style.display='flex'">
-                Languages
+                {% translate "Languages" %}
             </button>
             <a href="{% url 'questionnaire_preview' questionnaire.id %}" class="btn btn-secondary">Preview</a>
         </div>
@@ -97,15 +131,15 @@
 <div id="language_management_modal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) this.style.display='none'">
     <div class="modal-content" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-            <h2 style="margin: 0; color: var(--text-primary);">Questionnaire Languages</h2>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('language_management_modal').style.display='none'">Close</button>
+            <h2 style="margin: 0; color: var(--text-primary);">{% translate "Questionnaire Languages" %}</h2>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('language_management_modal').style.display='none'">{% translate "Close" %}</button>
         </div>
         <div class="card mb-2">
             <div class="card-body">
-                <strong>{{ source_language_label }} <span class="badge badge-info">Primary / Source</span></strong>
+                <strong>{{ source_language_label }} <span class="badge badge-info">{% translate "Primary / Source" %}</span></strong>
             </div>
         </div>
-        <h3 style="font-size: 1rem;">Available translations</h3>
+        <h3 style="font-size: 1rem;">{% translate "Available translations" %}</h3>
         {% if language_completeness %}
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             {% for language in language_completeness %}
@@ -115,17 +149,17 @@
                         <strong>{{ language.label }}</strong>
                         <span data-completeness-count="{{ language.code }}" style="color: var(--text-secondary);">{{ language.translated_count }}/{{ language.total_count }}</span>
                         <span data-completeness-status="{{ language.code }}" class="badge {% if language.complete %}badge-success{% else %}badge-warning{% endif %}">
-                            {% if language.complete %}Complete{% else %}Incomplete{% endif %}
+                            {% if language.complete %}{% translate "Complete" %}{% else %}{% translate "Incomplete" %}{% endif %}
                         </span>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <a class="btn btn-sm btn-secondary" href="{% url 'questionnaire_edit' questionnaire.id %}?lang={{ language.code }}">Edit translation</a>
-                        <form method="post" class="remove-translation-language-form" data-confirm-message="Remove {{ language.label }} and delete all questionnaire, section, and question translations for this language? Canonical content, responses, cycles, and reports will not be changed." style="margin: 0;">
+                        <a class="btn btn-sm btn-secondary" href="{% url 'questionnaire_edit' questionnaire.id %}?lang={{ language.code }}">{% translate "Edit translation" %}</a>
+                        <form method="post" class="remove-translation-language-form" data-confirm-message="{% blocktranslate with language=language.label %}Remove {{ language }} and delete all questionnaire, section, and question translations for this language? Canonical content, responses, cycles, and reports will not be changed.{% endblocktranslate %}" style="margin: 0;">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="remove_translation_language">
                             <input type="hidden" name="language_code" value="{{ language.code }}">
                             <input type="hidden" name="lang" value="{{ selected_language }}">
-                            <button type="submit" class="btn btn-sm btn-secondary" style="color: white; background: var(--danger); border-color: var(--danger);">Remove</button>
+                            <button type="submit" class="btn btn-sm btn-secondary" style="color: white; background: var(--danger); border-color: var(--danger);">{% translate "Remove" %}</button>
                         </form>
                     </div>
                 </div>
@@ -133,7 +167,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="color: var(--text-secondary);">No additional languages have been added yet.</p>
+        <p style="color: var(--text-secondary);">{% translate "No additional languages have been added yet." %}</p>
         {% endif %}
         <hr>
         <form method="post">
@@ -141,9 +175,9 @@
             <input type="hidden" name="action" value="add_translation_language">
             <input type="hidden" name="lang" value="{{ selected_language }}">
             <div class="form-group">
-                <label for="new_translation_language" class="form-label">Add a language</label>
+                <label for="new_translation_language" class="form-label">{% translate "Add a language" %}</label>
                 <select id="new_translation_language" name="language_code" class="form-control" required>
-                    <option value="">Select a supported language</option>
+                    <option value="">{% translate "Select a supported language" %}</option>
                     {% for language in language_options %}
                     {% if language.code != source_language and language.code not in available_language_codes %}
                     <option value="{{ language.code }}">{{ language.label }}</option>
@@ -151,7 +185,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary" {% if not available_language_options %}disabled{% endif %}>Add language</button>
+            <button type="submit" class="btn btn-primary" {% if not available_language_options %}disabled{% endif %}>{% translate "Add language" %}</button>
         </form>
     </div>
 </div>
@@ -168,25 +202,25 @@
     <!-- Basic Information -->
     <div class="card mb-2">
         <div class="card-header">
-            <h2 class="card-title">Basic Information</h2>
+            <h2 class="card-title">{% translate "Basic Information" %}</h2>
         </div>
         <div class="card-body">
             {% if translation_mode %}
                 <div class="form-group">
-                    <label class="form-label">SOURCE · {{ source_language_label }}</label>
+                    <label class="form-label">{% translate "SOURCE" %} · {{ source_language_label }}</label>
                     <div class="card"><div class="card-body">{{ questionnaire.name }}</div></div>
-                    <label for="translated_name" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · Name</label>
+                    <label for="translated_name" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · {% translate "Name" %}</label>
                     <input type="text" id="translated_name" data-translation-path="questionnaire.name" data-translation-kind="questionnaire" data-translation-field="name" class="form-control {% if not questionnaire_translation.name %}translation-missing{% endif %}" value="{{ questionnaire_translation.name }}">
                     <small class="translation-field-error" data-translation-error-for="questionnaire.name" hidden></small>
-                    {% if not questionnaire_translation.name %}<small style="color: var(--danger);">Translation missing</small>{% endif %}
+                    {% if not questionnaire_translation.name %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
                 </div>
                 <div class="form-group">
-                    <label class="form-label">SOURCE · {{ source_language_label }}</label>
+                    <label class="form-label">{% translate "SOURCE" %} · {{ source_language_label }}</label>
                     <div class="card"><div class="card-body">{{ questionnaire.description|default:"(No source description)" }}</div></div>
-                    <label for="translated_description" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · Description</label>
+                    <label for="translated_description" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · {% translate "Description" %}</label>
                     <textarea id="translated_description" data-translation-path="questionnaire.description" data-translation-kind="questionnaire" data-translation-field="description" class="form-control {% if questionnaire.description and not questionnaire_translation.description %}translation-missing{% endif %}" rows="3">{{ questionnaire_translation.description }}</textarea>
                     <small class="translation-field-error" data-translation-error-for="questionnaire.description" hidden></small>
-                    {% if questionnaire.description and not questionnaire_translation.description %}<small style="color: var(--danger);">Translation missing</small>{% endif %}
+                    {% if questionnaire.description and not questionnaire_translation.description %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
                 </div>
             {% else %}
             <form method="post">
@@ -194,7 +228,7 @@
                 <input type="hidden" name="action" value="update_info">
 
                 <div class="form-group">
-                    <label for="name" class="form-label">Questionnaire Name *</label>
+                    <label for="name" class="form-label">{% translate "Questionnaire Name" %} *</label>
                     <input
                         type="text"
                         id="name"
@@ -207,7 +241,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="description" class="form-label">Description (Optional)</label>
+                    <label for="description" class="form-label">{% translate "Description (Optional)" %}</label>
                     <textarea
                         id="description"
                         name="description"
@@ -224,17 +258,17 @@
                             name="is_default"
                             {% if questionnaire.is_default %}checked{% endif %}
                         >
-                        <span>Set as default questionnaire</span>
+                        <span>{% translate "Set as default questionnaire" %}</span>
                     </label>
                 </div>
 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     {% if questionnaire %}
-                    <button type="submit" class="btn btn-primary">Update Information</button>
+                    <button type="submit" class="btn btn-primary">{% translate "Update Information" %}</button>
                     {% else %}
-                    <button type="submit" class="btn btn-primary">Create Questionnaire</button>
+                    <button type="submit" class="btn btn-primary">{% translate "Create Questionnaire" %}</button>
                     {% endif %}
-                    <a href="{% url 'questionnaire_list' %}" class="btn btn-secondary">Cancel</a>
+                    <a href="{% url 'questionnaire_list' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
                 </div>
             </form>
             {% endif %}
@@ -248,10 +282,10 @@
     </form>
     <div class="translation-save-bar">
         <span id="translation-save-status" class="translation-save-status" role="status" aria-live="polite">
-            No unsaved translation changes.
+            {% translate "No unsaved translation changes." %}
         </span>
         <button id="save-translations-button" type="button" class="btn btn-secondary" disabled>
-            Save translations
+            {% translate "Save translations" %}
         </button>
     </div>
     {% endif %}
@@ -528,7 +562,7 @@
     <!-- Sections and Questions -->
     <div class="card mb-2">
         <div class="card-header">
-            <h2 class="card-title">Sections and Questions</h2>
+            <h2 class="card-title">{% translate "Sections and Questions" %}</h2>
         </div>
         <div class="card-body">
             {% if sections %}
@@ -546,12 +580,12 @@
                             type="button"
                             class="btn btn-sm btn-secondary"
                             onclick="openEditSectionModal({{ section.id }}, '{{ section.title|escapejs }}', '{{ section.description|escapejs }}')"
-                        >Edit</button>
-                        <form method="post" style="margin: 0;" onsubmit="return confirm('Delete section and all its questions?');">
+                        >{% translate "Edit" %}</button>
+                        <form method="post" style="margin: 0;" onsubmit="return confirm('{% translate 'Delete section and all its questions?' %}');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_section">
                             <input type="hidden" name="section_id" value="{{ section.id }}">
-                            <button type="submit" class="btn btn-sm btn-secondary" style="background: var(--danger); border-color: var(--danger); color: white;">Delete Section</button>
+                            <button type="submit" class="btn btn-sm btn-secondary" style="background: var(--danger); border-color: var(--danger); color: white;">{% translate "Delete Section" %}</button>
                         </form>
                     </div>
                 </div>
@@ -563,20 +597,20 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <p id="section-empty-{{ section.id }}" style="color: var(--text-secondary); margin: 0;">No questions in this section yet.</p>
+                    <p id="section-empty-{{ section.id }}" style="color: var(--text-secondary); margin: 0;">{% translate "No questions in this section yet." %}</p>
                     <div id="section-questions-{{ section.id }}" style="display: flex; flex-direction: column; gap: 1rem;"></div>
                     {% endif %}
 
                     <!-- Add Question Form -->
                     <details style="margin-top: 1rem;">
-                        <summary style="cursor: pointer; font-weight: 500; color: var(--primary); padding: 0.5rem 0;">Add Question to This Section</summary>
+                        <summary style="cursor: pointer; font-weight: 500; color: var(--primary); padding: 0.5rem 0;">{% translate "Add Question to This Section" %}</summary>
                         <form method="post" class="add-question-form" data-section-id="{{ section.id }}" style="margin-top: 1rem; padding: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem;">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="add_question">
                             <input type="hidden" name="section_id" value="{{ section.id }}">
 
                             <div class="form-group">
-                                <label for="question_text_{{ section.id }}" class="form-label">Question Text *</label>
+                                <label for="question_text_{{ section.id }}" class="form-label">{% translate "Question Text" %} *</label>
                                 <textarea
                                     id="question_text_{{ section.id }}"
                                     name="question_text"
@@ -588,24 +622,24 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="question_type_{{ section.id }}" class="form-label">Question Type *</label>
+                                <label for="question_type_{{ section.id }}" class="form-label">{% translate "Question Type" %} *</label>
                                 <select
                                     id="question_type_{{ section.id }}"
                                     name="question_type"
                                     class="form-control"
                                     onchange="toggleChoices{{ section.id }}(this)"
                                 >
-                                    <option value="rating">Rating Scale (1-5)</option>
-                                    <option value="likert">Likert Scale</option>
-                                    <option value="text">Free Text</option>
-                                    <option value="single_choice">Single Choice (Dropdown)</option>
-                                    <option value="multiple_choice">Multiple Choice (Checkboxes)</option>
-                                    <option value="scale">Numeric Scale</option>
+                                    <option value="rating">{% translate "Rating Scale (1-5)" %}</option>
+                                    <option value="likert">{% translate "Likert Scale" %}</option>
+                                    <option value="text">{% translate "Free Text" %}</option>
+                                    <option value="single_choice">{% translate "Single Choice (Dropdown)" %}</option>
+                                    <option value="multiple_choice">{% translate "Multiple Choice (Checkboxes)" %}</option>
+                                    <option value="scale">{% translate "Numeric Scale" %}</option>
                                 </select>
                             </div>
 
                             <div id="likert_container_{{ section.id }}" class="form-group" style="display: none;">
-                                <label for="likert_scale_{{ section.id }}" class="form-label">Likert Scale Items (one per line)</label>
+                                <label for="likert_scale_{{ section.id }}" class="form-label">{% translate "Likert Scale Items (one per line)" %}</label>
                                 <textarea
                                     id="likert_scale_{{ section.id }}"
                                     name="likert_scale"
@@ -617,31 +651,31 @@ Disagree
 Neutral
 Agree
 Strongly Agree</textarea>
-                                <small style="color: var(--text-secondary); font-size: 0.875rem;">Default 5-point scale provided. Customize or use 3-point, 7-point, etc.</small>
+                                <small style="color: var(--text-secondary); font-size: 0.875rem;">{% translate "Default 5-point scale provided. Customize or use 3-point, 7-point, etc." %}</small>
                             </div>
 
                             <div id="scale_container_{{ section.id }}" class="form-group" style="display: none;">
-                                <label class="form-label">Scale Configuration</label>
+                                <label class="form-label">{% translate "Scale Configuration" %}</label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
                                     <div>
-                                        <label style="font-size: 0.875rem; color: var(--text-secondary);">Min</label>
+                                        <label style="font-size: 0.875rem; color: var(--text-secondary);">{% translate "Min" %}</label>
                                         <input type="number" id="scale_min_{{ section.id }}" name="scale_min" class="form-control" value="1" style="font-size: 0.875rem;">
                                     </div>
                                     <div>
-                                        <label style="font-size: 0.875rem; color: var(--text-secondary);">Max</label>
+                                        <label style="font-size: 0.875rem; color: var(--text-secondary);">{% translate "Max" %}</label>
                                         <input type="number" id="scale_max_{{ section.id }}" name="scale_max" class="form-control" value="100" style="font-size: 0.875rem;">
                                     </div>
                                     <div>
-                                        <label style="font-size: 0.875rem; color: var(--text-secondary);">Step</label>
+                                        <label style="font-size: 0.875rem; color: var(--text-secondary);">{% translate "Step" %}</label>
                                         <input type="number" id="scale_step_{{ section.id }}" name="scale_step" class="form-control" value="1" style="font-size: 0.875rem;">
                                     </div>
                                 </div>
                                 <div style="margin-bottom: 0.5rem;">
-                                    <label style="font-size: 0.875rem; color: var(--text-secondary);">Min Label (Optional)</label>
+                                    <label style="font-size: 0.875rem; color: var(--text-secondary);">{% translate "Min Label (Optional)" %}</label>
                                     <input type="text" id="scale_min_label_{{ section.id }}" name="scale_min_label" class="form-control" placeholder="e.g., Not at all" style="font-size: 0.875rem;">
                                 </div>
                                 <div>
-                                    <label style="font-size: 0.875rem; color: var(--text-secondary);">Max Label (Optional)</label>
+                                    <label style="font-size: 0.875rem; color: var(--text-secondary);">{% translate "Max Label (Optional)" %}</label>
                                     <input type="text" id="scale_max_label_{{ section.id }}" name="scale_max_label" class="form-control" placeholder="e.g., Extremely" style="font-size: 0.875rem;">
                                 </div>
                                 <small style="color: var(--text-secondary); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
@@ -650,7 +684,7 @@ Strongly Agree</textarea>
                             </div>
 
                             <div id="choices_container_{{ section.id }}" class="form-group" style="display: none;">
-                                <label for="choices_{{ section.id }}" class="form-label">Choices (one per line)</label>
+                                <label for="choices_{{ section.id }}" class="form-label">{% translate "Choices (one per line)" %}</label>
                                 <textarea
                                     id="choices_{{ section.id }}"
                                     name="choices"
@@ -668,7 +702,7 @@ Strongly Agree</textarea>
                                             name="enable_scoring"
                                             onchange="toggleWeightInputs{{ section.id }}()"
                                         >
-                                        <span>Enable numeric scoring for analytics</span>
+                                        <span>{% translate "Enable numeric scoring for analytics" %}</span>
                                     </label>
                                     <small style="color: var(--text-secondary); font-size: 0.875rem; display: block; margin-top: 0.25rem;">
                                         When enabled, this question will contribute to section scores and charts
@@ -677,13 +711,13 @@ Strongly Agree</textarea>
                                             onclick="showScoringHelpModal{{ section.id }}()"
                                             style="background: none; border: none; color: var(--primary); cursor: pointer; text-decoration: underline; padding: 0; margin-left: 0.25rem; font-size: 0.875rem;"
                                         >
-                                            Learn more about scoring
+                                            {% translate "Learn more about scoring" %}
                                         </button>
                                     </small>
                                 </div>
 
                                 <div id="weights_container_{{ section.id }}" style="display: none; margin-top: 1rem;">
-                                    <label class="form-label">Assign weights to each option (for scoring)</label>
+                                    <label class="form-label">{% translate "Assign weights to each option (for scoring)" %}</label>
                                     <small style="color: var(--text-secondary); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">
                                         Assign numeric values (e.g., 1-5 scale) to measure this dimension
                                     </small>
@@ -694,14 +728,14 @@ Strongly Agree</textarea>
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                                     <input type="checkbox" name="required" checked>
-                                    <span>Required question</span>
+                                    <span>{% translate "Required question" %}</span>
                                 </label>
                             </div>
 
                             <!-- Dreyfus/Agency Configuration (Optional) -->
                             <details style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 0.5rem;">
                                 <summary style="cursor: pointer; font-weight: 600; color: var(--primary); margin-bottom: 1rem;">
-                                    ⚙️ Dreyfus/Agency Configuration (Optional)
+                                    ⚙️ {% translate "Dreyfus/Agency Configuration (Optional)" %}
                                 </summary>
 
                                 <div style="margin-top: 1rem;">
@@ -753,7 +787,7 @@ Strongly Agree</textarea>
                                 </div>
                             </details>
 
-                            <button type="submit" class="btn btn-sm btn-primary" style="margin-top: 1rem;">Add Question</button>
+                            <button type="submit" class="btn btn-sm btn-primary" style="margin-top: 1rem;"                            >{% translate "Add Question" %}</button>
 
                             <script>
                                 function toggleChoices{{ section.id }}(select) {
@@ -1045,7 +1079,7 @@ Strongly Agree</textarea>
             </div>
             {% endfor %}
             {% else %}
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">No sections yet. Add a section to start building your questionnaire.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">{% translate "No sections yet. Add a section to start building your questionnaire." %}</p>
             {% endif %}
         </div>
     </div>
@@ -1053,7 +1087,7 @@ Strongly Agree</textarea>
     <!-- Add Section -->
     <div class="card mb-2">
         <div class="card-header">
-            <h2 class="card-title">Add Section</h2>
+            <h2 class="card-title">{% translate "Add Section" %}</h2>
         </div>
         <div class="card-body">
             <form method="post">
@@ -1061,7 +1095,7 @@ Strongly Agree</textarea>
                 <input type="hidden" name="action" value="add_section">
 
                 <div class="form-group">
-                    <label for="section_title" class="form-label">Section Title *</label>
+                    <label for="section_title" class="form-label">{% translate "Section Title" %} *</label>
                     <input
                         type="text"
                         id="section_title"
@@ -1073,7 +1107,7 @@ Strongly Agree</textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="section_description" class="form-label">Section Description (Optional)</label>
+                    <label for="section_description" class="form-label">{% translate "Section Description (Optional)" %}</label>
                     <textarea
                         id="section_description"
                         name="section_description"
@@ -1083,7 +1117,7 @@ Strongly Agree</textarea>
                     ></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Add Section</button>
+                <button type="submit" class="btn btn-primary">{% translate "Add Section" %}</button>
             </form>
         </div>
     </div>
@@ -1322,7 +1356,7 @@ async function postFormAsJson(form) {
     const payload = await response.json();
 
     if (!response.ok || !payload.success) {
-        throw new Error(payload.message || 'Request failed.');
+        throw new Error(payload.message || document.getElementById('questionnaire-ui-labels').dataset.requestFailed);
     }
 
     return payload;
@@ -1336,7 +1370,7 @@ async function submitEditQuestionForm(event) {
     const originalLabel = submitButton.textContent;
 
     submitButton.disabled = true;
-    submitButton.textContent = 'Saving...';
+    submitButton.textContent = document.getElementById('questionnaire-ui-labels').dataset.saving;
 
     try {
         const payload = await postFormAsJson(form);
@@ -1347,7 +1381,7 @@ async function submitEditQuestionForm(event) {
             showFloatingAlert(questionCard, payload.message, 'success');
         }
     } catch (error) {
-        showFloatingAlert(document.getElementById('edit_question_modal').querySelector('.modal-content'), error.message || 'Failed to update question.', 'error');
+        showFloatingAlert(document.getElementById('edit_question_modal').querySelector('.modal-content'), error.message || document.getElementById('questionnaire-ui-labels').dataset.updateQuestionFailed, 'error');
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = originalLabel;
@@ -1362,7 +1396,7 @@ async function submitAddQuestionForm(event) {
     const originalLabel = submitButton.textContent;
 
     submitButton.disabled = true;
-    submitButton.textContent = 'Adding...';
+    submitButton.textContent = document.getElementById('questionnaire-ui-labels').dataset.adding;
 
     try {
         const payload = await postFormAsJson(form);
@@ -1370,7 +1404,7 @@ async function submitAddQuestionForm(event) {
         const emptyState = document.getElementById(`section-empty-${payload.section_id}`);
 
         if (!questionsContainer) {
-            throw new Error('Question list container not found.');
+            throw new Error(document.getElementById('questionnaire-ui-labels').dataset.questionListMissing);
         }
 
         if (emptyState) {
@@ -1401,7 +1435,7 @@ async function submitAddQuestionForm(event) {
             actionItemsContainer.innerHTML = '';
         }
     } catch (error) {
-        showFloatingAlert(form, error.message || 'Failed to add question.', 'error');
+        showFloatingAlert(form, error.message || document.getElementById('questionnaire-ui-labels').dataset.addQuestionFailed, 'error');
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = originalLabel;
@@ -1637,6 +1671,7 @@ async function loadDreyfusConfig(questionId) {
 }
 
 function addActionItem(text = '', threshold = 3.0, stages = []) {
+    const ui = document.getElementById('questionnaire-ui-labels').dataset;
     const container = document.getElementById('action_items_container');
 
     // Remove empty state message if present
@@ -1658,7 +1693,7 @@ function addActionItem(text = '', threshold = 3.0, stages = []) {
 
     itemDiv.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-            <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0;">Action Item #${itemId + 1}</h4>
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0;">${ui.actionItem} #${itemId + 1}</h4>
             <button
                 type="button"
                 onclick="removeActionItem(${itemId})"
@@ -1667,20 +1702,20 @@ function addActionItem(text = '', threshold = 3.0, stages = []) {
         </div>
 
         <div style="margin-bottom: 1rem;">
-            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.875rem;">Action Item Text *</label>
+            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.875rem;">${ui.actionItemText} *</label>
             <textarea
                 name="action_items[${itemId}][text]"
                 class="form-control"
                 rows="2"
                 required
-                placeholder="e.g., Practice pair programming with senior developers"
+                placeholder="${ui.actionItemPlaceholder}"
                 style="font-size: 0.875rem;"
             >${text}</textarea>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
             <div>
-                <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.875rem;">Threshold Score</label>
+                <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.875rem;">${ui.thresholdScore}</label>
                 <input
                     type="number"
                     name="action_items[${itemId}][threshold]"
@@ -1692,13 +1727,13 @@ function addActionItem(text = '', threshold = 3.0, stages = []) {
                     style="font-size: 0.875rem;"
                 >
                 <small style="color: var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 0.25rem;">
-                    Show if score &lt; this value
+                    ${ui.showIfScore}
                 </small>
             </div>
 
             <div>
                 <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.875rem;">
-                    Relevant Stages (Optional)
+                    ${ui.relevantStages}
                 </label>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     ${[1, 2, 3, 4, 5].map(stage => `
@@ -1709,12 +1744,12 @@ function addActionItem(text = '', threshold = 3.0, stages = []) {
                                 value="${stage}"
                                 ${stages.includes(stage) ? 'checked' : ''}
                             >
-                            <span>Stage ${stage}</span>
+                            <span>${ui.stage} ${stage}</span>
                         </label>
                     `).join('')}
                 </div>
                 <small style="color: var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 0.25rem;">
-                    Leave unchecked for all stages
+                    ${ui.leaveAllStages}
                 </small>
             </div>
         </div>
@@ -1732,7 +1767,7 @@ function removeActionItem(itemId) {
     // Show empty state if no items left
     const container = document.getElementById('action_items_container');
     if (container.children.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-secondary); font-style: italic; text-align: center; padding: 2rem;">No action items configured. Click "+ Add Action Item" to create one.</p>';
+            container.innerHTML = `<p style="color: var(--text-secondary); font-style: italic; text-align: center; padding: 2rem;">${document.getElementById('questionnaire-ui-labels').dataset.noActionItems}</p>`;
     }
 }
 </script>
@@ -1740,6 +1775,7 @@ function removeActionItem(itemId) {
 {% if questionnaire and translation_mode %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const ui = document.getElementById('questionnaire-ui-labels').dataset;
     const form = document.getElementById('translation-workspace');
     const button = document.getElementById('save-translations-button');
     const status = document.getElementById('translation-save-status');
@@ -1807,11 +1843,11 @@ document.addEventListener('DOMContentLoaded', function() {
         button.classList.toggle('btn-secondary', !dirty && !saving);
         if (dirty && !saving) {
             clearTimeout(stateTimeout);
-            button.textContent = 'Save translations';
-            status.textContent = 'Unsaved translation changes.';
+            button.textContent = ui.saveTranslations;
+            status.textContent = ui.unsavedTranslations;
         } else if (!dirty && !saving && button.textContent !== 'Saved ✓') {
-            button.textContent = 'Save translations';
-            status.textContent = 'No unsaved translation changes.';
+            button.textContent = ui.saveTranslations;
+            status.textContent = ui.noUnsavedTranslations;
         }
         return dirty;
     }
@@ -1876,8 +1912,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const submittedSnapshot = currentSnapshot();
         payloadField.value = submittedSnapshot;
         button.disabled = true;
-        button.textContent = 'Saving…';
-        status.textContent = 'Saving translations.';
+        button.textContent = ui.saving;
+        status.textContent = ui.savingTranslations;
         clearFieldErrors();
 
         try {
@@ -1895,7 +1931,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayFieldErrors(result && result.errors);
                 throw new Error(
                     (result && result.message)
-                    || `Translations could not be saved (HTTP ${response.status}).`
+                    || ui.httpError
+                        .replace('%%(status)s', response.status)
+                        .replace('%(status)s', response.status)
                 );
             }
 
@@ -1903,7 +1941,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const completeness = result.completeness;
             const badge = document.getElementById('selected-translation-completeness');
             if (badge && completeness) {
-                badge.textContent = `${badge.textContent.split(' · ')[0]} · ${completeness.translated_count}/${completeness.total_count} ${completeness.complete ? 'Complete' : 'Incomplete'}`;
+                badge.textContent = `${badge.textContent.split(' · ')[0]} · ${completeness.translated_count}/${completeness.total_count} ${completeness.complete ? ui.complete : ui.incomplete}`;
                 badge.classList.toggle('badge-success', completeness.complete);
                 badge.classList.toggle('badge-warning', !completeness.complete);
             }
@@ -1915,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll(
                 `[data-completeness-status="${result.language}"]`
             ).forEach(element => {
-                element.textContent = completeness.complete ? 'Complete' : 'Incomplete';
+                element.textContent = completeness.complete ? ui.complete : ui.incomplete;
                 element.classList.toggle('badge-success', completeness.complete);
                 element.classList.toggle('badge-warning', !completeness.complete);
             });
@@ -1925,20 +1963,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (option) {
                 option.textContent = `${option.textContent.split(' (')[0]} (${completeness.translated_count}/${completeness.total_count})`;
             }
-            status.textContent = 'Translations saved successfully.';
-            button.textContent = 'Saved ✓';
+            status.textContent = ui.translationsSaved;
+            button.textContent = `${ui.saved} ✓`;
             clearTimeout(stateTimeout);
             stateTimeout = setTimeout(function() {
                 if (currentSnapshot() === savedSnapshot) {
-                    button.textContent = 'Save translations';
-                    status.textContent = 'No unsaved translation changes.';
+                    button.textContent = ui.saveTranslations;
+                    status.textContent = ui.noUnsavedTranslations;
                 }
                 setDirtyState();
             }, 1800);
         } catch (error) {
-            button.textContent = 'Save failed — retry';
+            button.textContent = ui.saveFailed;
             button.disabled = false;
-            status.textContent = error.message || 'Save failed. Your edits remain on this page.';
+            status.textContent = error.message || ui.saveError;
         } finally {
             saving = false;
             if (currentSnapshot() !== savedSnapshot) {
@@ -1964,7 +2002,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     languageForm.addEventListener('submit', function(event) {
         if (hasUnsavedChanges() && !window.confirm(
-            'You have unsaved translations. Leave this language without saving?'
+            ui.confirmLeave
         )) {
             event.preventDefault();
             languageSelect.value = form.dataset.language;
@@ -1979,7 +2017,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.remove-translation-language-form').forEach(removeForm => {
         removeForm.addEventListener('submit', function(event) {
             const warning = hasUnsavedChanges()
-                ? '\n\nYou also have unsaved translations. Continue without saving them?'
+                ? `\n\n${ui.confirmRemoveUnsaved}`
                 : '';
             if (!window.confirm(`${removeForm.dataset.confirmMessage}${warning}`)) {
                 event.preventDefault();

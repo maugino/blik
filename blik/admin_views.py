@@ -13,6 +13,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Count, Q, Max
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -89,7 +90,7 @@ def _translation_workspace_error(message, errors=None, status=400):
 def _translation_workspace_string(record, key, path, errors):
     value = record.get(key)
     if not isinstance(value, str):
-        errors[path] = 'Enter text for this translation field.'
+        errors[path] = _('Enter text for this translation field.')
         return ''
     return value
 
@@ -1118,7 +1119,7 @@ def questionnaire_edit(request, questionnaire_id):
 
             return JsonResponse({
                 'success': True,
-                'message': 'Translations saved.',
+                'message': _('Translations saved.'),
                 'language': requested_language,
                 'completeness': completeness,
             })
@@ -1199,7 +1200,7 @@ def questionnaire_edit(request, questionnaire_id):
             try:
                 with transaction.atomic():
                     if action == 'update_questionnaire_translation':
-                        translation, _ = QuestionnaireTranslation.objects.get_or_create(
+                        translation, _created = QuestionnaireTranslation.objects.get_or_create(
                             questionnaire=questionnaire,
                             language_code=requested_language,
                         )
@@ -1485,21 +1486,21 @@ def questionnaire_edit(request, questionnaire_id):
                         )
                         return JsonResponse({
                             'success': True,
-                            'message': 'Question added successfully.',
+                            'message': _('Question added successfully.'),
                             'section_id': section.id,
                             'question_id': question.id,
                             'question_html': question_html,
                         })
 
-                    messages.success(request, 'Question added successfully.')
+                    messages.success(request, _('Question added successfully.'))
                 except Exception as e:
                     logger.exception('Error adding question')
                     if is_ajax:
                         return JsonResponse({
                             'success': False,
-                            'message': 'Error adding question. Please try again.',
+                            'message': _('Error adding question. Please try again.'),
                         }, status=400)
-                    messages.error(request, 'Error adding question. Please try again.')
+                    messages.error(request, _('Error adding question. Please try again.'))
 
         elif action == 'delete_section':
             section_id = request.POST.get('section_id')
@@ -1597,7 +1598,7 @@ def questionnaire_edit(request, questionnaire_id):
                         except (ValueError, TypeError):
                             # Use defaults if parsing fails
                             config = {'min': 1, 'max': 100, 'step': 1}
-                            messages.warning(request, 'Invalid scale values. Using defaults (1-100, step 1).')
+                            messages.warning(request, _('Invalid scale values. Using defaults (1-100, step 1).'))
 
                     question.config = config
                     question.save()
@@ -1605,7 +1606,7 @@ def questionnaire_edit(request, questionnaire_id):
                     if is_ajax:
                         return JsonResponse({
                             'success': True,
-                            'message': 'Question updated successfully.',
+                            'message': _('Question updated successfully.'),
                             'question': {
                                 'id': question.id,
                                 'question_text': question.question_text,
@@ -1616,15 +1617,15 @@ def questionnaire_edit(request, questionnaire_id):
                             },
                         })
 
-                    messages.success(request, 'Question updated successfully.')
+                    messages.success(request, _('Question updated successfully.'))
                 except Exception as e:
                     logger.exception('Error updating question')
                     if is_ajax:
                         return JsonResponse({
                             'success': False,
-                            'message': 'Error updating question. Please try again.',
+                            'message': _('Error updating question. Please try again.'),
                         }, status=400)
-                    messages.error(request, 'Error updating question. Please try again.')
+                    messages.error(request, _('Error updating question. Please try again.'))
 
         elif action == 'update_dreyfus_config':
             question_id = request.POST.get('question_id')

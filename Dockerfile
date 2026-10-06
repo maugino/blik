@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     cron \
+    gettext \
     fonts-liberation \
     fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
@@ -30,6 +31,9 @@ COPY . .
 
 # Install Python dependencies using uv
 RUN uv pip install --system -e .
+
+# Compile project translations into the image at build time.
+RUN python manage.py compilemessages
 
 # Create directory for static files
 RUN mkdir -p /app/staticfiles

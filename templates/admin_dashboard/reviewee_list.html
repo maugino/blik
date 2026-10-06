@@ -1,23 +1,23 @@
 {% extends "admin_dashboard/base.html" %}
+{% load i18n %}
 
 {% block title %}Reviewees{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>Reviewees</h1>
-        <p>Manage people who receive 360-degree feedback</p>
+        <h1>{% translate "Reviewees" %}</h1>
+        <p>{% translate "Manage people who receive 360-degree feedback" %}</p>
         {% if subscription_status.has_subscription %}
         <p style="font-size: 0.875rem; color: {% if subscription_status.reviewees_remaining <= 5 %}#ef4444{% else %}#64748b{% endif %}; margin-top: 0.25rem;">
-            {{ subscription_status.current_reviewees }} / {{ subscription_status.max_employees }} reviewees
-            ({{ subscription_status.reviewees_remaining }} remaining)
+            {% blocktranslate with current=subscription_status.current_reviewees maximum=subscription_status.max_employees remaining=subscription_status.reviewees_remaining %}{{ current }} / {{ maximum }} reviewees ({{ remaining }} remaining){% endblocktranslate %}
         </p>
         {% endif %}
     </div>
     {% if perms.accounts.can_manage_organization %}
-    <a href="{% url 'reviewee_create' %}" class="btn btn-primary">Add Reviewee</a>
+    <a href="{% url 'reviewee_create' %}" class="btn btn-primary">{% translate "Add Reviewee" %}</a>
     {% else %}
-    <a href="{% url 'reviewee_create' %}" class="btn btn-primary">Add Myself</a>
+    <a href="{% url 'reviewee_create' %}" class="btn btn-primary">{% translate "Add Myself" %}</a>
     {% endif %}
 </div>
 
@@ -28,11 +28,11 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Questionnaire</th>
-                    <th>Review Cycles</th>
-                    <th style="text-align: right;">Actions</th>
+                    <th>{% translate "Name" %}</th>
+                    <th>{% translate "Email" %}</th>
+                    <th>{% translate "Questionnaire" %}</th>
+                    <th>{% translate "Review Cycles" %}</th>
+                    <th style="text-align: right;">{% translate "Actions" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -65,11 +65,11 @@
                             {% endif %}
 
                             {% if item.active_cycle %}
-                            <a href="{% url 'review_cycle_detail' item.active_cycle.uuid %}" class="badge badge-success" style="text-decoration: none; cursor: pointer;">Active</a>
+                            <a href="{% url 'review_cycle_detail' item.active_cycle.uuid %}" class="badge badge-success" style="text-decoration: none; cursor: pointer;">{% translate "Active" %}</a>
                             {% endif %}
 
                             {% if item.latest_completed_report %}
-                            <a href="{% url 'reports:view_report' item.latest_completed_report.cycle.uuid %}" class="btn btn-sm btn-secondary" style="text-decoration: none; cursor: pointer;">Report</a>
+                            <a href="{% url 'reports:view_report' item.latest_completed_report.cycle.uuid %}" class="btn btn-sm btn-secondary" style="text-decoration: none; cursor: pointer;">{% translate "Report" %}</a>
                             {% endif %}
                         </div>
                     </td>
@@ -77,7 +77,7 @@
                         {% if perms.accounts.can_manage_organization %}
                         <div style="display: inline-flex; gap: 0.5rem; align-items: center; justify-content: flex-end;">
                             {% if item.active_cycle %}
-                            <a href="{% url 'review_cycle_detail' item.active_cycle.uuid %}" class="btn btn-sm btn-secondary">View Cycle</a>
+                            <a href="{% url 'review_cycle_detail' item.active_cycle.uuid %}" class="btn btn-sm btn-secondary">{% translate "View Cycle" %}</a>
                             {% endif %}
 
                             <!-- Split button: New Cycle (main action) + dropdown for other questionnaires -->
@@ -95,7 +95,7 @@
                                     {% endfor %}
                                     {% endif %}
                                     <button type="submit" class="btn btn-sm btn-primary" style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: 1px solid rgba(255,255,255,0.3);">
-                                        New Cycle
+                                        {% translate "New Cycle" %}
                                     </button>
                                 </form>
 
@@ -105,7 +105,7 @@
                                     type="button"
                                     data-toggle="cycle-{{ item.reviewee.id }}"
                                     style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0.25rem 0.5rem; border-left: 1px solid rgba(255,255,255,0.3);"
-                                    title="Select different questionnaire"
+                                    title="{% translate 'Select a different questionnaire' %}"
                                 >
                                     ▾
                                 </button>
@@ -114,11 +114,11 @@
                                 <div class="dropdown-menu" id="cycle-{{ item.reviewee.id }}" style="display: none; position: fixed; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); min-width: 300px; z-index: 9999; margin-top: 0.25rem;">
                                     <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: var(--bg-light);">
                                         <div style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary); margin-bottom: 0.25rem;">
-                                            Select Questionnaire
+                                            {% translate "Select Questionnaire" %}
                                         </div>
                                         <div style="font-size: 0.75rem; color: var(--text-secondary);">
                                             <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                ✓ = Quick create (button action)
+                                                {% translate "✓ = Quick create (button action)" %}
                                             </span>
                                         </div>
                                     </div>
@@ -132,7 +132,7 @@
                                                 <span style="flex: 1; padding-right: 0.5rem; font-weight: 500;">{{ q.name }}</span>
                                                 <span class="badge badge-primary" style="font-size: 0.75rem; background: var(--primary); color: white; display: inline-flex; align-items: center; gap: 0.25rem;">
                                                     <span>✓</span>
-                                                    <span>Quick create</span>
+                                                    <span>{% translate "Quick create" %}</span>
                                                 </span>
                                             </button>
                                         </form>
@@ -143,7 +143,7 @@
                                             <button type="submit" class="dropdown-item" style="width: 100%; text-align: left; padding: 0.625rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; color: var(--text-primary);">
                                                 <span style="flex: 1; padding-right: 0.5rem;">{{ q.name }}</span>
                                                 {% if q.is_default %}
-                                                <span class="badge badge-secondary" style="font-size: 0.75rem;">Default</span>
+                                                <span class="badge badge-secondary" style="font-size: 0.75rem;">{% translate "Default" %}</span>
                                                 {% endif %}
                                             </button>
                                         </form>
@@ -152,8 +152,8 @@
                                 </div>
                             </div>
 
-                            <a href="{% url 'reviewee_edit' item.reviewee.id %}" class="btn btn-sm btn-secondary">Edit</a>
-                            <a href="{% url 'reviewee_delete' item.reviewee.id %}" class="btn btn-sm btn-danger">Delete</a>
+                            <a href="{% url 'reviewee_edit' item.reviewee.id %}" class="btn btn-sm btn-secondary">{% translate "Edit" %}</a>
+                            <a href="{% url 'reviewee_delete' item.reviewee.id %}" class="btn btn-sm btn-danger">{% translate "Delete" %}</a>
                         </div>
                         {% else %}
                         <span style="color: #cbd5e1;">—</span>
@@ -169,7 +169,7 @@
     {% if reviewees.has_other_pages %}
     <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="color: var(--text-secondary); font-size: 0.875rem;">Items per page:</span>
+            <span style="color: var(--text-secondary); font-size: 0.875rem;">{% translate "Items per page:" %}</span>
             <select onchange="window.location.href='?per_page=' + this.value" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary);">
                 <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
                 <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
@@ -178,17 +178,17 @@
         </div>
         <div class="pagination">
             {% if reviewees.has_previous %}
-                <a href="?page=1&per_page={{ per_page }}" class="pagination-link">First</a>
-                <a href="?page={{ reviewees.previous_page_number }}&per_page={{ per_page }}" class="pagination-link">Previous</a>
+                <a href="?page=1&per_page={{ per_page }}" class="pagination-link">{% translate "First" %}</a>
+                <a href="?page={{ reviewees.previous_page_number }}&per_page={{ per_page }}" class="pagination-link">{% translate "Previous" %}</a>
             {% endif %}
 
             <span class="pagination-info">
-                Page {{ reviewees.number }} of {{ reviewees.paginator.num_pages }}
+                {% blocktranslate with number=reviewees.number pages=reviewees.paginator.num_pages %}Page {{ number }} of {{ pages }}{% endblocktranslate %}
             </span>
 
             {% if reviewees.has_next %}
-                <a href="?page={{ reviewees.next_page_number }}&per_page={{ per_page }}" class="pagination-link">Next</a>
-                <a href="?page={{ reviewees.paginator.num_pages }}&per_page={{ per_page }}" class="pagination-link">Last</a>
+                <a href="?page={{ reviewees.next_page_number }}&per_page={{ per_page }}" class="pagination-link">{% translate "Next" %}</a>
+                <a href="?page={{ reviewees.paginator.num_pages }}&per_page={{ per_page }}" class="pagination-link">{% translate "Last" %}</a>
             {% endif %}
         </div>
     </div>
@@ -198,13 +198,13 @@
 <div class="card">
     <div class="card-body">
         <div class="empty-state">
-            <h3 style="margin-bottom: 0.5rem;">No reviewees yet</h3>
+            <h3 style="margin-bottom: 0.5rem;">{% translate "No reviewees yet" %}</h3>
             {% if perms.accounts.can_manage_organization %}
-            <p style="margin-bottom: 1.5rem;">Add your first reviewee to start creating review cycles</p>
-            <a href="{% url 'reviewee_create' %}" class="btn btn-primary">Add Reviewee</a>
+            <p style="margin-bottom: 1.5rem;">{% translate "Add your first reviewee to start creating review cycles" %}</p>
+            <a href="{% url 'reviewee_create' %}" class="btn btn-primary">{% translate "Add Reviewee" %}</a>
             {% else %}
-            <p style="margin-bottom: 1.5rem;">Add yourself as a reviewee to start receiving feedback</p>
-            <a href="{% url 'reviewee_create' %}" class="btn btn-primary">Add Myself</a>
+            <p style="margin-bottom: 1.5rem;">{% translate "Add yourself as a reviewee to start receiving feedback" %}</p>
+            <a href="{% url 'reviewee_create' %}" class="btn btn-primary">{% translate "Add Myself" %}</a>
             {% endif %}
         </div>
     </div>

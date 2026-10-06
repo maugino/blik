@@ -13,6 +13,7 @@ handler404 = 'blik.views.handler404'
 handler500 = 'blik.views.handler500'
 
 urlpatterns = [
+    path('i18n/setlang/', views.set_interface_language, name='set_language'),
     path('', views.home, name='home'),
     path('health/', views.health_check, name='health_check'),
     path('sitemap.xml', seo_views.sitemap, name='sitemap'),

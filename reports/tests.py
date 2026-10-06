@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.test import RequestFactory, TestCase, override_settings
@@ -204,6 +205,32 @@ class MultilingualReportSnapshotTestCase(TestCase):
             ),
             'Viewing a frozen report must not query current questionnaire translations.',
         )
+
+    def test_interface_language_does_not_change_frozen_report_language_or_content(self):
+        report = generate_report(self.cycle, language_code='fr')
+        self.cycle.status = 'completed'
+        self.cycle.save(update_fields=['status'])
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'it'
+
+        response = self.client.get(
+            reverse(
+                'reports:reviewee_report',
+                kwargs={'access_token': report.access_token},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.wsgi_request.LANGUAGE_CODE, 'it')
+        report.refresh_from_db()
+        self.assertEqual(report.language_code, 'fr')
+        self.assertEqual(
+            report.report_data['by_section'][str(self.section.id)]['questions'][
+                str(self.question.id)
+            ]['question_text'],
+            'Cette personne communique-t-elle clairement ?',
+        )
+        self.assertContains(response, 'Cette personne communique-t-elle clairement ?')
+        self.assertNotContains(response, 'How clearly does this person communicate?')
 
     def test_explicit_unavailable_language_is_rejected(self):
         with self.assertRaises(ValidationError):

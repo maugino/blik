@@ -1,4 +1,5 @@
 {% extends "admin_dashboard/base.html" %}
+{% load i18n %}
 
 {% block title %}Preview: {{ questionnaire.name }}{% endblock %}
 
@@ -9,14 +10,14 @@
             <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">
                 {{ questionnaire.name }}
                 {% if questionnaire.is_default %}
-                <span class="badge badge-success">Default</span>
+                <span class="badge badge-success">{% translate "Default" %}</span>
                 {% endif %}
             </h1>
             {% if questionnaire.description %}
             <p style="color: var(--text-secondary);">{{ questionnaire.description }}</p>
             {% endif %}
         </div>
-        <a href="{% url 'questionnaire_list' %}" class="btn btn-secondary">Back to List</a>
+        <a href="{% url 'questionnaire_list' %}" class="btn btn-secondary">{% translate "Back to List" %}</a>
     </div>
 </div>
 
@@ -43,20 +44,20 @@
 
                     {% if question.question_type == 'rating' %}
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                        Rating scale:
+                        {% translate "Rating scale:" %}
                         {% if question.config.scale_type == 'likert_5' %}
-                        1 (Strongly Disagree) to 5 (Strongly Agree)
+                        {% translate "1 (Strongly Disagree) to 5 (Strongly Agree)" %}
                         {% elif question.config.scale_type == 'performance_5' %}
-                        1 (Needs Improvement) to 5 (Exceptional)
+                        {% translate "1 (Needs Improvement) to 5 (Exceptional)" %}
                         {% elif question.config.scale_type == 'frequency_5' %}
-                        1 (Never) to 5 (Always)
+                        {% translate "1 (Never) to 5 (Always)" %}
                         {% else %}
                         1 to {{ question.config.max_value|default:5 }}
                         {% endif %}
                     </div>
                     {% elif question.question_type == 'likert' %}
                     <div style="margin-top: 0.5rem;">
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Likert scale options:</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">{% translate "Likert scale options:" %}</div>
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                             {% for item in question.config.scale %}
                             <div style="padding: 0.5rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; color: var(--text-primary);">
@@ -67,7 +68,7 @@
                     </div>
                     {% elif question.question_type == 'multiple_choice' %}
                     <div style="margin-top: 0.5rem;">
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Options:</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">{% translate "Options:" %}</div>
                         <ul style="margin-left: 1.5rem;">
                             {% for choice in question.config.choices %}
                             <li>{{ choice }}</li>
@@ -76,14 +77,14 @@
                     </div>
                     {% elif question.question_type == 'text' %}
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                        Open-ended text response
+                        {% translate "Open-ended text response" %}
                     </div>
                     {% endif %}
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">No questions in this section</p>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">{% translate "No questions in this section" %}</p>
             {% endif %}
         </div>
     </div>
@@ -93,8 +94,8 @@
     <div class="card">
         <div class="card-body">
             <div class="empty-state">
-                <h3 style="margin-bottom: 0.5rem;">No sections yet</h3>
-                <p>This questionnaire doesn't have any sections or questions yet.</p>
+                <h3 style="margin-bottom: 0.5rem;">{% translate "No sections yet" %}</h3>
+                <p>{% translate "This questionnaire doesn't have any sections or questions yet." %}</p>
             </div>
         </div>
     </div>

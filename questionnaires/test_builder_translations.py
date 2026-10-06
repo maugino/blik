@@ -1,4 +1,5 @@
 import json
+import re
 from copy import deepcopy
 
 from django.contrib.auth.models import User
@@ -241,11 +242,13 @@ class QuestionnaireTranslationBuilderTests(TestCase):
 
         self.assertNotContains(response, '<option value="en-us">English</option>', html=True)
         self.assertNotContains(response, '<option value="fr">French</option>', html=True)
-        self.assertNotContains(
-            response,
-            '<option value="xx">Deployment-specific language</option>',
-            html=True,
+        questionnaire_language_selector = re.search(
+            r'<select\b[^>]*\bid="questionnaire_language"[^>]*>(.*?)</select>',
+            response.content.decode(),
+            re.DOTALL,
         )
+        self.assertIsNotNone(questionnaire_language_selector)
+        self.assertNotIn('value="xx"', questionnaire_language_selector.group(1))
 
     def test_remove_translation_deletes_only_current_questionnaire_language(self):
         self.add_french()
@@ -487,7 +490,7 @@ class QuestionnaireTranslationBuilderTests(TestCase):
 
         translated_response = self.client.get(f'{self.edit_url}?lang=fr')
         self.assertEqual(translated_response.status_code, 200)
-        self.assertContains(translated_response, 'Save translations')
+        self.assertContains(translated_response, 'id="save-translations-button"')
         self.assertContains(translated_response, 'id="translation-workspace"')
         self.assertContains(translated_response, 'Canonical questionnaire')
         self.assertContains(translated_response, 'Canonical section')
@@ -505,7 +508,7 @@ class QuestionnaireTranslationBuilderTests(TestCase):
 
         source_response = self.client.get(f'{self.edit_url}?lang=en-us')
         self.assertEqual(source_response.status_code, 200)
-        self.assertNotContains(source_response, 'Save translations')
+        self.assertNotContains(source_response, 'id="save-translations-button"')
         self.assertNotContains(source_response, 'id="translation-workspace"')
         self.assertContains(source_response, 'name="action" value="add_section"')
         self.assertContains(source_response, 'name="action" value="add_question"')

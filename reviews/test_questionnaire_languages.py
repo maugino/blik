@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.conf import settings
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
@@ -201,6 +202,20 @@ class RespondentQuestionnaireLanguageTests(TestCase):
         self.assertContains(response, 'French')
         self.assertNotContains(response, 'Simplified Chinese')
         self.assertNotContains(response, 'zz')
+
+    def test_interface_language_cookie_does_not_select_questionnaire_language(self):
+        self.add_french_translations()
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'fr'
+
+        response = self.client.get(self.form_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.wsgi_request.LANGUAGE_CODE, 'fr')
+        self.assertEqual(response.context['selected_language'], 'en-us')
+        self.assertContains(response, 'Canonical questionnaire')
+        self.assertContains(response, 'Canonical rating question')
+        self.assertNotContains(response, 'Questionnaire traduit')
+        self.assertNotContains(response, 'Question de notation')
 
     def test_available_partial_translation_can_be_selected_and_content_falls_back(self):
         QuestionnaireTranslation.objects.create(
