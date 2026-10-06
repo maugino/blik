@@ -1,10 +1,10 @@
 {% load static feedback_tags %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ selected_language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback - {{ reviewee.name }}</title>
+    <title>{{ questionnaire_display_name }} - {{ reviewee.name }}</title>
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <script>
         // Theme detection and initialization
@@ -34,10 +34,24 @@
 <body style="background: var(--bg-body);">
     <div class="feedback-container">
         <div class="feedback-header">
-            <h1>360 Feedback</h1>
+            <h1>{{ questionnaire_display_name }}</h1>
+            {% if questionnaire_display_description %}
+            <p>{{ questionnaire_display_description }}</p>
+            {% endif %}
             <div class="reviewee-name">{{ reviewee.name }}</div>
             <div class="category-badge">{{ token.get_category_display }}</div>
         </div>
+
+        <form method="get" action="{% url 'reviews:feedback_form' token=token.token %}" class="questionnaire-language-selector" style="margin-bottom: 1rem;">
+            <label for="questionnaire-language">Questionnaire language</label>
+            <select id="questionnaire-language" name="lang" class="text-input" onchange="this.form.submit()">
+                {% for language in language_options %}
+                <option value="{{ language.code }}" {% if selected_language == language.code %}selected{% endif %}>
+                    {{ language.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
 
         <div class="progress-container">
             <div class="progress-bar">
@@ -48,41 +62,42 @@
 
         <div id="error-container" class="error-message" style="display: none;"></div>
 
-        <form id="feedback-form" action="{% url 'reviews:submit_feedback' token=token.token %}" method="post" data-token="{{ token.token }}">
+        <form id="feedback-form" action="{% url 'reviews:submit_feedback' token=token.token %}?lang={{ selected_language|urlencode }}" method="post" data-token="{{ token.token }}">
             {% csrf_token %}
+            <input type="hidden" name="lang" value="{{ selected_language }}">
 
             {% for section in sections %}
             <div class="section" data-section="{{ forloop.counter0 }}">
                 <div class="section-header">
-                    <h2 class="section-title">{{ section.title }}</h2>
-                    {% if section.description %}
-                    <p class="section-description">{{ section.description }}</p>
+                    <h2 class="section-title">{{ section.display_title }}</h2>
+                    {% if section.display_description %}
+                    <p class="section-description">{{ section.display_description }}</p>
                     {% endif %}
                 </div>
 
                 {% for question in section.questions.all %}
                 <div class="question">
                     <div class="question-text">
-                        {{ question.question_text|personalize:reviewee.name }}
+                        {{ question.display_text|personalize:reviewee.name }}
                         {% if question.required %}<span class="required">*</span>{% endif %}
                     </div>
 
                     {% if question.question_type == 'rating' %}
                     <div class="rating-group">
-                        {% for value in "12345" %}
+                        {% for option in question.display_options %}
                         <div class="rating-option">
                             <input
                                 type="radio"
                                 name="question_{{ question.id }}"
-                                value="{{ value }}"
-                                id="q{{ question.id }}_{{ value }}"
-                                {% if existing_responses|get_item:question.id == value %}checked{% endif %}
+                                value="{{ option.value }}"
+                                id="q{{ question.id }}_{{ option.value }}"
+                                {% if existing_responses|get_item:question.id == option.value %}checked{% endif %}
                                 {% if question.required %}required{% endif %}
                             >
-                            <label for="q{{ question.id }}_{{ value }}" class="rating-label">
-                                <span class="rating-value">{{ value }}</span>
-                                {% if question.config.labels|get_item:value %}
-                                <span class="rating-description">{{ question.config.labels|get_item:value }}</span>
+                            <label for="q{{ question.id }}_{{ option.value }}" class="rating-label">
+                                <span class="rating-value">{{ option.value }}</span>
+                                {% if question.display_config.labels|get_item:option.value %}
+                                <span class="rating-description">{{ option.label }}</span>
                                 {% endif %}
                             </label>
                         </div>
@@ -91,18 +106,18 @@
 
                     {% elif question.question_type == 'likert' %}
                     <div class="likert-group">
-                        {% for item in question.config.scale %}
+                        {% for option in question.display_options %}
                         <div class="likert-option">
                             <input
                                 type="radio"
                                 name="question_{{ question.id }}"
-                                value="{{ item }}"
+                                value="{{ option.value }}"
                                 id="q{{ question.id }}_{{ forloop.counter }}"
-                                {% if existing_responses|get_item:question.id == item %}checked{% endif %}
+                                {% if existing_responses|get_item:question.id == option.value %}checked{% endif %}
                                 {% if question.required %}required{% endif %}
                             >
                             <label for="q{{ question.id }}_{{ forloop.counter }}" class="likert-label">
-                                {{ item }}
+                                {{ option.label }}
                             </label>
                         </div>
                         {% endfor %}
@@ -123,27 +138,27 @@
                         {% if question.required %}required{% endif %}
                     >
                         <option value="">Select an option</option>
-                        {% for choice in question.config.choices %}
-                        <option value="{{ choice }}" {% if existing_responses|get_item:question.id == choice %}selected{% endif %}>
-                            {{ choice }}
+                        {% for choice in question.display_options %}
+                        <option value="{{ choice.value }}" {% if existing_responses|get_item:question.id == choice.value %}selected{% endif %}>
+                            {{ choice.label }}
                         </option>
                         {% endfor %}
                     </select>
 
                     {% elif question.question_type == 'multiple_choice' %}
                     <div class="multiple-choice-group">
-                        {% for choice in question.config.choices %}
+                        {% for choice in question.display_options %}
                         <div class="multiple-choice-option">
                             <input
                                 type="checkbox"
                                 name="question_{{ question.id }}"
-                                value="{{ choice }}"
+                                value="{{ choice.value }}"
                                 id="q{{ question.id }}_{{ forloop.counter }}"
-                                {% if existing_responses|get_item:question.id and choice in existing_responses|get_item:question.id %}checked{% endif %}
+                                {% if existing_responses|get_item:question.id and choice.value in existing_responses|get_item:question.id %}checked{% endif %}
                                 class="multiple-choice-checkbox"
                             >
                             <label for="q{{ question.id }}_{{ forloop.counter }}" class="multiple-choice-label">
-                                {{ choice }}
+                                {{ choice.label }}
                             </label>
                         </div>
                         {% endfor %}
@@ -155,14 +170,18 @@
                     {% elif question.question_type == 'scale' %}
                     <div class="scale-group">
                         <div class="scale-labels">
-                            {% if question.config.min_label %}
-                            <span class="scale-label-min">{{ question.config.min_label }}</span>
+                            {% if question.display_config.min_label %}
+                            <span class="scale-label-min">{{ question.display_config.min_label }}</span>
                             {% endif %}
                             <span class="scale-value-display" id="scale_value_{{ question.id }}">
-                                {% if existing_responses|get_item:question.id %}{{ existing_responses|get_item:question.id }}{% else %}{{ question.config.min }}{% endif %}
+                                {% if existing_responses|get_item:question.id %}
+                                    {{ existing_responses|get_item:question.id }}
+                                {% else %}
+                                    {{ question.display_config.min }}
+                                {% endif %}
                             </span>
-                            {% if question.config.max_label %}
-                            <span class="scale-label-max">{{ question.config.max_label }}</span>
+                            {% if question.display_config.max_label %}
+                            <span class="scale-label-max">{{ question.display_config.max_label }}</span>
                             {% endif %}
                         </div>
                         <input
@@ -170,16 +189,16 @@
                             name="question_{{ question.id }}"
                             id="scale_input_{{ question.id }}"
                             class="scale-slider"
-                            min="{{ question.config.min }}"
-                            max="{{ question.config.max }}"
-                            step="{{ question.config.step }}"
-                            value="{% if existing_responses|get_item:question.id %}{{ existing_responses|get_item:question.id }}{% else %}{{ question.config.min }}{% endif %}"
+                            min="{{ question.display_config.min }}"
+                            max="{{ question.display_config.max }}"
+                            step="{{ question.display_config.step }}"
+                            value="{% if existing_responses|get_item:question.id %}{{ existing_responses|get_item:question.id }}{% else %}{{ question.display_config.min }}{% endif %}"
                             {% if question.required %}required{% endif %}
                             oninput="document.getElementById('scale_value_{{ question.id }}').textContent = this.value"
                         >
                         <div class="scale-range-labels">
-                            <span>{{ question.config.min }}</span>
-                            <span>{{ question.config.max }}</span>
+                            <span>{{ question.display_config.min }}</span>
+                            <span>{{ question.display_config.max }}</span>
                         </div>
                     </div>
                     {% endif %}

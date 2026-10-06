@@ -1,15 +1,16 @@
 {% extends "admin_dashboard/base.html" %}
+{% load i18n %}
 
 {% block title %}Team Management{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>Team Management</h1>
-        <p class="page-description">Manage users and send invitations</p>
+        <h1>{% translate "Team Management" %}</h1>
+        <p class="page-description">{% translate "Manage users and send invitations" %}</p>
         {% if subscription_status.has_subscription %}
         <p style="font-size: 0.875rem; color: #10b981; margin-top: 0.25rem;">
-            {{ subscription_status.current_users }} team members (unlimited)
+            {% blocktranslate with count=subscription_status.current_users %}{{ count }} team members (unlimited){% endblocktranslate %}
         </p>
         {% endif %}
     </div>
@@ -20,12 +21,12 @@
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
-            GDPR Data Management
+            {% translate "GDPR Data Management" %}
         </a>
         {% endif %}
         {% if perms.accounts.can_invite_members %}
         <button type="button" class="btn btn-primary" onclick="document.getElementById('invite-modal').style.display='flex'">
-            Invite User
+            {% translate "Invite User" %}
         </button>
         {% endif %}
     </div>
@@ -34,17 +35,17 @@
 <!-- Invite Modal -->
 <div id="invite-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
     <div style="background: var(--bg-card); padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
-        <h2 style="margin-top: 0;">Send Invitation</h2>
+        <h2 style="margin-top: 0;">{% translate "Send Invitation" %}</h2>
         <form method="post" action="{% url 'send_invitation' %}">
             {% csrf_token %}
             <div class="form-group">
-                <label for="email">Email Address</label>
+                <label for="email">{% translate "Email Address" %}</label>
                 <input type="email" id="email" name="email" class="form-control" required autofocus>
-                <small class="help-text">The user will receive an email with instructions to join</small>
+                <small class="help-text">{% translate "The user will receive an email with instructions to join" %}</small>
             </div>
             <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('invite-modal').style.display='none'">Cancel</button>
-                <button type="submit" class="btn btn-primary">Send Invitation</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('invite-modal').style.display='none'">{% translate "Cancel" %}</button>
+                <button type="submit" class="btn btn-primary">{% translate "Send Invitation" %}</button>
             </div>
         </form>
     </div>
@@ -53,7 +54,7 @@
 <!-- Active Users -->
 <div class="card mb-2">
     <div class="card-header">
-        <h2 class="card-title">Active Users ({{ users.paginator.count }})</h2>
+        <h2 class="card-title">{% blocktranslate with count=users.paginator.count %}Active Users ({{ count }}){% endblocktranslate %}</h2>
     </div>
     <div class="card-body">
         {% if users %}
@@ -62,13 +63,13 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Joined</th>
-                        <th>Permissions</th>
+                        <th>{% translate "Name" %}</th>
+                        <th>{% translate "Email" %}</th>
+                        <th>{% translate "Role" %}</th>
+                        <th>{% translate "Joined" %}</th>
+                        <th>{% translate "Permissions" %}</th>
                         {% if perms.accounts.can_manage_organization %}
-                        <th>Actions</th>
+                        <th>{% translate "Actions" %}</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -79,32 +80,32 @@
                             <strong>{{ user_profile.user.first_name|default:user_profile.user.username }}</strong>
                             {% if user_profile.user.last_name %}{{ user_profile.user.last_name }}{% endif %}
                             {% if user_profile.user.id == request.user.id %}
-                                <span class="badge" style="background: #6b7280; color: white; font-size: 11px; margin-left: 4px;">You</span>
+                                <span class="badge" style="background: #6b7280; color: white; font-size: 11px; margin-left: 4px;">{% translate "You" %}</span>
                             {% endif %}
                         </td>
                         <td>{{ user_profile.user.email }}</td>
                         <td>
                             {% if user_profile.user.is_superuser %}
-                                <span class="badge" style="background: #7c3aed; color: white;">Super Admin</span>
+                                <span class="badge" style="background: #7c3aed; color: white;">{% translate "Super Admin" %}</span>
                             {% elif user_profile.is_org_admin %}
-                                <span class="badge" style="background: #059669; color: white;">Organization Admin</span>
+                                <span class="badge" style="background: #059669; color: white;">{% translate "Organization Admin" %}</span>
                             {% else %}
-                                <span class="badge" style="background: #6b7280; color: white;">Member</span>
+                                <span class="badge" style="background: #6b7280; color: white;">{% translate "Member" %}</span>
                             {% endif %}
                         </td>
                         <td>{{ user_profile.user.date_joined|date:"M d, Y" }}</td>
                         <td>
                             {% if user_profile.can_create_cycles_for_others %}
-                                <span class="badge" style="background: #0ea5e9; color: white;">Can manage cycles</span>
+                                <span class="badge" style="background: #0ea5e9; color: white;">{% translate "Can manage cycles" %}</span>
                             {% else %}
-                                <span class="badge" style="background: #f59e0b; color: white;">Self-only</span>
+                                <span class="badge" style="background: #f59e0b; color: white;">{% translate "Self-only" %}</span>
                             {% endif %}
                         </td>
                         {% if perms.accounts.can_manage_organization %}
                         <td>
                             {% if user_profile.user.id != request.user.id and not user_profile.user.is_superuser %}
                             <button type="button" class="btn btn-sm btn-secondary" onclick="showManagePermissionsModal({{ user_profile.id }}, '{{ user_profile.user.username }}', {{ user_profile.is_org_admin|lower }}, {{ user_profile.can_create_cycles_for_others|lower }})">
-                                Manage
+                                {% translate "Manage" %}
                             </button>
                             {% else %}
                             <span style="color: var(--text-tertiary); font-size: 12px;">—</span>
@@ -141,27 +142,27 @@
                 </div>
                 <div class="mobile-card-body">
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Email</span>
+                        <span class="mobile-card-label">{% translate "Email" %}</span>
                         <span>{{ user_profile.user.email }}</span>
                     </div>
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Joined</span>
+                        <span class="mobile-card-label">{% translate "Joined" %}</span>
                         <span>{{ user_profile.user.date_joined|date:"M d, Y" }}</span>
                     </div>
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Permissions</span>
+                        <span class="mobile-card-label">{% translate "Permissions" %}</span>
                         <span>
                             {% if user_profile.can_create_cycles_for_others %}
-                                <span class="badge" style="background: #0ea5e9; color: white; font-size: 11px;">Can manage cycles</span>
+                                <span class="badge" style="background: #0ea5e9; color: white; font-size: 11px;">{% translate "Can manage cycles" %}</span>
                             {% else %}
-                                <span class="badge" style="background: #f59e0b; color: white; font-size: 11px;">Self-only</span>
+                                <span class="badge" style="background: #f59e0b; color: white; font-size: 11px;">{% translate "Self-only" %}</span>
                             {% endif %}
                         </span>
                     </div>
                     {% if perms.accounts.can_manage_organization %}
                         {% if user_profile.user.id != request.user.id and not user_profile.user.is_superuser %}
                         <button type="button" class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="showManagePermissionsModal({{ user_profile.id }}, '{{ user_profile.user.username }}', {{ user_profile.is_org_admin|lower }}, {{ user_profile.can_create_cycles_for_others|lower }})">
-                            Manage Permissions
+                            {% translate "Manage Permissions" %}
                         </button>
                         {% endif %}
                     {% endif %}
@@ -170,14 +171,14 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No users found</p>
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">{% translate "No users found" %}</p>
         {% endif %}
     </div>
 
     {% if users.has_other_pages %}
     <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="color: var(--text-secondary); font-size: 0.875rem;">Items per page:</span>
+            <span style="color: var(--text-secondary); font-size: 0.875rem;">{% translate "Items per page:" %}</span>
             <select onchange="window.location.href='?per_page=' + this.value" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary);">
                 <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
                 <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
@@ -186,17 +187,17 @@
         </div>
         <div class="pagination">
             {% if users.has_previous %}
-                <a href="?page=1&per_page={{ per_page }}" class="pagination-link">First</a>
-                <a href="?page={{ users.previous_page_number }}&per_page={{ per_page }}" class="pagination-link">Previous</a>
+                <a href="?page=1&per_page={{ per_page }}" class="pagination-link">{% translate "First" %}</a>
+                <a href="?page={{ users.previous_page_number }}&per_page={{ per_page }}" class="pagination-link">{% translate "Previous" %}</a>
             {% endif %}
 
             <span class="pagination-info">
-                Page {{ users.number }} of {{ users.paginator.num_pages }}
+                {% blocktranslate with number=users.number pages=users.paginator.num_pages %}Page {{ number }} of {{ pages }}{% endblocktranslate %}
             </span>
 
             {% if users.has_next %}
-                <a href="?page={{ users.next_page_number }}&per_page={{ per_page }}" class="pagination-link">Next</a>
-                <a href="?page={{ users.paginator.num_pages }}&per_page={{ per_page }}" class="pagination-link">Last</a>
+                <a href="?page={{ users.next_page_number }}&per_page={{ per_page }}" class="pagination-link">{% translate "Next" %}</a>
+                <a href="?page={{ users.paginator.num_pages }}&per_page={{ per_page }}" class="pagination-link">{% translate "Last" %}</a>
             {% endif %}
         </div>
     </div>
@@ -206,7 +207,7 @@
 <!-- Pending Invitations -->
 <div class="card">
     <div class="card-header">
-        <h2 class="card-title">Pending Invitations ({{ invitations.count }})</h2>
+        <h2 class="card-title">{% blocktranslate with count=invitations.count %}Pending Invitations ({{ count }}){% endblocktranslate %}</h2>
     </div>
     <div class="card-body">
         {% if invitations %}
@@ -215,11 +216,11 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Email</th>
-                        <th>Invited By</th>
-                        <th>Sent</th>
-                        <th>Expires</th>
-                        <th>Status</th>
+                        <th>{% translate "Email" %}</th>
+                        <th>{% translate "Invited By" %}</th>
+                        <th>{% translate "Sent" %}</th>
+                        <th>{% translate "Expires" %}</th>
+                        <th>{% translate "Status" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -231,9 +232,9 @@
                         <td>{{ invitation.expires_at|date:"M d, Y" }}</td>
                         <td>
                             {% if invitation.is_valid %}
-                                <span class="badge" style="background: #059669; color: white;">Active</span>
+                                <span class="badge" style="background: #059669; color: white;">{% translate "Active" %}</span>
                             {% else %}
-                                <span class="badge" style="background: #dc2626; color: white;">Expired</span>
+                                <span class="badge" style="background: #dc2626; color: white;">{% translate "Expired" %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -258,15 +259,15 @@
                 </div>
                 <div class="mobile-card-body">
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Invited By</span>
+                        <span class="mobile-card-label">{% translate "Invited By" %}</span>
                         <span>{{ invitation.invited_by.username }}</span>
                     </div>
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Sent</span>
+                        <span class="mobile-card-label">{% translate "Sent" %}</span>
                         <span>{{ invitation.created_at|date:"M d, Y" }}</span>
                     </div>
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Expires</span>
+                        <span class="mobile-card-label">{% translate "Expires" %}</span>
                         <span>{{ invitation.expires_at|date:"M d, Y" }}</span>
                     </div>
                 </div>
@@ -274,7 +275,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No pending invitations</p>
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">{% translate "No pending invitations" %}</p>
         {% endif %}
     </div>
 </div>
@@ -283,32 +284,32 @@
 {% if perms.accounts.can_manage_organization %}
 <div id="manage-permissions-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
     <div style="background: var(--bg-card); padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
-        <h2 style="margin-top: 0;">Manage User Permissions</h2>
+        <h2 style="margin-top: 0;">{% translate "Manage User Permissions" %}</h2>
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-            Update permissions for <strong id="modal-username"></strong>
+            {% translate "Update permissions for" %} <strong id="modal-username"></strong>
         </p>
         <form method="post" action="{% url 'update_user_permissions' %}">
             {% csrf_token %}
             <input type="hidden" id="modal-user-id" name="user_profile_id">
 
             <div class="form-group">
-                <label class="form-label">Role</label>
+                <label class="form-label">{% translate "Role" %}</label>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <div class="form-check">
                         <input type="radio" id="role-admin" name="role" value="admin" class="form-check-input">
                         <label for="role-admin" style="display: inline; font-weight: normal;">
-                            <strong>Organization Admin</strong>
+                            <strong>{% translate "Organization Admin" %}</strong>
                             <small style="display: block; color: var(--text-secondary); margin-left: 24px;">
-                                Can invite members, manage organization settings, and delete organization
+                                {% translate "Can invite members, manage organization settings, and delete organization" %}
                             </small>
                         </label>
                     </div>
                     <div class="form-check">
                         <input type="radio" id="role-member" name="role" value="member" class="form-check-input">
                         <label for="role-member" style="display: inline; font-weight: normal;">
-                            <strong>Member</strong>
+                            <strong>{% translate "Member" %}</strong>
                             <small style="display: block; color: var(--text-secondary); margin-left: 24px;">
-                                Regular team member with limited permissions
+                                {% translate "Regular team member with limited permissions" %}
                             </small>
                         </label>
                     </div>
@@ -316,21 +317,21 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Additional Permissions</label>
+                <label class="form-label">{% translate "Additional Permissions" %}</label>
                 <div class="form-check">
                     <input type="checkbox" id="can-manage-cycles" name="can_create_cycles_for_others" class="form-check-input">
                     <label for="can-manage-cycles" style="display: inline; font-weight: normal;">
-                        Can create review cycles for others
+                        {% translate "Can create review cycles for others" %}
                         <small style="display: block; color: var(--text-secondary); margin-left: 24px;">
-                            Without this, user can only create cycles for themselves
+                            {% translate "Without this, user can only create cycles for themselves" %}
                         </small>
                     </label>
                 </div>
             </div>
 
             <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-                <button type="button" class="btn btn-secondary" onclick="hideManagePermissionsModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Update Permissions</button>
+                <button type="button" class="btn btn-secondary" onclick="hideManagePermissionsModal()">{% translate "Cancel" %}</button>
+                <button type="submit" class="btn btn-primary">{% translate "Update Permissions" %}</button>
             </div>
         </form>
     </div>

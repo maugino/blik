@@ -113,6 +113,8 @@ def export_organization_data(organization):
     for report in Report.objects.for_organization(organization).select_related('cycle'):
         data['reports'].append({
             'reviewee': report.cycle.reviewee.name,
+            'questionnaire_name': report.cycle.questionnaire.name,
+            'language_code': report.language_code,
             'generated_at': report.generated_at.isoformat(),
             'report_data': report.report_data,
         })

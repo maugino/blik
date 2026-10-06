@@ -49,6 +49,27 @@ class SetupOrganizationCommandTests(TestCase):
         org = Organization.objects.get(id=1)
         self.assertEqual(org.name, 'Acme Corp')
 
+    def test_first_run_encrypts_email_host_password(self):
+        password = 'first-run-secret'
+
+        self._run(EMAIL_HOST_PASSWORD=password)
+
+        org = Organization.objects.get(id=1)
+        self.assertEqual(org.smtp_password, password)
+        self.assertIsNotNone(org.smtp_password_encrypted)
+        self.assertNotIn(password.encode(), org.smtp_password_encrypted)
+
+    def test_subsequent_run_encrypts_email_host_password(self):
+        self._run(ORGANIZATION_NAME='Acme Corp')
+        password = 'updated-secret'
+
+        self._run(EMAIL_HOST_PASSWORD=password)
+
+        org = Organization.objects.get(id=1)
+        self.assertEqual(org.smtp_password, password)
+        self.assertIsNotNone(org.smtp_password_encrypted)
+        self.assertNotIn(password.encode(), org.smtp_password_encrypted)
+
     def test_subsequent_run_preserves_admin_edits_when_env_unset(self):
         self._run(ORGANIZATION_NAME='Acme Corp')
         org = Organization.objects.get(id=1)

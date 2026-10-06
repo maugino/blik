@@ -48,6 +48,10 @@
         const colors = getThemeColors();
         const sections = chartData.section_scores || {};
         const sectionNames = Object.keys(sections);
+        const sectionDisplayNames = chartData.section_display_names || {};
+        const displayNames = sectionNames.map(section =>
+            sectionDisplayNames[section] || section
+        );
 
         if (sectionNames.length === 0) {
             ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No chart data available</p>';
@@ -81,7 +85,7 @@
 
         // On mobile, use horizontal bar chart instead
         if (isMobile()) {
-            renderMobileSectionChart(canvasId, sectionNames, sections, colors);
+            renderMobileSectionChart(canvasId, sectionNames, displayNames, sections, colors);
             return;
         }
 
@@ -89,7 +93,7 @@
         new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: sectionNames,
+                labels: displayNames,
                 datasets: datasets
             },
             options: {
@@ -151,7 +155,7 @@
     /**
      * Render mobile-friendly stacked bar chart for sections
      */
-    function renderMobileSectionChart(canvasId, sectionNames, sections, colors) {
+    function renderMobileSectionChart(canvasId, sectionNames, displayNames, sections, colors) {
         const ctx = document.getElementById(canvasId);
         const categories = ['self', 'peer', 'manager', 'direct_report'];
 
@@ -165,7 +169,7 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: sectionNames,
+                labels: displayNames,
                 datasets: datasets
             },
             options: {
@@ -230,6 +234,7 @@
         const colors = getThemeColors();
         const sections = chartData.section_scores || {};
         const sectionNames = Object.keys(sections);
+        const sectionDisplayNames = chartData.section_display_names || {};
 
         if (sectionNames.length === 0) return;
 
@@ -248,7 +253,7 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: gaps.map(g => g.section),
+                labels: gaps.map(g => sectionDisplayNames[g.section] || g.section),
                 datasets: [
                     {
                         label: 'Self',

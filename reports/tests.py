@@ -1,12 +1,270 @@
 from unittest.mock import patch
 
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import connection
 from django.test import RequestFactory, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
+from django.urls import reverse
 from core.models import Organization
 from accounts.models import UserProfile, Reviewee
-from questionnaires.models import Questionnaire, QuestionSection, Question
+from questionnaires.models import (
+    Questionnaire,
+    QuestionnaireTranslation,
+    QuestionSection,
+    QuestionSectionTranslation,
+    Question,
+    QuestionTranslation,
+)
 from reviews.models import ReviewCycle, ReviewerToken, Response
+from .models import Report
 from .services import generate_report, apply_display_anonymization
+
+
+class MultilingualReportSnapshotTestCase(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='Snapshot Org')
+        self.user = User.objects.create_user(username='snapshot-admin')
+        UserProfile.objects.create(user=self.user, organization=self.organization)
+        self.reviewee = Reviewee.objects.create(
+            organization=self.organization,
+            name='Snapshot Reviewee',
+            email='snapshot@example.com',
+        )
+        self.questionnaire = Questionnaire.objects.create(
+            organization=self.organization,
+            name='Leadership Review',
+            description='Source questionnaire description',
+            source_language='en-us',
+        )
+        self.section = QuestionSection.objects.create(
+            questionnaire=self.questionnaire,
+            title='Communication',
+            description='Source section description',
+            order=1,
+        )
+        self.question = Question.objects.create(
+            section=self.section,
+            question_text='How clearly does this person communicate?',
+            question_type='single_choice',
+            config={
+                'choices': ['Clearly', 'Sometimes'],
+                'weights': [2, 1],
+                'scoring_enabled': True,
+            },
+            order=1,
+        )
+        self.cycle = ReviewCycle.objects.create(
+            reviewee=self.reviewee,
+            questionnaire=self.questionnaire,
+            created_by=self.user,
+        )
+        QuestionnaireTranslation.objects.create(
+            questionnaire=self.questionnaire,
+            language_code='fr',
+            name='Évaluation du leadership',
+        )
+        QuestionSectionTranslation.objects.create(
+            section=self.section,
+            language_code='fr',
+            title='Communication',
+            description='Description traduite',
+        )
+        self.question_translation = QuestionTranslation.objects.create(
+            question=self.question,
+            language_code='fr',
+            question_text='Cette personne communique-t-elle clairement ?',
+            translated_config={'choices': ['Clairement', 'Parfois']},
+        )
+        token = ReviewerToken.objects.create(cycle=self.cycle, category='self')
+        Response.objects.create(
+            cycle=self.cycle,
+            token=token,
+            question=self.question,
+            category='self',
+            answer_data={'value': 'Clearly'},
+        )
+
+    def test_generated_report_freezes_translated_content_and_canonical_analytics(self):
+        report = generate_report(self.cycle, language_code='FR')
+
+        self.assertEqual(report.language_code, 'fr')
+        self.assertEqual(report.report_data['questionnaire_name'], 'Évaluation du leadership')
+        self.assertEqual(
+            report.report_data['questionnaire_description'],
+            'Source questionnaire description',
+        )
+        section_data = report.report_data['by_section'][str(self.section.id)]
+        self.assertEqual(section_data['title'], 'Communication')
+        self.assertEqual(section_data['display_title'], 'Communication')
+        self.assertEqual(section_data['description'], 'Description traduite')
+        question_data = section_data['questions'][str(self.question.id)]
+        self.assertEqual(
+            question_data['question_text'],
+            'Cette personne communique-t-elle clairement ?',
+        )
+        self.assertEqual(question_data['question_config']['choices'], ['Clearly', 'Sometimes'])
+        self.assertEqual(question_data['display_config']['choices'], ['Clairement', 'Parfois'])
+        self.assertEqual(question_data['display_labels']['Clearly'], 'Clairement')
+        self.assertEqual(
+            question_data['by_category']['self']['distribution'],
+            {'Clearly': 1},
+        )
+        self.assertEqual(question_data['by_category']['self']['avg'], 2)
+        question_html = render_to_string(
+            'reports/_question_response.html',
+            {'question_data': question_data},
+        )
+        self.assertIn('Cette personne communique-t-elle clairement ?', question_html)
+        self.assertIn('Clairement', question_html)
+        report_header = render_to_string(
+            'reports/report_base.html',
+            {
+                'report': report,
+                'cycle': self.cycle,
+                'summary': {'total_responses': 1},
+                'is_admin_view': True,
+                'report_language_options': [{'code': 'fr', 'label': 'French'}],
+            },
+        )
+        self.assertIn('Évaluation du leadership', report_header)
+        self.assertNotIn('Leadership Review', report_header)
+
+    def test_existing_report_is_stable_until_explicit_regeneration(self):
+        report = generate_report(self.cycle, language_code='fr')
+        original_questionnaire_name = report.report_data['questionnaire_name']
+        original_question_text = report.report_data['by_section'][str(self.section.id)][
+            'questions'
+        ][str(self.question.id)]['question_text']
+
+        QuestionnaireTranslation.objects.filter(questionnaire=self.questionnaire).update(
+            name='Nom modifié'
+        )
+        self.question_translation.question_text = 'Texte modifié'
+        self.question_translation.save()
+
+        report.refresh_from_db()
+        self.assertEqual(report.report_data['questionnaire_name'], original_questionnaire_name)
+        self.assertEqual(
+            report.report_data['by_section'][str(self.section.id)]['questions'][
+                str(self.question.id)
+            ]['question_text'],
+            original_question_text,
+        )
+
+        regenerated = generate_report(self.cycle, language_code='fr')
+        self.assertEqual(regenerated.report_data['questionnaire_name'], 'Nom modifié')
+        self.assertEqual(
+            regenerated.report_data['by_section'][str(self.section.id)]['questions'][
+                str(self.question.id)
+            ]['question_text'],
+            'Texte modifié',
+        )
+
+    def test_report_view_uses_only_frozen_questionnaire_content(self):
+        report = generate_report(self.cycle, language_code='fr')
+        self.cycle.status = 'completed'
+        self.cycle.save(update_fields=['status'])
+
+        QuestionnaireTranslation.objects.filter(
+            questionnaire=self.questionnaire
+        ).update(name='Nom actualisé')
+        QuestionSectionTranslation.objects.filter(section=self.section).update(
+            title='Section actualisée',
+        )
+        QuestionTranslation.objects.filter(question=self.question).update(
+            question_text='Question actualisée',
+            translated_config={'choices': ['Option actualisée', 'Autre option']},
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(
+                reverse(
+                    'reports:reviewee_report',
+                    kwargs={'access_token': report.access_token},
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cette personne communique-t-elle clairement ?')
+        self.assertContains(response, 'Clairement')
+        self.assertNotContains(response, 'Question actualisée')
+        self.assertNotContains(response, 'Option actualisée')
+        translation_tables = (
+            'questionnaires_questionnairetranslation',
+            'questionnaires_questionsectiontranslation',
+            'questionnaires_questiontranslation',
+        )
+        self.assertFalse(
+            any(
+                table in query['sql'].lower()
+                for query in queries.captured_queries
+                for table in translation_tables
+            ),
+            'Viewing a frozen report must not query current questionnaire translations.',
+        )
+
+    def test_interface_language_does_not_change_frozen_report_language_or_content(self):
+        report = generate_report(self.cycle, language_code='fr')
+        self.cycle.status = 'completed'
+        self.cycle.save(update_fields=['status'])
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = 'it'
+
+        response = self.client.get(
+            reverse(
+                'reports:reviewee_report',
+                kwargs={'access_token': report.access_token},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.wsgi_request.LANGUAGE_CODE, 'it')
+        report.refresh_from_db()
+        self.assertEqual(report.language_code, 'fr')
+        self.assertEqual(
+            report.report_data['by_section'][str(self.section.id)]['questions'][
+                str(self.question.id)
+            ]['question_text'],
+            'Cette personne communique-t-elle clairement ?',
+        )
+        self.assertContains(response, 'Cette personne communique-t-elle clairement ?')
+        self.assertNotContains(response, 'How clearly does this person communicate?')
+
+    def test_explicit_unavailable_language_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            generate_report(self.cycle, language_code='de')
+
+    def test_implicit_report_language_uses_source_language(self):
+        self.questionnaire.source_language = 'fr'
+        self.questionnaire.save()
+        report = generate_report(self.cycle)
+        self.assertEqual(report.language_code, 'fr')
+
+    def test_export_and_legacy_import_preserve_source_language_fallback(self):
+        from accounts.import_service import import_reports
+        from accounts.services import export_organization_data
+
+        report = generate_report(self.cycle, language_code='fr')
+        exported = export_organization_data(self.organization)
+        self.assertEqual(exported['reports'][0]['language_code'], 'fr')
+
+        imported = import_reports(
+            self.organization,
+            [{
+                'reviewee': self.reviewee.name,
+                'questionnaire_name': self.questionnaire.name,
+                'report_data': {'legacy_snapshot': True},
+            }],
+            {self.questionnaire.name: self.questionnaire},
+            conflict_resolution='overwrite',
+            imported_cycles=[self.cycle],
+        )
+        self.assertEqual(imported['created'], 1)
+        imported_report = Report.objects.get(cycle=self.cycle)
+        self.assertEqual(imported_report.language_code, 'en-us')
+        self.assertEqual(imported_report.report_data, {'legacy_snapshot': True})
 
 
 class AnonymizationArchitectureTestCase(TestCase):

@@ -1,0 +1,14 @@
+{% load i18n %}
+<form method="post" action="{% url 'set_language' %}" class="nav-language-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <svg class="nav-language-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    </svg>
+    <select id="interface-language" name="language" aria-label="{% translate 'Blik interface language' %}" onchange="this.form.submit()">
+        {% for language_code, language_name in LANGUAGES %}
+        <option value="{{ language_code }}" {% if LANGUAGE_CODE == language_code %}selected{% endif %}>{{ language_name }}</option>
+        {% endfor %}
+    </select>
+</form>

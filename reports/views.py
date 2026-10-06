@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from accounts.permissions import can_view_all_reports
 from reviews.models import ReviewCycle
@@ -69,6 +71,10 @@ def view_report(request, cycle_uuid):
         'questionnaire': cycle.questionnaire,
         'is_admin_view': True,
     }
+    from questionnaires.translations import available_questionnaire_language_options
+    context['report_language_options'] = available_questionnaire_language_options(
+        cycle.questionnaire
+    )
 
     return render(request, 'reports/view_report.html', context)
 
@@ -77,7 +83,18 @@ def view_report(request, cycle_uuid):
 def regenerate_report(request, cycle_uuid):
     """Regenerate report for a review cycle"""
     cycle = get_cycle_or_404(request, cycle_uuid)
-    generate_report(cycle)
+    try:
+        language_code = request.POST.get('language_code')
+        if language_code is None:
+            language_code = request.GET.get('language_code')
+        if language_code is None:
+            language_code = Report.objects.filter(cycle=cycle).values_list(
+                'language_code', flat=True
+            ).first()
+        generate_report(cycle, language_code=language_code)
+    except ValidationError:
+        messages.error(request, 'Choose a supported language available for this questionnaire.')
+        return redirect('reports:view_report', cycle_uuid=cycle.uuid)
 
     return redirect('reports:view_report', cycle_uuid=cycle.uuid)
 

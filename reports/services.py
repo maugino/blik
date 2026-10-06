@@ -1,4 +1,5 @@
-from django.db.models import Avg, Count
+from django.core.exceptions import ValidationError
+from django.db.models import Avg, Count, Prefetch
 from collections import defaultdict
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -7,6 +8,14 @@ from core.email import send_email
 from .models import Report
 from reviews.models import Response, ReviewCycle
 from core.models import Organization
+from core.languages import normalize_language_code
+from questionnaires.models import (
+    Questionnaire,
+    QuestionnaireTranslation,
+    QuestionSectionTranslation,
+    QuestionTranslation,
+)
+from questionnaires.translations import available_questionnaire_language_options
 from statistics import mean, stdev, median
 import copy
 
@@ -488,10 +497,33 @@ def _calculate_chart_data(report_data, cycle):
     return chart_data
 
 
-def generate_report(cycle):
-    """Generate aggregated report for a review cycle"""
+def generate_report(cycle, language_code=None):
+    """Generate a report with questionnaire text frozen in the selected language."""
 
-    questionnaire = cycle.questionnaire
+    questionnaire = Questionnaire.objects.get(pk=cycle.questionnaire_id)
+    source_language = normalize_language_code(questionnaire.source_language)
+    if not source_language:
+        raise ValidationError({'language_code': 'The questionnaire source language is invalid.'})
+
+    if language_code is None:
+        language_code = source_language
+    else:
+        language_code = normalize_language_code(language_code)
+        available_languages = {
+            option['code']
+            for option in available_questionnaire_language_options(questionnaire)
+        }
+        if not language_code or language_code not in available_languages:
+            raise ValidationError({
+                'language_code': 'Choose a supported language available for this questionnaire.'
+            })
+
+    questionnaire = Questionnaire.objects.prefetch_related(
+        Prefetch(
+            'translations',
+            queryset=QuestionnaireTranslation.objects.filter(language_code=language_code),
+        ),
+    ).get(pk=cycle.questionnaire_id)
 
     # Get organization's anonymity threshold
     organization = cycle.organization
@@ -500,15 +532,28 @@ def generate_report(cycle):
     # Get all responses for this cycle
     responses = Response.objects.filter(cycle=cycle).select_related(
         'question', 'question__section'
+    ).prefetch_related(
+        Prefetch(
+            'question__translations',
+            queryset=QuestionTranslation.objects.filter(language_code=language_code),
+        ),
+        Prefetch(
+            'question__section__translations',
+            queryset=QuestionSectionTranslation.objects.filter(language_code=language_code),
+        ),
     )
 
     # Group responses by section and question
     data_by_section = defaultdict(lambda: {
         'title': '',
+        'display_title': '',
+        'display_description': '',
         'questions': defaultdict(lambda: {
             'question_text': '',
+            'display_question_text': '',
             'question_type': '',
             'question_config': {},
+            'display_config': {},
             'by_category': defaultdict(lambda: {
                 'responses': [],
                 'count': 0,
@@ -523,12 +568,34 @@ def generate_report(cycle):
 
         # Set section title
         data_by_section[section.id]['title'] = section.title
+        data_by_section[section.id]['display_title'] = section.resolve_title(language_code)
+        data_by_section[section.id]['display_description'] = section.resolve_description(language_code)
 
         # Set question details
         question_data = data_by_section[section.id]['questions'][question.id]
         question_data['question_text'] = question.question_text
+        question_data['display_question_text'] = question.resolve_question_text(language_code)
         question_data['question_type'] = question.question_type
         question_data['question_config'] = question.config  # Store config for weight calculations
+        question_data['display_config'] = question.resolve_config(language_code)
+        canonical_config = question.config or {}
+        display_config = question_data['display_config']
+        if question.question_type == 'rating':
+            question_data['display_labels'] = display_config.get('labels', {})
+        elif question.question_type == 'likert':
+            canonical_options = canonical_config.get('scale', [])
+            question_data['display_labels'] = dict(zip(
+                canonical_options if isinstance(canonical_options, list) else [],
+                display_config.get('scale', []),
+            ))
+        elif question.question_type in {'single_choice', 'multiple_choice'}:
+            canonical_options = canonical_config.get('choices', [])
+            question_data['display_labels'] = dict(zip(
+                canonical_options if isinstance(canonical_options, list) else [],
+                display_config.get('choices', []),
+            ))
+        else:
+            question_data['display_labels'] = {}
 
         # Add response to category
         category_data = question_data['by_category'][response.category]
@@ -538,14 +605,24 @@ def generate_report(cycle):
     # Calculate averages and apply anonymity threshold
     report_data = {
         'by_section': {},
-        'questionnaire_id': questionnaire.id
+        'questionnaire_id': questionnaire.id,
+        'questionnaire_name': questionnaire.resolve_name(language_code),
+        'questionnaire_description': questionnaire.resolve_description(language_code),
+        'language_code': language_code,
+        'section_display_names': {},
     }
 
     for section_id, section_data in data_by_section.items():
         report_section = {
             'title': section_data['title'],
+            'display_title': section_data['display_title'],
+            'description': section_data['display_description'],
             'questions': {}
         }
+        report_data['section_display_names'].setdefault(
+            section_data['title'],
+            section_data['display_title'],
+        )
 
         for question_id, question_data in section_data['questions'].items():
             # Ensure 'self' category is always first in output
@@ -567,9 +644,12 @@ def generate_report(cycle):
             present_categories.extend([cat for cat in ordered_categories.keys() if cat not in category_order])
 
             report_question = {
-                'question_text': question_data['question_text'],
+                'question_text': question_data['display_question_text'],
+                'canonical_question_text': question_data['question_text'],
                 'question_type': question_data['question_type'],
                 'question_config': question_data['question_config'],  # Include config for labels, scales, etc.
+                'display_config': question_data['display_config'],
+                'display_labels': question_data['display_labels'],
                 'category_order': present_categories,  # Explicit ordering
                 'by_category': {}
             }
@@ -684,6 +764,7 @@ def generate_report(cycle):
 
     # Generate chart data
     chart_data = _calculate_chart_data(report_data, cycle)
+    chart_data['section_display_names'] = report_data['section_display_names']
     report_data['charts'] = chart_data
 
     # Add cycle-over-cycle comparison if previous cycle exists
@@ -756,6 +837,7 @@ def generate_report(cycle):
         cycle=cycle,
         defaults={
             'report_data': report_data,
+            'language_code': language_code,
             'available': True,
             'access_token': access_token
         }

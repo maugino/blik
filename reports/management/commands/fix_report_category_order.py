@@ -52,7 +52,7 @@ class Command(BaseCommand):
         for report in reports_to_fix:
             try:
                 self.stdout.write(f'Regenerating report {report.id} (Cycle {report.cycle.id})...', ending='')
-                generate_report(report.cycle)
+                generate_report(report.cycle, language_code=report.language_code)
                 success_count += 1
                 self.stdout.write(self.style.SUCCESS(' ✓'))
             except Exception as e:

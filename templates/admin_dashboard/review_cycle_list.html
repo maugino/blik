@@ -1,14 +1,15 @@
 {% extends "admin_dashboard/base.html" %}
+{% load i18n %}
 
 {% block title %}Review Cycles{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>Review Cycles</h1>
-        <p>Manage 360-degree feedback review cycles</p>
+        <h1>{% translate "Review Cycles" %}</h1>
+        <p>{% translate "Manage 360-degree feedback review cycles" %}</p>
     </div>
-    <a href="{% url 'review_cycle_create' %}" class="btn btn-primary">Create Review Cycle</a>
+    <a href="{% url 'review_cycle_create' %}" class="btn btn-primary">{% translate "Create Review Cycle" %}</a>
 </div>
 
 {% if cycles_with_latest %}
@@ -18,13 +19,13 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Reviewee</th>
-                    <th>Questionnaire</th>
-                    <th>Status</th>
-                    <th>Progress</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                    <th style="width: 50px; text-align: center;" title="Show API Identifiers">
+                    <th>{% translate "Reviewee" %}</th>
+                    <th>{% translate "Questionnaire" %}</th>
+                    <th>{% translate "Status" %}</th>
+                    <th>{% translate "Progress" %}</th>
+                    <th>{% translate "Created" %}</th>
+                    <th>{% translate "Actions" %}</th>
+                    <th style="width: 50px; text-align: center;" title="{% translate 'Show API Identifiers' %}">
                         <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
                     </th>
                 </tr>
@@ -42,14 +43,14 @@
                     </td>
                     <td>
                         {% if item.cycle.status == 'active' %}
-                        <span class="badge badge-warning">Active</span>
+                        <span class="badge badge-warning">{% translate "Active" %}</span>
                         {% else %}
-                        <span class="badge badge-success">Completed</span>
+                        <span class="badge badge-success">{% translate "Completed" %}</span>
                         {% endif %}
                     </td>
                     <td>
                         <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.25rem;">
-                            {{ item.cycle.completed_count }} / {{ item.cycle.token_count }} responses
+                            {% blocktranslate with completed=item.cycle.completed_count total=item.cycle.token_count %}{{ completed }} / {{ total }} responses{% endblocktranslate %}
                         </div>
                         <div class="progress">
                             <div class="progress-bar" style="width: {% widthratio item.cycle.completed_count item.cycle.token_count 100 %}%;"></div>
@@ -77,7 +78,7 @@
                                     {% endfor %}
                                     {% endif %}
                                     <button type="submit" class="btn btn-sm btn-primary" style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: 1px solid rgba(255,255,255,0.3);">
-                                        New Cycle
+                                        {% translate "New Cycle" %}
                                     </button>
                                 </form>
 
@@ -87,7 +88,7 @@
                                     type="button"
                                     data-toggle="cycle-{{ item.cycle.id }}"
                                     style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0.25rem 0.5rem; border-left: 1px solid rgba(255,255,255,0.3);"
-                                    title="Select different questionnaire"
+                                    title="{% translate 'Select a different questionnaire' %}"
                                 >
                                     ▾
                                 </button>
@@ -96,11 +97,11 @@
                                 <div class="dropdown-menu" id="cycle-{{ item.cycle.id }}" style="display: none; position: fixed; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); min-width: 300px; z-index: 9999; margin-top: 0.25rem;">
                                     <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); background: var(--bg-light);">
                                         <div style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary); margin-bottom: 0.25rem;">
-                                            Select Questionnaire
+                                            {% translate "Select Questionnaire" %}
                                         </div>
                                         <div style="font-size: 0.75rem; color: var(--text-secondary);">
                                             <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                ✓ = Quick create (button action)
+                                                {% translate "✓ = Quick create (button action)" %}
                                             </span>
                                         </div>
                                     </div>
@@ -115,7 +116,7 @@
                                                 <span style="flex: 1; padding-right: 0.5rem; font-weight: 500;">{{ q.name }}</span>
                                                 <span class="badge badge-primary" style="font-size: 0.75rem; background: var(--primary); color: white; display: inline-flex; align-items: center; gap: 0.25rem;">
                                                     <span>✓</span>
-                                                    <span>Quick create</span>
+                                                    <span>{% translate "Quick create" %}</span>
                                                 </span>
                                             </button>
                                         </form>
@@ -127,7 +128,7 @@
                                             <button type="submit" class="dropdown-item" style="width: 100%; text-align: left; padding: 0.625rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; color: var(--text-primary);">
                                                 <span style="flex: 1; padding-right: 0.5rem;">{{ q.name }}</span>
                                                 {% if q.is_default %}
-                                                <span class="badge badge-secondary" style="font-size: 0.75rem;">Default</span>
+                                                <span class="badge badge-secondary" style="font-size: 0.75rem;">{% translate "Default" %}</span>
                                                 {% endif %}
                                             </button>
                                         </form>
@@ -136,16 +137,16 @@
                                 </div>
                             </div>
 
-                            <a href="{% url 'review_cycle_detail' item.cycle.uuid %}" class="btn btn-sm btn-secondary">View</a>
+                            <a href="{% url 'review_cycle_detail' item.cycle.uuid %}" class="btn btn-sm btn-secondary">{% translate "View" %}</a>
                         </div>
                         {% else %}
-                        <a href="{% url 'review_cycle_detail' item.cycle.uuid %}" class="btn btn-sm btn-secondary">View</a>
+                        <a href="{% url 'review_cycle_detail' item.cycle.uuid %}" class="btn btn-sm btn-secondary">{% translate "View" %}</a>
                         {% endif %}
                     </td>
                     <td style="text-align: center;">
                         <button onclick="showUuidModal('{{ item.cycle.uuid }}', '{{ item.cycle.reviewee.uuid }}', '{{ item.cycle.reviewee.name|escapejs }}')"
                                 style="background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0.25rem; display: inline-flex; align-items: center; justify-content: center;"
-                                title="Show API Identifiers">
+                                title="{% translate 'Show API Identifiers' %}">
                             <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </button>
                     </td>
@@ -159,7 +160,7 @@
     {% if cycles.has_other_pages %}
     <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="color: var(--text-secondary); font-size: 0.875rem;">Items per page:</span>
+            <span style="color: var(--text-secondary); font-size: 0.875rem;">{% translate "Items per page:" %}</span>
             <select onchange="window.location.href='?per_page=' + this.value" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary);">
                 <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
                 <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
@@ -168,17 +169,17 @@
         </div>
         <div class="pagination">
             {% if cycles.has_previous %}
-                <a href="?page=1&per_page={{ per_page }}" class="pagination-link">First</a>
-                <a href="?page={{ cycles.previous_page_number }}&per_page={{ per_page }}" class="pagination-link">Previous</a>
+                <a href="?page=1&per_page={{ per_page }}" class="pagination-link">{% translate "First" %}</a>
+                <a href="?page={{ cycles.previous_page_number }}&per_page={{ per_page }}" class="pagination-link">{% translate "Previous" %}</a>
             {% endif %}
 
             <span class="pagination-info">
-                Page {{ cycles.number }} of {{ cycles.paginator.num_pages }}
+                {% blocktranslate with number=cycles.number pages=cycles.paginator.num_pages %}Page {{ number }} of {{ pages }}{% endblocktranslate %}
             </span>
 
             {% if cycles.has_next %}
-                <a href="?page={{ cycles.next_page_number }}&per_page={{ per_page }}" class="pagination-link">Next</a>
-                <a href="?page={{ cycles.paginator.num_pages }}&per_page={{ per_page }}" class="pagination-link">Last</a>
+                <a href="?page={{ cycles.next_page_number }}&per_page={{ per_page }}" class="pagination-link">{% translate "Next" %}</a>
+                <a href="?page={{ cycles.paginator.num_pages }}&per_page={{ per_page }}" class="pagination-link">{% translate "Last" %}</a>
             {% endif %}
         </div>
     </div>
@@ -188,9 +189,9 @@
 <div class="card">
     <div class="card-body">
         <div class="empty-state">
-            <h3 style="margin-bottom: 0.5rem;">No review cycles yet</h3>
-            <p style="margin-bottom: 1.5rem;">Create your first review cycle to start collecting feedback</p>
-            <a href="{% url 'review_cycle_create' %}" class="btn btn-primary">Create Review Cycle</a>
+            <h3 style="margin-bottom: 0.5rem;">{% translate "No review cycles yet" %}</h3>
+            <p style="margin-bottom: 1.5rem;">{% translate "Create your first review cycle to start collecting feedback" %}</p>
+            <a href="{% url 'review_cycle_create' %}" class="btn btn-primary">{% translate "Create Review Cycle" %}</a>
         </div>
     </div>
 </div>

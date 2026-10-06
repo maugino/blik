@@ -7,7 +7,7 @@ from accounts.models import Organization, User, Reviewee, UserProfile
 from accounts.permissions import assign_organization_admin
 from api.models import APIToken
 from reviews.models import ReviewCycle, ReviewerToken
-from questionnaires.models import Questionnaire, QuestionSection, Question
+from questionnaires.models import Questionnaire, QuestionnaireTranslation, QuestionSection, Question
 from reports.models import Report
 
 
@@ -496,7 +496,7 @@ class ReportViewSetTest(TestCase):
             email='reviewee@example.com'
         )
 
-        questionnaire = Questionnaire.objects.create(
+        self.questionnaire = Questionnaire.objects.create(
             organization=self.org,
             name='Test Questionnaire',
             is_active=True
@@ -504,7 +504,7 @@ class ReportViewSetTest(TestCase):
 
         self.cycle = ReviewCycle.objects.create(
             reviewee=reviewee,
-            questionnaire=questionnaire,
+            questionnaire=self.questionnaire,
             created_by=self.user
         )
 
@@ -540,3 +540,32 @@ class ReportViewSetTest(TestCase):
         # access_token should be in detail response
         self.assertIn('access_token', response.data)
         self.assertEqual(response.data['access_token'], self.report.access_token)
+
+    def test_regenerate_accepts_and_returns_report_language(self):
+        QuestionnaireTranslation.objects.create(
+            questionnaire=self.questionnaire,
+            language_code='fr',
+            name='Questionnaire français',
+        )
+
+        response = self.client.post(
+            f'/api/v1/reports/{self.report.uuid}/regenerate/',
+            {'language_code': 'fr'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['language_code'], 'fr')
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.language_code, 'fr')
+        self.assertEqual(self.report.report_data['questionnaire_name'], 'Questionnaire français')
+
+    def test_regenerate_rejects_unavailable_language(self):
+        response = self.client.post(
+            f'/api/v1/reports/{self.report.uuid}/regenerate/',
+            {'language_code': 'de'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('language_code', response.data)

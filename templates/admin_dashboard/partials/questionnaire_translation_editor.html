@@ -1,0 +1,117 @@
+{% load i18n questionnaire_translation_tags %}
+<div class="card mb-2">
+    <div class="card-body">
+        <h2 class="card-title">{% blocktranslate with language=selected_language_label %}Translating into {{ language }}{% endblocktranslate %}</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 0;">
+            {% blocktranslate with language=source_language_label %}Source content remains visible for reference. Switch to {{ language }} (Primary) to change questionnaire structure.{% endblocktranslate %}
+        </p>
+    </div>
+</div>
+
+{% for entry in translation_sections %}
+{% with section=entry.section section_translation=entry.translation %}
+<section class="card mb-2" data-translation-section-id="{{ section.id }}">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">{{ section.title }}</h2>
+            {% if section.description %}<p style="margin: 0.25rem 0 0; color: var(--text-secondary);">{{ section.description }}</p>{% endif %}
+            <small style="color: var(--text-secondary);">{% translate "SOURCE" %} · {{ source_language_label }}</small>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="card mb-2" style="padding: 1rem;">
+            <div class="form-group">
+                <label for="section_title_{{ section.id }}" class="form-label">{{ selected_language_label }} · {% translate "Section title" %}</label>
+                <input id="section_title_{{ section.id }}" data-translation-path="sections.{{ section.id }}.title" data-translation-kind="section" data-translation-id="{{ section.id }}" data-translation-field="title" class="form-control {% if not section_translation.title %}translation-missing{% endif %}" value="{{ section_translation.title }}">
+                <small class="translation-field-error" data-translation-error-for="sections.{{ section.id }}.title" hidden></small>
+                {% if not section_translation.title %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+            </div>
+            {% if section.description %}
+            <div class="form-group">
+                <label for="section_description_translation_{{ section.id }}" class="form-label">{% translate "SOURCE" %} · {{ section.description }}</label>
+                <label for="section_description_translation_{{ section.id }}" class="form-label">{{ selected_language_label }} · {% translate "Section description" %}</label>
+                <textarea id="section_description_translation_{{ section.id }}" data-translation-path="sections.{{ section.id }}.description" data-translation-kind="section" data-translation-id="{{ section.id }}" data-translation-field="description" class="form-control {% if not section_translation.description %}translation-missing{% endif %}" rows="2">{{ section_translation.description }}</textarea>
+                <small class="translation-field-error" data-translation-error-for="sections.{{ section.id }}.description" hidden></small>
+                {% if not section_translation.description %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% for question_entry in entry.questions %}
+        {% with question=question_entry.question question_translation=question_entry.translation %}
+        <div class="card mb-2 translation-question" style="padding: 1rem;" data-translation-question-id="{{ question.id }}">
+            <div class="form-group">
+                <label class="form-label">{% translate "SOURCE" %} · {{ source_language_label }}</label>
+                <div class="card"><div class="card-body">{{ question.question_text }}</div></div>
+                <label for="question_translation_{{ question.id }}" class="form-label" style="margin-top: 0.75rem;">{{ selected_language_label }} · {% translate "Question" %}</label>
+                <textarea id="question_translation_{{ question.id }}" data-translation-path="questions.{{ question.id }}.question_text" data-translation-kind="question" data-translation-id="{{ question.id }}" data-translation-field="question_text" class="form-control {% if question.question_text and not question_translation.question_text %}translation-missing{% endif %}" rows="2">{{ question_translation.question_text }}</textarea>
+                <small class="translation-field-error" data-translation-error-for="questions.{{ question.id }}.question_text" hidden></small>
+                {% if question.question_text and not question_translation.question_text %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+            </div>
+
+            {% if question.question_type == 'rating' and question.config.labels %}
+            <div class="form-group">
+                <h3 style="font-size: 1rem;">{% translate "Rating labels" %}</h3>
+                {% for key, source_label in question.config.labels.items %}
+                <div style="display: grid; grid-template-columns: minmax(7rem, 1fr) minmax(10rem, 2fr); gap: 0.75rem; align-items: center; margin-bottom: 0.75rem;">
+                    <label for="rating_{{ question.id }}_{{ forloop.counter0 }}">{{ key }} · {{ source_label }}</label>
+                    <input id="rating_{{ question.id }}_{{ forloop.counter0 }}" data-translation-path="questions.{{ question.id }}.translated_config.labels.{{ key }}" data-translation-kind="question-config" data-translation-id="{{ question.id }}" data-config-key="labels" data-label-key="{{ key }}" class="form-control {% if not question_translation.translated_config.labels|get_item:key %}translation-missing{% endif %}" value="{{ question_translation.translated_config.labels|get_item:key }}">
+                </div>
+                <small class="translation-field-error" data-translation-error-for="questions.{{ question.id }}.translated_config.labels.{{ key }}" hidden></small>
+                {% if not question_translation.translated_config.labels|get_item:key %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+                {% endfor %}
+            </div>
+            {% elif question.question_type == 'likert' %}
+            <div class="form-group">
+                <h3 style="font-size: 1rem;">{% translate "Likert labels" %}</h3>
+                {% for source_label in question.config.scale %}
+                <div style="display: grid; grid-template-columns: minmax(7rem, 1fr) minmax(10rem, 2fr); gap: 0.75rem; align-items: center; margin-bottom: 0.75rem;">
+                    <label for="option_{{ question.id }}_{{ forloop.counter0 }}">{{ source_label }}</label>
+                    <input id="option_{{ question.id }}_{{ forloop.counter0 }}" data-translation-path="questions.{{ question.id }}.translated_config.scale.{{ forloop.counter0 }}" data-translation-kind="question-config" data-translation-id="{{ question.id }}" data-config-key="scale" data-config-index="{{ forloop.counter0 }}" class="form-control {% if not question_translation.translated_config.scale|get_item:forloop.counter0 %}translation-missing{% endif %}" value="{{ question_translation.translated_config.scale|get_item:forloop.counter0 }}">
+                </div>
+                <small class="translation-field-error" data-translation-error-for="questions.{{ question.id }}.translated_config.scale.{{ forloop.counter0 }}" hidden></small>
+                {% if not question_translation.translated_config.scale|get_item:forloop.counter0 %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+                {% endfor %}
+            </div>
+            {% elif question.question_type == 'single_choice' or question.question_type == 'multiple_choice' %}
+            <div class="form-group">
+                <h3 style="font-size: 1rem;">{% translate "Choice labels" %}</h3>
+                {% for source_label in question.config.choices %}
+                <div style="display: grid; grid-template-columns: minmax(7rem, 1fr) minmax(10rem, 2fr); gap: 0.75rem; align-items: center; margin-bottom: 0.75rem;">
+                    <label for="option_{{ question.id }}_{{ forloop.counter0 }}">{{ source_label }}</label>
+                    <input id="option_{{ question.id }}_{{ forloop.counter0 }}" data-translation-path="questions.{{ question.id }}.translated_config.choices.{{ forloop.counter0 }}" data-translation-kind="question-config" data-translation-id="{{ question.id }}" data-config-key="choices" data-config-index="{{ forloop.counter0 }}" class="form-control {% if not question_translation.translated_config.choices|get_item:forloop.counter0 %}translation-missing{% endif %}" value="{{ question_translation.translated_config.choices|get_item:forloop.counter0 }}">
+                </div>
+                <small class="translation-field-error" data-translation-error-for="questions.{{ question.id }}.translated_config.choices.{{ forloop.counter0 }}" hidden></small>
+                {% if not question_translation.translated_config.choices|get_item:forloop.counter0 %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+                {% endfor %}
+            </div>
+            {% elif question.question_type == 'scale' %}
+            {% if question.config.min_label or question.config.max_label %}
+            <div class="form-group">
+                <h3 style="font-size: 1rem;">{% translate "Scale endpoint labels" %}</h3>
+                {% if question.config.min_label %}
+                <label for="min_label_{{ question.id }}" class="form-label">Minimum · {{ question.config.min_label }}</label>
+                <input id="min_label_{{ question.id }}" data-translation-path="questions.{{ question.id }}.translated_config.min_label" data-translation-kind="question-config" data-translation-id="{{ question.id }}" data-config-key="min_label" class="form-control {% if not question_translation.translated_config.min_label %}translation-missing{% endif %}" value="{{ question_translation.translated_config.min_label }}">
+                <small class="translation-field-error" data-translation-error-for="questions.{{ question.id }}.translated_config.min_label" hidden></small>
+                {% if not question_translation.translated_config.min_label %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+                {% endif %}
+                {% if question.config.max_label %}
+                <label for="max_label_{{ question.id }}" class="form-label" style="margin-top: 0.75rem;">Maximum · {{ question.config.max_label }}</label>
+                <input id="max_label_{{ question.id }}" data-translation-path="questions.{{ question.id }}.translated_config.max_label" data-translation-kind="question-config" data-translation-id="{{ question.id }}" data-config-key="max_label" class="form-control {% if not question_translation.translated_config.max_label %}translation-missing{% endif %}" value="{{ question_translation.translated_config.max_label }}">
+                <small class="translation-field-error" data-translation-error-for="questions.{{ question.id }}.translated_config.max_label" hidden></small>
+                {% if not question_translation.translated_config.max_label %}<small style="color: var(--danger);">{% translate "Translation missing" %}</small>{% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endwith %}
+        {% empty %}
+        <p style="color: var(--text-secondary);">{% translate "This section has no questions." %}</p>
+        {% endfor %}
+    </div>
+</section>
+{% endwith %}
+{% empty %}
+<div class="card"><div class="card-body">{% translate "There are no sections to translate yet." %}</div></div>
+{% endfor %}

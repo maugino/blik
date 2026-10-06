@@ -57,7 +57,7 @@
                 {% if is_admin_view %}
                 <div class="meta-item">
                     <span class="meta-label">Questionnaire</span>
-                    <span class="meta-value">{{ cycle.questionnaire.name }}</span>
+                    <span class="meta-value">{{ report.report_data.questionnaire_name|default:cycle.questionnaire.name }}</span>
                 </div>
                 {% endif %}
                 <div class="meta-item">
@@ -86,7 +86,16 @@
         {% if is_admin_view %}
         <div class="actions">
             <a href="{% url 'review_cycle_detail' cycle.uuid %}" class="btn btn-secondary">Back to Cycle</a>
-            <a href="{% url 'reports:regenerate_report' cycle.uuid %}" class="btn btn-primary">Regenerate Report</a>
+            <form method="post" action="{% url 'reports:regenerate_report' cycle.uuid %}">
+                {% csrf_token %}
+                <label for="report-language">Questionnaire content language</label>
+                <select id="report-language" name="language_code">
+                    {% for option in report_language_options %}
+                    <option value="{{ option.code }}" {% if report.language_code == option.code %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Regenerate Report</button>
+            </form>
         </div>
         {% endif %}
 
