@@ -90,7 +90,7 @@
         {% for strength in report.report_data.insights.strengths %}
         <li class="strength-item">
             <div style="flex: 1;">
-                <div class="area-name">{{ strength.area }}</div>
+                <div class="area-name">{{ report.report_data.section_display_names|get_item:strength.area|default:strength.area }}</div>
                 <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
                     Others' avg: <strong>{{ strength.others_avg }}/5.0</strong>
                     {% if strength.self_score %}
@@ -113,7 +113,7 @@
         <li class="development-item">
             <div style="flex: 1;">
                 <div>
-                    <span class="area-name">{{ area.area }}</span>
+                    <span class="area-name">{{ report.report_data.section_display_names|get_item:area.area|default:area.area }}</span>
                     <span class="priority-badge priority-{{ area.priority }}">{{ area.priority }} priority</span>
                 </div>
                 <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
@@ -163,7 +163,7 @@
         {% for section_name, categories in report.report_data.section_summary.items %}
         <div class="section-performance-card">
             <h3 class="section-performance-title">
-                {{ section_name }}
+                {{ report.report_data.section_display_names|get_item:section_name|default:section_name }}
                 {% if report.report_data.comparison.show_trends and report.report_data.comparison.section_trends %}
                     {% with trend=report.report_data.comparison.section_trends|get_item:section_name %}
                         {% if trend %}
@@ -254,7 +254,7 @@
 
 {% for section_id, section_data in display_data.by_section.items %}
 <div class="section-report">
-    <h2 class="section-title">{{ section_data.title }}</h2>
+    <h2 class="section-title">{{ section_data.display_title|default:section_data.title }}</h2>
 
     {% for question_id, question_data in section_data.questions.items %}
         {% include "reports/_question_response.html" with question_data=question_data %}

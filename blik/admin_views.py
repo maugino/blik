@@ -2111,6 +2111,7 @@ def bulk_send_invitations(request):
 def review_cycle_detail(request, cycle_uuid):
     """View details of a review cycle"""
     cycle = get_cycle_or_404(request, cycle_uuid)
+    from questionnaires.translations import available_questionnaire_language_options
 
     tokens = cycle.tokens.all().order_by('category', 'created_at')
 
@@ -2153,6 +2154,7 @@ def review_cycle_detail(request, cycle_uuid):
         'completion_rate': completion_rate,
         'claimed_completion_rate': claimed_completion_rate,
         'report_exists': report_exists,
+        'report_language_options': available_questionnaire_language_options(cycle.questionnaire),
     }
 
     return render(request, 'admin_dashboard/review_cycle_detail.html', context)
@@ -2166,12 +2168,15 @@ def generate_report_view(request, cycle_uuid):
     cycle = get_cycle_or_404(request, cycle_uuid)
 
     try:
-        report = generate_report(cycle)
+        report = generate_report(cycle, language_code=request.POST.get('language_code'))
 
         # Send notification email to reviewee
         email_stats = send_report_ready_notification(report, request)
 
-        success_msg = f'Report generated successfully for {cycle.reviewee.name}.'
+        success_msg = (
+            f'Report generated successfully for {cycle.reviewee.name} '
+            f'in {report.language_code}.'
+        )
         if email_stats['sent'] > 0:
             success_msg += ' Notification email sent.'
         if email_stats['errors']:

@@ -100,10 +100,20 @@
                 </button>
             </form>
             {% endif %}
-            <a href="{% url 'generate_report' cycle.uuid %}" class="btn btn-secondary" style="justify-content: center;">
+            <form method="post" action="{% url 'generate_report' cycle.uuid %}" style="margin: 0;">
+                {% csrf_token %}
+                <label for="report-language-existing" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Questionnaire content language</label>
+                <select id="report-language-existing" name="language_code" style="width: 100%; margin-bottom: 0.75rem;">
+                    {% for option in report_language_options %}
+                    <option value="{{ option.code }}" {% if report.language_code == option.code %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">Regenerating replaces the current report snapshot and language.</p>
+                <button type="submit" class="btn btn-secondary" style="width: 100%; justify-content: center;">
                 <svg style="width: 20px; height: 20px; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Regenerate Report
-            </a>
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -523,10 +533,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
             {% if report_exists %}
             <a href="{% url 'reports:view_report' cycle.uuid %}" class="btn btn-secondary">View Report (Admin)</a>
-            <a href="{% url 'generate_report' cycle.uuid %}" class="btn btn-secondary">Regenerate Report</a>
-            {% else %}
-            <a href="{% url 'generate_report' cycle.uuid %}" class="btn btn-secondary">Generate Report</a>
             {% endif %}
+            <form method="post" action="{% url 'generate_report' cycle.uuid %}" style="margin: 0;">
+                {% csrf_token %}
+                <label for="report-language-compact" style="display: block; margin-bottom: 0.5rem;">Questionnaire content language</label>
+                <select id="report-language-compact" name="language_code" style="width: 100%; margin-bottom: 0.75rem;">
+                    {% for option in report_language_options %}
+                    <option value="{{ option.code }}" {% if report and report.language_code == option.code %}selected{% elif not report and cycle.questionnaire.source_language == option.code %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+                {% if report_exists %}
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">Regeneration replaces the current report snapshot and language.</p>
+                <button type="submit" class="btn btn-secondary">Regenerate Report</button>
+                {% else %}
+                <button type="submit" class="btn btn-secondary">Generate Report</button>
+                {% endif %}
+            </form>
 
             {% if user.is_superuser %}
             <a href="/admin/reviews/reviewcycle/{{ cycle.id }}/change/" class="btn btn-secondary">

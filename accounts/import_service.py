@@ -660,6 +660,7 @@ def import_reports(organization, reports_data, questionnaire_map, conflict_resol
             Report.objects.create(
                 cycle=cycle,
                 report_data=report_data.get('report_data', {}),
+                language_code=report_data.get('language_code') or questionnaire.source_language,
                 available=True,
                 generated_at=generated_at or timezone.now(),
             )
