@@ -1,9 +1,12 @@
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.test import RequestFactory, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
+from django.urls import reverse
 from core.models import Organization
 from accounts.models import UserProfile, Reviewee
 from questionnaires.models import (
@@ -23,6 +26,7 @@ class MultilingualReportSnapshotTestCase(TestCase):
     def setUp(self):
         self.organization = Organization.objects.create(name='Snapshot Org')
         self.user = User.objects.create_user(username='snapshot-admin')
+        UserProfile.objects.create(user=self.user, organization=self.organization)
         self.reviewee = Reviewee.objects.create(
             organization=self.organization,
             name='Snapshot Reviewee',
@@ -156,6 +160,49 @@ class MultilingualReportSnapshotTestCase(TestCase):
                 str(self.question.id)
             ]['question_text'],
             'Texte modifié',
+        )
+
+    def test_report_view_uses_only_frozen_questionnaire_content(self):
+        report = generate_report(self.cycle, language_code='fr')
+        self.cycle.status = 'completed'
+        self.cycle.save(update_fields=['status'])
+
+        QuestionnaireTranslation.objects.filter(
+            questionnaire=self.questionnaire
+        ).update(name='Nom actualisé')
+        QuestionSectionTranslation.objects.filter(section=self.section).update(
+            title='Section actualisée',
+        )
+        QuestionTranslation.objects.filter(question=self.question).update(
+            question_text='Question actualisée',
+            translated_config={'choices': ['Option actualisée', 'Autre option']},
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(
+                reverse(
+                    'reports:reviewee_report',
+                    kwargs={'access_token': report.access_token},
+                )
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cette personne communique-t-elle clairement ?')
+        self.assertContains(response, 'Clairement')
+        self.assertNotContains(response, 'Question actualisée')
+        self.assertNotContains(response, 'Option actualisée')
+        translation_tables = (
+            'questionnaires_questionnairetranslation',
+            'questionnaires_questionsectiontranslation',
+            'questionnaires_questiontranslation',
+        )
+        self.assertFalse(
+            any(
+                table in query['sql'].lower()
+                for query in queries.captured_queries
+                for table in translation_tables
+            ),
+            'Viewing a frozen report must not query current questionnaire translations.',
         )
 
     def test_explicit_unavailable_language_is_rejected(self):
