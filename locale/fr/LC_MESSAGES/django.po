@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 11:30+0000\n"
+"POT-Creation-Date: 2026-10-06 14:39+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,25 +35,23 @@ msgid "This email address is already in use."
 msgstr "Cette adresse e-mail est déjà utilisée."
 
 #: accounts/forms.py:67
-#| msgid "Use your invited email address"
 msgid "Enter your email address"
 msgstr "Saisissez votre adresse e-mail"
 
-#: accounts/forms.py:76
+#: accounts/forms.py:76 templates/accounts/reset_password.html:28
 msgid "New Password"
 msgstr "Nouveau mot de passe"
 
 #: accounts/forms.py:79
-#| msgid "New Password"
 msgid "New password"
 msgstr "Nouveau mot de passe"
 
-#: accounts/forms.py:84
+#: accounts/forms.py:84 templates/accounts/register.html:47
+#: templates/accounts/reset_password.html:33
 msgid "Confirm Password"
 msgstr "Confirmer le mot de passe"
 
 #: accounts/forms.py:87
-#| msgid "Confirm Password"
 msgid "Confirm new password"
 msgstr "Confirmez le nouveau mot de passe"
 
@@ -70,7 +68,6 @@ msgid "Translations saved."
 msgstr "Traductions enregistrées."
 
 #: blik/admin_views.py:1489 blik/admin_views.py:1495
-#| msgid "Database connected successfully"
 msgid "Question added successfully."
 msgstr "Question ajoutée avec succès."
 
@@ -85,13 +82,75 @@ msgstr ""
 "seront utilisées."
 
 #: blik/admin_views.py:1609 blik/admin_views.py:1620
-#| msgid "Database connected successfully"
 msgid "Question updated successfully."
 msgstr "Question mise à jour avec succès."
 
 #: blik/admin_views.py:1626 blik/admin_views.py:1628
 msgid "Error updating question. Please try again."
 msgstr "Erreur lors de la mise à jour de la question. Veuillez réessayer."
+
+#: templates/accounts/forgot_password.html:4
+#: templates/accounts/forgot_password.html:12
+msgid "Forgot Password"
+msgstr "Mot de passe oublié"
+
+#: templates/accounts/forgot_password.html:13
+msgid "Enter your email to receive a password reset link"
+msgstr ""
+"Saisissez votre adresse e-mail pour recevoir un lien de réinitialisation du "
+"mot de passe"
+
+#: templates/accounts/forgot_password.html:28 templates/accounts/login.html:28
+#: templates/accounts/profile.html:153 templates/accounts/register.html:32
+#: templates/admin_dashboard/reviewee_form.html:38
+#: templates/admin_dashboard/reviewee_list.html:32
+#: templates/admin_dashboard/team.html:67
+#: templates/admin_dashboard/team.html:145
+#: templates/admin_dashboard/team.html:219
+msgid "Email"
+msgstr "E-mail"
+
+#: templates/accounts/forgot_password.html:32
+msgid "Send Reset Link"
+msgstr "Envoyer le lien de réinitialisation"
+
+#: templates/accounts/forgot_password.html:36
+#: templates/accounts/reset_password.html:45
+msgid "Back to Login"
+msgstr "Retour à la connexion"
+
+#: templates/accounts/login.html:4
+msgid "Login"
+msgstr "Connexion"
+
+#: templates/accounts/login.html:12
+msgid "Welcome Back"
+msgstr "Heureux de vous revoir"
+
+#: templates/accounts/login.html:13
+msgid "Sign in to your account"
+msgstr "Connectez-vous à votre compte"
+
+#: templates/accounts/login.html:33 templates/accounts/register.html:41
+#: templates/admin_dashboard/settings.html:313
+msgid "Password"
+msgstr "Mot de passe"
+
+#: templates/accounts/login.html:37
+msgid "Sign In"
+msgstr "Se connecter"
+
+#: templates/accounts/login.html:41
+msgid "Forgot your password?"
+msgstr "Vous avez oublié votre mot de passe ?"
+
+#: templates/accounts/login.html:46
+msgid "Don't have an account?"
+msgstr "Vous n’avez pas de compte ?"
+
+#: templates/accounts/login.html:46
+msgid "Create one"
+msgstr "Créer un compte"
 
 #: templates/accounts/profile.html:18
 #: templates/admin_dashboard/dashboard.html:18
@@ -204,15 +263,6 @@ msgstr "Prénom"
 msgid "Last Name"
 msgstr "Nom"
 
-#: templates/accounts/profile.html:153
-#: templates/admin_dashboard/reviewee_form.html:38
-#: templates/admin_dashboard/reviewee_list.html:32
-#: templates/admin_dashboard/team.html:67
-#: templates/admin_dashboard/team.html:145
-#: templates/admin_dashboard/team.html:219
-msgid "Email"
-msgstr "E-mail"
-
 #: templates/accounts/profile.html:161
 #: templates/admin_dashboard/settings.html:298
 msgid "Username"
@@ -320,12 +370,67 @@ msgstr ""
 "Les cycles d’évaluation apparaîtront ici lorsqu’ils seront créés pour votre "
 "adresse e-mail."
 
+#: templates/accounts/register.html:4
+msgid "Register"
+msgstr "Inscription"
+
+#: templates/accounts/register.html:12 templates/accounts/register.html:52
+msgid "Create Account"
+msgstr "Créer un compte"
+
+#: templates/accounts/register.html:14
+#, python-format
+msgid "Join %(organization_name)s"
+msgstr "Rejoindre %(organization_name)s"
+
+#: templates/accounts/register.html:16
+msgid "Create your account"
+msgstr "Créer votre compte"
+
+#: templates/accounts/register.html:37
+msgid "Use your invited email address"
+msgstr "Saisissez l’adresse e-mail indiquée dans votre invitation"
+
+#: templates/accounts/register.html:43
+msgid "At least 8 characters"
+msgstr "8 caractères minimum"
+
+#: templates/accounts/register.html:49
+msgid "Re-enter your password"
+msgstr "Saisissez à nouveau votre mot de passe"
+
+#: templates/accounts/register.html:56
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+#: templates/accounts/register.html:56
+msgid "Sign in"
+msgstr "Se connecter"
+
+#: templates/accounts/reset_password.html:4
+#: templates/accounts/reset_password.html:41
+msgid "Reset Password"
+msgstr "Réinitialiser le mot de passe"
+
+#: templates/accounts/reset_password.html:12
+msgid "Set New Password"
+msgstr "Définir un nouveau mot de passe"
+
+#: templates/accounts/reset_password.html:13
+msgid "Enter your new password below"
+msgstr "Saisissez votre nouveau mot de passe ci-dessous"
+
+#: templates/accounts/reset_password.html:38
+msgid "Password must be at least 8 characters and not too common."
+msgstr ""
+"Le mot de passe doit comporter au moins 8 caractères et ne pas être trop "
+"courant."
+
 #: templates/admin_dashboard/base.html:7
 msgid "Admin Dashboard"
 msgstr "Tableau de bord d’administration"
 
 #: templates/admin_dashboard/base.html:44
-#| msgid "Toggle theme"
 msgid "Toggle menu"
 msgstr "Afficher ou masquer le menu"
 
@@ -358,7 +463,6 @@ msgid "Review Cycles"
 msgstr "Cycles d’évaluation"
 
 #: templates/admin_dashboard/base.html:59
-#| msgid "Review Date"
 msgid "Reviews"
 msgstr "Évaluations"
 
@@ -368,7 +472,6 @@ msgid "Settings"
 msgstr "Paramètres"
 
 #: templates/admin_dashboard/base.html:63
-#| msgid "Organization"
 msgid "Create Organization"
 msgstr "Créer une organisation"
 
@@ -393,29 +496,24 @@ msgid "Skip for now"
 msgstr "Ignorer pour le moment"
 
 #: templates/admin_dashboard/dashboard.html:143
-#| msgid "to manage reviewees, questionnaires, and review cycles"
 msgid "Manage 360-degree feedback and review cycles"
 msgstr "Gérer les évaluations à 360° et les cycles d’évaluation"
 
 #: templates/admin_dashboard/dashboard.html:152
-#| msgid "Add reviewees"
 msgid "Active Reviewees"
 msgstr "Personnes évaluées actives"
 
 #: templates/admin_dashboard/dashboard.html:159
 #: templates/admin_dashboard/dashboard.html:279
-#| msgid "Active"
 msgid "Active Cycles"
 msgstr "Cycles actifs"
 
 #: templates/admin_dashboard/dashboard.html:166
 #: templates/admin_dashboard/dashboard.html:322
-#| msgid "Completed"
 msgid "Completed Cycles"
 msgstr "Cycles terminés"
 
 #: templates/admin_dashboard/dashboard.html:173
-#| msgid "Loading Review..."
 msgid "Pending Reviews"
 msgstr "Évaluations en attente"
 
@@ -427,10 +525,11 @@ msgstr "Partagez votre expérience avec Blik"
 msgid ""
 "Enjoying Blik? Take 2 minutes to share your feedback and help other teams "
 "discover us."
-msgstr "Blik vous plaît ? Prenez 2 minutes pour nous donner votre avis et aider d’autres équipes à nous découvrir."
+msgstr ""
+"Blik vous plaît ? Prenez 2 minutes pour nous donner votre avis et aider "
+"d’autres équipes à nous découvrir."
 
 #: templates/admin_dashboard/dashboard.html:193
-#| msgid "Submit Feedback"
 msgid "Submit a Review"
 msgstr "Soumettre une évaluation"
 
@@ -445,7 +544,6 @@ msgstr "Offre"
 
 #: templates/admin_dashboard/dashboard.html:214
 #, python-format
-#| msgid "Created %(created_date)s"
 msgid "Renews %(renewal_date)s"
 msgstr "Renouvellement le %(renewal_date)s"
 
@@ -471,21 +569,21 @@ msgstr "Limite bientôt atteinte :"
 msgid ""
 "You're nearing your plan limit of %(limit)s reviewees. Contact us to upgrade "
 "your plan."
-msgstr "Vous approchez de la limite de %(limit)s personnes évaluées prévue par votre offre. Contactez-nous pour passer à une offre supérieure."
+msgstr ""
+"Vous approchez de la limite de %(limit)s personnes évaluées prévue par votre "
+"offre. Contactez-nous pour passer à une offre supérieure."
 
 #: templates/admin_dashboard/dashboard.html:253
 msgid "Quick Actions"
 msgstr "Actions rapides"
 
 #: templates/admin_dashboard/dashboard.html:258
-#| msgid "My Review Cycles"
 msgid "New Review Cycle"
 msgstr "Nouveau cycle d’évaluation"
 
 #: templates/admin_dashboard/dashboard.html:261
 #: templates/admin_dashboard/reviewee_list.html:18
 #: templates/admin_dashboard/reviewee_list.html:204
-#| msgid "Add reviewees"
 msgid "Add Reviewee"
 msgstr "Ajouter une personne évaluée"
 
@@ -501,7 +599,6 @@ msgstr "Tous les cycles"
 #: templates/admin_dashboard/reviewee_form.html:4
 #: templates/admin_dashboard/reviewee_form.html:8
 #: templates/admin_dashboard/reviewee_form.html:64
-#| msgid "Review Date"
 msgid "Reviewee"
 msgstr "Personne évaluée"
 
@@ -518,7 +615,6 @@ msgstr "Progression"
 #: templates/admin_dashboard/review_cycle_list.html:27
 #: templates/admin_dashboard/reviewee_list.html:35
 #: templates/admin_dashboard/team.html:72
-#| msgid "Action:"
 msgid "Actions"
 msgstr "Actions"
 
@@ -531,7 +627,6 @@ msgid "View"
 msgstr "Voir"
 
 #: templates/admin_dashboard/dashboard.html:365
-#| msgid "My Review Cycles"
 msgid "Recent Review Cycles"
 msgstr "Cycles d’évaluation récents"
 
@@ -561,12 +656,10 @@ msgstr "Statut"
 
 #: templates/admin_dashboard/dashboard.html:412
 #: templates/admin_dashboard/review_cycle_list.html:192
-#| msgid "My Review Cycles"
 msgid "No review cycles yet"
 msgstr "Aucun cycle d’évaluation pour le moment"
 
 #: templates/admin_dashboard/dashboard.html:413
-#| msgid "Create your first reviewee:"
 msgid "Create your first review cycle to get started"
 msgstr "Créez votre premier cycle d’évaluation pour commencer"
 
@@ -576,7 +669,6 @@ msgstr "Créez votre premier cycle d’évaluation pour commencer"
 #: templates/admin_dashboard/review_cycle_form.html:188
 #: templates/admin_dashboard/review_cycle_list.html:12
 #: templates/admin_dashboard/review_cycle_list.html:194
-#| msgid "Create a review cycle"
 msgid "Create Review Cycle"
 msgstr "Créer un cycle d’évaluation"
 
@@ -638,7 +730,9 @@ msgstr "Traduction vers %(language)s"
 msgid ""
 "Source content remains visible for reference. Switch to %(language)s "
 "(Primary) to change questionnaire structure."
-msgstr "Le contenu source reste visible à titre de référence. Passez à %(language)s (langue principale) pour modifier la structure du questionnaire."
+msgstr ""
+"Le contenu source reste visible à titre de référence. Passez à %(language)s "
+"(langue principale) pour modifier la structure du questionnaire."
 
 #: templates/admin_dashboard/partials/questionnaire_translation_editor.html:18
 #: templates/admin_dashboard/partials/questionnaire_translation_editor.html:31
@@ -751,12 +845,16 @@ msgstr "Impossible d’enregistrer les traductions (HTTP %%(status)s)."
 #: templates/admin_dashboard/questionnaire_form.html:65
 #: templates/admin_dashboard/questionnaire_form.html:82
 msgid "You have unsaved translations. Leave this language without saving?"
-msgstr "Des traductions ne sont pas enregistrées. Quitter cette langue sans enregistrer ?"
+msgstr ""
+"Des traductions ne sont pas enregistrées. Quitter cette langue sans "
+"enregistrer ?"
 
 #: templates/admin_dashboard/questionnaire_form.html:66
 #: templates/admin_dashboard/questionnaire_form.html:83
 msgid "You also have unsaved translations. Continue without saving them?"
-msgstr "D’autres traductions ne sont pas enregistrées. Continuer sans les enregistrer ?"
+msgstr ""
+"D’autres traductions ne sont pas enregistrées. Continuer sans les "
+"enregistrer ?"
 
 #: templates/admin_dashboard/questionnaire_form.html:67
 msgid "Request failed."
@@ -822,7 +920,6 @@ msgstr "Par exemple : programmer en binôme avec des développeurs expérimenté
 
 #: templates/admin_dashboard/questionnaire_form.html:87
 #: templates/admin_dashboard/reviewee_form.html:64
-#| msgid "Create Account"
 msgid "Create"
 msgstr "Créer"
 
@@ -837,7 +934,6 @@ msgstr "Créer un nouveau questionnaire de feedback"
 
 #: templates/admin_dashboard/questionnaire_form.html:103
 #: templates/admin_dashboard/review_cycle_detail.html:106
-#| msgid "Questionnaire"
 msgid "Questionnaire content language"
 msgstr "Langue du contenu du questionnaire"
 
@@ -847,12 +943,10 @@ msgid "%(language)s (Primary)"
 msgstr "%(language)s (principale)"
 
 #: templates/admin_dashboard/questionnaire_form.html:124
-#| msgid "Language"
 msgid "Languages"
 msgstr "Langues"
 
 #: templates/admin_dashboard/questionnaire_form.html:134
-#| msgid "Questionnaire"
 msgid "Questionnaire Languages"
 msgstr "Langues du questionnaire"
 
@@ -874,7 +968,10 @@ msgid ""
 "Remove %(language)s and delete all questionnaire, section, and question "
 "translations for this language? Canonical content, responses, cycles, and "
 "reports will not be changed."
-msgstr "Supprimer %(language)s ainsi que toutes les traductions du questionnaire, des sections et des questions dans cette langue ? Le contenu de référence, les réponses, les cycles et les rapports ne seront pas modifiés."
+msgstr ""
+"Supprimer %(language)s ainsi que toutes les traductions du questionnaire, "
+"des sections et des questions dans cette langue ? Le contenu de référence, "
+"les réponses, les cycles et les rapports ne seront pas modifiés."
 
 #: templates/admin_dashboard/questionnaire_form.html:162
 msgid "Remove"
@@ -885,7 +982,6 @@ msgid "No additional languages have been added yet."
 msgstr "Aucune langue supplémentaire n’a encore été ajoutée."
 
 #: templates/admin_dashboard/questionnaire_form.html:178
-#| msgid "Change language"
 msgid "Add a language"
 msgstr "Ajouter une langue"
 
@@ -894,13 +990,11 @@ msgid "Select a supported language"
 msgstr "Sélectionnez une langue prise en charge"
 
 #: templates/admin_dashboard/questionnaire_form.html:188
-#| msgid "Language"
 msgid "Add language"
 msgstr "Ajouter une langue"
 
 #: templates/admin_dashboard/questionnaire_form.html:205
 #: templates/admin_dashboard/review_cycle_form.html:60
-#| msgid "Personal Information"
 msgid "Basic Information"
 msgstr "Informations générales"
 
@@ -917,7 +1011,6 @@ msgid "Description"
 msgstr "Description"
 
 #: templates/admin_dashboard/questionnaire_form.html:231
-#| msgid "Questionnaire"
 msgid "Questionnaire Name"
 msgstr "Nom du questionnaire"
 
@@ -930,7 +1023,6 @@ msgid "Set as default questionnaire"
 msgstr "Définir comme questionnaire par défaut"
 
 #: templates/admin_dashboard/questionnaire_form.html:267
-#| msgid "Personal Information"
 msgid "Update Information"
 msgstr "Mettre à jour les informations"
 
@@ -949,7 +1041,6 @@ msgid "Cancel"
 msgstr "Annuler"
 
 #: templates/admin_dashboard/questionnaire_form.html:565
-#| msgid "Select an option"
 msgid "Sections and Questions"
 msgstr "Sections et questions"
 
@@ -958,7 +1049,6 @@ msgid "Delete section and all its questions?"
 msgstr "Supprimer la section et toutes ses questions ?"
 
 #: templates/admin_dashboard/questionnaire_form.html:588
-#| msgid "Select an option"
 msgid "Delete Section"
 msgstr "Supprimer la section"
 
@@ -971,22 +1061,18 @@ msgid "Add Question to This Section"
 msgstr "Ajouter une question à cette section"
 
 #: templates/admin_dashboard/questionnaire_form.html:613
-#| msgid "Questionnaire"
 msgid "Question Text"
 msgstr "Texte de la question"
 
 #: templates/admin_dashboard/questionnaire_form.html:625
-#| msgid "Questionnaire"
 msgid "Question Type"
 msgstr "Type de question"
 
 #: templates/admin_dashboard/questionnaire_form.html:632
-#| msgid "Rating scale (1-5):"
 msgid "Rating Scale (1-5)"
 msgstr "Échelle de notation (1-5)"
 
 #: templates/admin_dashboard/questionnaire_form.html:633
-#| msgid "Likert scale options:"
 msgid "Likert Scale"
 msgstr "Échelle de Likert"
 
@@ -995,7 +1081,6 @@ msgid "Free Text"
 msgstr "Texte libre"
 
 #: templates/admin_dashboard/questionnaire_form.html:635
-#| msgid "Single choice (select one):"
 msgid "Single Choice (Dropdown)"
 msgstr "Choix unique (liste déroulante)"
 
@@ -1013,10 +1098,11 @@ msgstr "Éléments de l’échelle de Likert (un par ligne)"
 
 #: templates/admin_dashboard/questionnaire_form.html:654
 msgid "Default 5-point scale provided. Customize or use 3-point, 7-point, etc."
-msgstr "Une échelle de 5 points est proposée par défaut. Personnalisez-la ou choisissez 3, 7 points, etc."
+msgstr ""
+"Une échelle de 5 points est proposée par défaut. Personnalisez-la ou "
+"choisissez 3, 7 points, etc."
 
 #: templates/admin_dashboard/questionnaire_form.html:658
-#| msgid "Email Configuration"
 msgid "Scale Configuration"
 msgstr "Configuration de l’échelle"
 
@@ -1049,7 +1135,6 @@ msgid "Enable numeric scoring for analytics"
 msgstr "Activer la notation numérique pour les analyses"
 
 #: templates/admin_dashboard/questionnaire_form.html:714
-#| msgid "Learn more about Agency Levels"
 msgid "Learn more about scoring"
 msgstr "En savoir plus sur la notation"
 
@@ -1066,22 +1151,21 @@ msgid "Dreyfus/Agency Configuration (Optional)"
 msgstr "Configuration Dreyfus/Agency (facultatif)"
 
 #: templates/admin_dashboard/questionnaire_form.html:790
-#| msgid "Questionnaire"
 msgid "Add Question"
 msgstr "Ajouter une question"
 
 #: templates/admin_dashboard/questionnaire_form.html:1082
 msgid "No sections yet. Add a section to start building your questionnaire."
-msgstr "Aucune section pour le moment. Ajoutez-en une pour commencer à créer votre questionnaire."
+msgstr ""
+"Aucune section pour le moment. Ajoutez-en une pour commencer à créer votre "
+"questionnaire."
 
 #: templates/admin_dashboard/questionnaire_form.html:1090
 #: templates/admin_dashboard/questionnaire_form.html:1120
-#| msgid "Action:"
 msgid "Add Section"
 msgstr "Ajouter une section"
 
 #: templates/admin_dashboard/questionnaire_form.html:1098
-#| msgid "Action Items"
 msgid "Section Title"
 msgstr "Titre de la section"
 
@@ -1090,7 +1174,6 @@ msgid "Section Description (Optional)"
 msgstr "Description de la section (facultatif)"
 
 #: templates/admin_dashboard/questionnaire_list.html:10
-#| msgid "Your 360-degree feedback platform"
 msgid "Manage 360-degree feedback questionnaires"
 msgstr "Gérer les questionnaires d’évaluation à 360°"
 
@@ -1107,22 +1190,18 @@ msgid "Preview Questions"
 msgstr "Aperçu des questions"
 
 #: templates/admin_dashboard/questionnaire_list.html:36
-#| msgid "View Report"
 msgid "Sample Report"
 msgstr "Exemple de rapport"
 
 #: templates/admin_dashboard/questionnaire_list.html:43
-#| msgid "Questionnaire"
 msgid "Questions"
 msgstr "Questions"
 
 #: templates/admin_dashboard/questionnaire_list.html:49
-#| msgid "My Review Cycles"
 msgid "Used in Cycles"
 msgstr "Utilisé dans les cycles"
 
 #: templates/admin_dashboard/questionnaire_list.html:69
-#| msgid "Questionnaire"
 msgid "No questionnaires yet"
 msgstr "Aucun questionnaire pour le moment"
 
@@ -1132,7 +1211,6 @@ msgstr "Chargez le questionnaire par défaut ou créez-en un personnalisé"
 
 #: templates/admin_dashboard/questionnaire_preview.html:20
 #: templates/admin_dashboard/review_cycle_detail.html:45
-#| msgid "Back to Login"
 msgid "Back to List"
 msgstr "Retour à la liste"
 
@@ -1157,7 +1235,6 @@ msgid "Likert scale options:"
 msgstr "Options de l’échelle de Likert :"
 
 #: templates/admin_dashboard/questionnaire_preview.html:71
-#| msgid "Action:"
 msgid "Options:"
 msgstr "Options :"
 
@@ -1178,7 +1255,6 @@ msgid "This questionnaire doesn't have any sections or questions yet."
 msgstr "Ce questionnaire ne contient encore aucune section ni question."
 
 #: templates/admin_dashboard/review_cycle_detail.html:19
-#| msgid "Questionnaire"
 msgid "Questionnaire:"
 msgstr "Questionnaire :"
 
@@ -1196,7 +1272,6 @@ msgid "Copy"
 msgstr "Copier"
 
 #: templates/admin_dashboard/review_cycle_detail.html:36
-#| msgid "Review Date"
 msgid "Reviewee UUID:"
 msgstr "UUID de la personne évaluée :"
 
@@ -1209,7 +1284,9 @@ msgstr "Rapport disponible"
 msgid ""
 "The 360-degree feedback report for <strong>%(name)s</strong> has been "
 "generated and is ready to view."
-msgstr "Le rapport de feedback à 360° de <strong>%(name)s</strong> a été généré et peut être consulté."
+msgstr ""
+"Le rapport de feedback à 360° de <strong>%(name)s</strong> a été généré et "
+"peut être consulté."
 
 #: templates/admin_dashboard/review_cycle_detail.html:68
 msgid "Report Access Token"
@@ -1231,7 +1308,6 @@ msgid "Last accessed %(ago)s ago • Viewed %(count)s times"
 msgstr "Dernier accès il y a %(ago)s • Consulté %(count)s fois"
 
 #: templates/admin_dashboard/review_cycle_detail.html:89
-#| msgid "View Report"
 msgid "View Report (Admin)"
 msgstr "Voir le rapport (vue administrateur)"
 
@@ -1263,13 +1339,11 @@ msgstr "%(completed)s sur %(total)s terminés (%(rate)s%%)"
 
 #: templates/admin_dashboard/review_cycle_detail.html:135
 #: templates/admin_dashboard/review_cycle_detail.html:160
-#| msgid "Total Responses"
 msgid "Total Reviewers"
 msgstr "Nombre total d’évaluateurs"
 
 #: templates/admin_dashboard/review_cycle_detail.html:147
 #: templates/admin_dashboard/review_cycle_detail.html:181
-#| msgid "Completed"
 msgid "Completion Rate"
 msgstr "Taux de complétion"
 
@@ -1290,12 +1364,10 @@ msgid "Creation Mode"
 msgstr "Mode de création"
 
 #: templates/admin_dashboard/review_cycle_form.html:30
-#| msgid "Loading Review..."
 msgid "Single Reviewee"
 msgstr "Une personne évaluée"
 
 #: templates/admin_dashboard/review_cycle_form.html:31
-#| msgid "Can create cycles for others"
 msgid "Create cycle for one person"
 msgstr "Créer un cycle pour une personne"
 
@@ -1304,7 +1376,6 @@ msgid "Bulk Create"
 msgstr "Création groupée"
 
 #: templates/admin_dashboard/review_cycle_form.html:38
-#| msgid "Create your first reviewee:"
 msgid "Create for all active reviewees"
 msgstr "Créer pour toutes les personnes évaluées actives"
 
@@ -1312,7 +1383,9 @@ msgstr "Créer pour toutes les personnes évaluées actives"
 msgid ""
 "Bulk creation does not send any emails. You'll review the new cycles and "
 "send invitations in the next step."
-msgstr "La création groupée n’envoie aucun e-mail. Vous pourrez vérifier les nouveaux cycles et envoyer les invitations à l’étape suivante."
+msgstr ""
+"La création groupée n’envoie aucun e-mail. Vous pourrez vérifier les "
+"nouveaux cycles et envoyer les invitations à l’étape suivante."
 
 #: templates/admin_dashboard/review_cycle_form.html:52
 msgid "Note:"
@@ -1322,19 +1395,19 @@ msgstr "Remarque :"
 msgid ""
 "You can only create review cycles for yourself. Contact an administrator to "
 "create cycles for other team members."
-msgstr "Vous ne pouvez créer des cycles d’évaluation que pour vous-même. Contactez un administrateur pour créer des cycles pour les autres membres de l’équipe."
+msgstr ""
+"Vous ne pouvez créer des cycles d’évaluation que pour vous-même. Contactez "
+"un administrateur pour créer des cycles pour les autres membres de l’équipe."
 
 #: templates/admin_dashboard/review_cycle_form.html:66
 msgid "Select a reviewee..."
 msgstr "Sélectionnez une personne à évaluer…"
 
 #: templates/admin_dashboard/review_cycle_form.html:72
-#| msgid "People who will receive 360° feedback"
 msgid "Person who will receive 360-degree feedback"
 msgstr "Personne qui recevra une évaluation à 360°"
 
 #: templates/admin_dashboard/review_cycle_form.html:79
-#| msgid "Select an option"
 msgid "Select a questionnaire..."
 msgstr "Sélectionnez un questionnaire…"
 
@@ -1343,12 +1416,10 @@ msgid "Questions that reviewers will answer"
 msgstr "Questions auxquelles les évaluateurs répondront"
 
 #: templates/admin_dashboard/review_cycle_form.html:97
-#| msgid "Report Not Ready"
 msgid "Report type:"
 msgstr "Type de rapport :"
 
 #: templates/admin_dashboard/review_cycle_form.html:103
-#| msgid "Review the report"
 msgid "Preview sample report"
 msgstr "Prévisualiser un exemple de rapport"
 
@@ -1360,16 +1431,20 @@ msgstr "Inviter des évaluateurs (facultatif)"
 msgid ""
 "Enter email addresses for reviewers now, or skip and add them later. "
 "Separate multiple emails with commas or newlines."
-msgstr "Saisissez les adresses e-mail des évaluateurs maintenant, ou ignorez cette étape et ajoutez-les plus tard. Séparez plusieurs adresses par des virgules ou des retours à la ligne."
+msgstr ""
+"Saisissez les adresses e-mail des évaluateurs maintenant, ou ignorez cette "
+"étape et ajoutez-les plus tard. Séparez plusieurs adresses par des virgules "
+"ou des retours à la ligne."
 
 #: templates/admin_dashboard/review_cycle_form.html:126
-#| msgid "Self-assessment"
 msgid "Self Assessment"
 msgstr "Auto-évaluation"
 
 #: templates/admin_dashboard/review_cycle_form.html:135
 msgid "Usually the reviewee's own email (auto-filled when reviewee selected)"
-msgstr "En général, l’adresse e-mail de la personne évaluée (renseignée automatiquement après sa sélection)"
+msgstr ""
+"En général, l’adresse e-mail de la personne évaluée (renseignée "
+"automatiquement après sa sélection)"
 
 #: templates/admin_dashboard/review_cycle_form.html:140
 msgid "Manager/Supervisor"
@@ -1388,7 +1463,6 @@ msgid "Colleagues at the same level"
 msgstr "Collègues de même niveau"
 
 #: templates/admin_dashboard/review_cycle_form.html:166
-#| msgid "Direct Report"
 msgid "Direct Reports"
 msgstr "Collaborateurs directs"
 
@@ -1398,10 +1472,10 @@ msgstr "Personnes sous la responsabilité de la personne évaluée"
 
 #: templates/admin_dashboard/review_cycle_form.html:181
 msgid "Send invitation emails immediately after creating cycle"
-msgstr "Envoyer les e-mails d’invitation immédiatement après la création du cycle"
+msgstr ""
+"Envoyer les e-mails d’invitation immédiatement après la création du cycle"
 
 #: templates/admin_dashboard/review_cycle_list.html:10
-#| msgid "Your 360-degree feedback platform"
 msgid "Manage 360-degree feedback review cycles"
 msgstr "Gérer les cycles d’évaluation à 360°"
 
@@ -1417,7 +1491,6 @@ msgstr "%(completed)s / %(total)s réponses"
 
 #: templates/admin_dashboard/review_cycle_list.html:81
 #: templates/admin_dashboard/reviewee_list.html:98
-#| msgid "My Review Cycles"
 msgid "New Cycle"
 msgstr "Nouveau cycle"
 
@@ -1428,7 +1501,6 @@ msgstr "Sélectionner un autre questionnaire"
 
 #: templates/admin_dashboard/review_cycle_list.html:100
 #: templates/admin_dashboard/reviewee_list.html:117
-#| msgid "Questionnaire"
 msgid "Select Questionnaire"
 msgstr "Sélectionner un questionnaire"
 
@@ -1451,7 +1523,6 @@ msgstr "Éléments par page :"
 #: templates/admin_dashboard/review_cycle_list.html:172
 #: templates/admin_dashboard/reviewee_list.html:181
 #: templates/admin_dashboard/team.html:190
-#| msgid "First name"
 msgid "First"
 msgstr "Prénom"
 
@@ -1477,14 +1548,14 @@ msgstr "Suivant"
 #: templates/admin_dashboard/review_cycle_list.html:182
 #: templates/admin_dashboard/reviewee_list.html:191
 #: templates/admin_dashboard/team.html:200
-#| msgid "Last name"
 msgid "Last"
 msgstr "Nom"
 
 #: templates/admin_dashboard/review_cycle_list.html:193
-#| msgid "Create your first reviewee:"
 msgid "Create your first review cycle to start collecting feedback"
-msgstr "Créez votre premier cycle d’évaluation pour commencer à recueillir des retours"
+msgstr ""
+"Créez votre premier cycle d’évaluation pour commencer à recueillir des "
+"retours"
 
 #: templates/admin_dashboard/reviewee_form.html:4
 #: templates/admin_dashboard/reviewee_form.html:8
@@ -1497,7 +1568,6 @@ msgid "Update information for %(name)s"
 msgstr "Mettre à jour les informations de %(name)s"
 
 #: templates/admin_dashboard/reviewee_form.html:13
-#| msgid "Add people who will receive 360-degree feedback from the dashboard"
 msgid "Add a new person who will receive 360-degree feedback"
 msgstr "Ajouter une personne qui recevra une évaluation à 360°"
 
@@ -1506,12 +1576,10 @@ msgid "Department (Optional)"
 msgstr "Service (facultatif)"
 
 #: templates/admin_dashboard/reviewee_form.html:64
-#| msgid "Update Profile"
 msgid "Update"
 msgstr "Mettre à jour"
 
 #: templates/admin_dashboard/reviewee_list.html:10
-#| msgid "People who will receive 360° feedback"
 msgid "Manage people who receive 360-degree feedback"
 msgstr "Gérer les personnes évaluées"
 
@@ -1526,28 +1594,26 @@ msgid "Add Myself"
 msgstr "M’ajouter"
 
 #: templates/admin_dashboard/reviewee_list.html:72
-#| msgid "View Report"
 msgid "Report"
 msgstr "Rapport"
 
 #: templates/admin_dashboard/reviewee_list.html:80
-#| msgid "My Review Cycles"
 msgid "View Cycle"
 msgstr "Voir le cycle"
 
 #: templates/admin_dashboard/reviewee_list.html:201
-#| msgid "Add reviewees"
 msgid "No reviewees yet"
 msgstr "Aucune personne évaluée pour le moment"
 
 #: templates/admin_dashboard/reviewee_list.html:203
-#| msgid "to manage reviewees, questionnaires, and review cycles"
 msgid "Add your first reviewee to start creating review cycles"
-msgstr "Ajoutez votre première personne évaluée pour commencer à créer des cycles"
+msgstr ""
+"Ajoutez votre première personne évaluée pour commencer à créer des cycles"
 
 #: templates/admin_dashboard/reviewee_list.html:206
 msgid "Add yourself as a reviewee to start receiving feedback"
-msgstr "Ajoutez-vous comme personne évaluée pour commencer à recevoir des retours"
+msgstr ""
+"Ajoutez-vous comme personne évaluée pour commencer à recevoir des retours"
 
 #: templates/admin_dashboard/settings.html:10
 msgid "Organization configuration and preferences"
@@ -1559,7 +1625,8 @@ msgstr "Mode lecture seule :"
 
 #: templates/admin_dashboard/settings.html:16
 msgid "Only organization administrators can modify these settings."
-msgstr "Seuls les administrateurs de l’organisation peuvent modifier ces paramètres."
+msgstr ""
+"Seuls les administrateurs de l’organisation peuvent modifier ces paramètres."
 
 #: templates/admin_dashboard/settings.html:47
 #: templates/admin_dashboard/settings.html:62
@@ -1568,7 +1635,6 @@ msgid "Managed by %(name)s in the environment"
 msgstr "Géré par %(name)s dans l’environnement"
 
 #: templates/admin_dashboard/settings.html:51
-#| msgid "Continue to Email Setup"
 msgid "Contact Email"
 msgstr "E-mail de contact"
 
@@ -1591,7 +1657,10 @@ msgstr "Nombre minimal de réponses pour garantir l’anonymat"
 msgid ""
 "Minimum responses required to display results. Set to 1 for small teams, 3+ "
 "for larger teams. Self-assessments always shown."
-msgstr "Nombre minimal de réponses requis pour afficher les résultats. Choisissez 1 pour les petites équipes et 3 ou plus pour les grandes. Les auto-évaluations sont toujours affichées."
+msgstr ""
+"Nombre minimal de réponses requis pour afficher les résultats. Choisissez 1 "
+"pour les petites équipes et 3 ou plus pour les grandes. Les auto-évaluations "
+"sont toujours affichées."
 
 #: templates/admin_dashboard/settings.html:110
 msgid "Automatically send report email when generated"
@@ -1601,7 +1670,10 @@ msgstr "Envoyer automatiquement le rapport par e-mail après sa génération"
 msgid ""
 "When enabled, reviewees automatically receive an email with a link to their "
 "report when all feedback is collected."
-msgstr "Une fois cette option activée, les personnes évaluées reçoivent automatiquement un e-mail contenant un lien vers leur rapport lorsque tous les retours ont été recueillis."
+msgstr ""
+"Une fois cette option activée, les personnes évaluées reçoivent "
+"automatiquement un e-mail contenant un lien vers leur rapport lorsque tous "
+"les retours ont été recueillis."
 
 #: templates/admin_dashboard/settings.html:128
 msgid "User Registration"
@@ -1613,16 +1685,20 @@ msgstr "Autoriser l’inscription des utilisateurs"
 
 #: templates/admin_dashboard/settings.html:148
 msgid "When enabled, new users can register at /accounts/register/"
-msgstr "Une fois cette option activée, les nouveaux utilisateurs peuvent s’inscrire à l’adresse /accounts/register/"
+msgstr ""
+"Une fois cette option activée, les nouveaux utilisateurs peuvent s’inscrire "
+"à l’adresse /accounts/register/"
 
 #: templates/admin_dashboard/settings.html:162
-#| msgid "Can create cycles for others"
 msgid "New users can create cycles for others"
-msgstr "Les nouveaux utilisateurs peuvent créer des cycles pour d’autres personnes"
+msgstr ""
+"Les nouveaux utilisateurs peuvent créer des cycles pour d’autres personnes"
 
 #: templates/admin_dashboard/settings.html:165
 msgid "If disabled, new users can only create cycles for themselves"
-msgstr "Si cette option est désactivée, les nouveaux utilisateurs ne peuvent créer des cycles que pour eux-mêmes"
+msgstr ""
+"Si cette option est désactivée, les nouveaux utilisateurs ne peuvent créer "
+"des cycles que pour eux-mêmes"
 
 #: templates/admin_dashboard/settings.html:186
 msgid "Subscription & Billing"
@@ -1670,7 +1746,6 @@ msgid "Email (SMTP) Settings"
 msgstr "Paramètres e-mail (SMTP)"
 
 #: templates/admin_dashboard/settings.html:259
-#| msgid "Recommended: Use Blik's Email Service"
 msgid "Using Blik's Email Service?"
 msgstr "Utiliser le service de messagerie de Blik ?"
 
@@ -1678,38 +1753,31 @@ msgstr "Utiliser le service de messagerie de Blik ?"
 msgid ""
 "Leave all fields empty to use our managed email service. Fill in to use your "
 "own SMTP."
-msgstr "Laissez tous les champs vides pour utiliser notre service de messagerie géré. Renseignez-les pour utiliser votre propre serveur SMTP."
+msgstr ""
+"Laissez tous les champs vides pour utiliser notre service de messagerie "
+"géré. Renseignez-les pour utiliser votre propre serveur SMTP."
 
 #: templates/admin_dashboard/settings.html:268
-#| msgid "SMTP Host"
 msgid "Host"
 msgstr "Hôte"
 
 #: templates/admin_dashboard/settings.html:282
-#| msgid "SMTP Port"
 msgid "Port"
 msgstr "Port"
-
-#: templates/admin_dashboard/settings.html:313
-msgid "Password"
-msgstr "Mot de passe"
 
 #: templates/admin_dashboard/settings.html:321
 msgid "Leave blank to keep current"
 msgstr "Laissez vide pour conserver la valeur actuelle"
 
 #: templates/admin_dashboard/settings.html:327
-#| msgid "From Email Address"
 msgid "From Address"
 msgstr "Adresse d’expédition"
 
 #: templates/admin_dashboard/settings.html:354
-#| msgid "Enable TLS encryption (recommended for port 587)"
 msgid "Use TLS encryption (port 587)"
 msgstr "Utiliser le chiffrement TLS (port 587)"
 
 #: templates/admin_dashboard/settings.html:371
-#| msgid "Email Configuration"
 msgid "API Configuration"
 msgstr "Configuration de l’API"
 
@@ -1726,12 +1794,10 @@ msgid "API Docs"
 msgstr "Documentation de l’API"
 
 #: templates/admin_dashboard/settings.html:421
-#| msgid "No report generated yet"
 msgid "No API tokens created yet"
 msgstr "Aucun jeton d’API créé pour le moment"
 
 #: templates/admin_dashboard/settings.html:428
-#| msgid "Create Account"
 msgid "Create New Token"
 msgstr "Créer un jeton"
 
@@ -1741,10 +1807,11 @@ msgstr "Webhooks"
 
 #: templates/admin_dashboard/settings.html:437
 msgid "Receive event notifications for cycle creation, completion, etc."
-msgstr "Recevoir des notifications lors de la création ou de la finalisation d’un cycle, etc."
+msgstr ""
+"Recevoir des notifications lors de la création ou de la finalisation d’un "
+"cycle, etc."
 
 #: templates/admin_dashboard/settings.html:477
-#| msgid "Not yet configured"
 msgid "No webhooks configured"
 msgstr "Aucun webhook configuré"
 
@@ -1756,14 +1823,15 @@ msgstr "Ajouter un webhook"
 msgid ""
 "Cancel subscription? You will retain access until the end of the billing "
 "period."
-msgstr "Annuler l’abonnement ? Vous conserverez l’accès jusqu’à la fin de la période de facturation."
+msgstr ""
+"Annuler l’abonnement ? Vous conserverez l’accès jusqu’à la fin de la période "
+"de facturation."
 
 #: templates/admin_dashboard/team.html:9
 msgid "Team Management"
 msgstr "Gestion de l’équipe"
 
 #: templates/admin_dashboard/team.html:10
-#| msgid "Configure email settings for sending invitations"
 msgid "Manage users and send invitations"
 msgstr "Gérer les utilisateurs et envoyer des invitations"
 
@@ -1786,13 +1854,14 @@ msgid "Send Invitation"
 msgstr "Envoyer l’invitation"
 
 #: templates/admin_dashboard/team.html:42
-#| msgid "Email address"
 msgid "Email Address"
 msgstr "Adresse e-mail"
 
 #: templates/admin_dashboard/team.html:44
 msgid "The user will receive an email with instructions to join"
-msgstr "L’utilisateur recevra un e-mail contenant les instructions pour rejoindre l’équipe"
+msgstr ""
+"L’utilisateur recevra un e-mail contenant les instructions pour rejoindre "
+"l’équipe"
 
 #: templates/admin_dashboard/team.html:57
 #, python-format
@@ -1819,7 +1888,6 @@ msgstr "Superadministrateur"
 
 #: templates/admin_dashboard/team.html:91
 #: templates/admin_dashboard/team.html:301
-#| msgid "Organization"
 msgid "Organization Admin"
 msgstr "Administrateur de l’organisation"
 
@@ -1835,7 +1903,6 @@ msgstr "Peut gérer les cycles"
 
 #: templates/admin_dashboard/team.html:101
 #: templates/admin_dashboard/team.html:158
-#| msgid "Self cycles only"
 msgid "Self-only"
 msgstr "Uniquement pour soi-même"
 
@@ -1844,7 +1911,6 @@ msgid "Manage"
 msgstr "Gérer"
 
 #: templates/admin_dashboard/team.html:165
-#| msgid "Permissions"
 msgid "Manage Permissions"
 msgstr "Gérer les autorisations"
 
@@ -1881,50 +1947,48 @@ msgid "No pending invitations"
 msgstr "Aucune invitation en attente"
 
 #: templates/admin_dashboard/team.html:287
-#| msgid "Permissions"
 msgid "Manage User Permissions"
 msgstr "Gérer les autorisations des utilisateurs"
 
 #: templates/admin_dashboard/team.html:289
-#| msgid "Permissions"
 msgid "Update permissions for"
 msgstr "Mettre à jour les autorisations de"
 
 #: templates/admin_dashboard/team.html:303
 msgid ""
 "Can invite members, manage organization settings, and delete organization"
-msgstr "Peut inviter des membres, gérer les paramètres de l’organisation et supprimer l’organisation"
+msgstr ""
+"Peut inviter des membres, gérer les paramètres de l’organisation et "
+"supprimer l’organisation"
 
 #: templates/admin_dashboard/team.html:312
 msgid "Regular team member with limited permissions"
 msgstr "Membre de l’équipe avec des autorisations limitées"
 
 #: templates/admin_dashboard/team.html:320
-#| msgid "Permissions"
 msgid "Additional Permissions"
 msgstr "Autorisations supplémentaires"
 
 #: templates/admin_dashboard/team.html:324
-#| msgid "Can create cycles for others"
 msgid "Can create review cycles for others"
 msgstr "Peut créer des cycles d’évaluation pour d’autres personnes"
 
 #: templates/admin_dashboard/team.html:326
 msgid "Without this, user can only create cycles for themselves"
-msgstr "Sans cette autorisation, l’utilisateur ne peut créer des cycles que pour lui-même"
+msgstr ""
+"Sans cette autorisation, l’utilisateur ne peut créer des cycles que pour lui-"
+"même"
 
 #: templates/admin_dashboard/team.html:334
-#| msgid "Permissions"
 msgid "Update Permissions"
 msgstr "Mettre à jour les autorisations"
 
-#: templates/components/language_selector.html:5
+#: templates/components/language_selector.html:9
 msgid "Blik interface language"
 msgstr "Langue de l’interface Blik"
 
-#: templates/components/language_selector.html:11
-msgid "Apply"
-msgstr "Appliquer"
+#~ msgid "Apply"
+#~ msgstr "Appliquer"
 
 #~ msgid "Email address for the administrator"
 #~ msgstr "Adresse e-mail de l’administrateur"
@@ -1999,71 +2063,15 @@ msgstr "Appliquer"
 #~ msgid "Reminder: 360 Feedback Request for %(reviewee_name)s"
 #~ msgstr "Rappel : demande de feedback à 360° pour %(reviewee_name)s"
 
-#~ msgid "Forgot Password"
-#~ msgstr "Mot de passe oublié"
-
-#~ msgid "Enter your email to receive a password reset link"
-#~ msgstr ""
-#~ "Saisissez votre adresse e-mail pour recevoir un lien de réinitialisation "
-#~ "du mot de passe"
-
-#~ msgid "Send Reset Link"
-#~ msgstr "Envoyer le lien de réinitialisation"
-
-#~ msgid "Login"
-#~ msgstr "Connexion"
-
-#~ msgid "Welcome Back"
-#~ msgstr "Heureux de vous revoir"
-
-#~ msgid "Sign in to your account"
-#~ msgstr "Connectez-vous à votre compte"
-
-#~ msgid "Sign In"
-#~ msgstr "Se connecter"
-
-#~ msgid "Forgot your password?"
-#~ msgstr "Vous avez oublié votre mot de passe ?"
-
 #, python-format
 #~ msgid "Don't have an account? <a href=\"%(signup_url)s\">Create one</a>"
 #~ msgstr ""
 #~ "Vous n’avez pas de compte ? <a href=\"%(signup_url)s\">Créer un compte</a>"
 
-#~ msgid "Register"
-#~ msgstr "Inscription"
-
-#, python-format
-#~ msgid "Join %(organization_name)s"
-#~ msgstr "Rejoindre %(organization_name)s"
-
-#~ msgid "Create your account"
-#~ msgstr "Créer votre compte"
-
-#~ msgid "At least 8 characters"
-#~ msgstr "8 caractères minimum"
-
-#~ msgid "Re-enter your password"
-#~ msgstr "Saisissez à nouveau votre mot de passe"
-
 #, python-format
 #~ msgid "Already have an account? <a href=\"%(login_url)s\">Sign in</a>"
 #~ msgstr ""
 #~ "Vous avez déjà un compte ? <a href=\"%(login_url)s\">Connectez-vous</a>"
-
-#~ msgid "Reset Password"
-#~ msgstr "Réinitialiser le mot de passe"
-
-#~ msgid "Set New Password"
-#~ msgstr "Définir un nouveau mot de passe"
-
-#~ msgid "Enter your new password below"
-#~ msgstr "Saisissez votre nouveau mot de passe ci-dessous"
-
-#~ msgid "Password must be at least 8 characters and not too common."
-#~ msgstr ""
-#~ "Le mot de passe doit comporter au moins 8 caractères et ne pas être trop "
-#~ "courant."
 
 #~ msgid "Blik - 360 Feedback System"
 #~ msgstr "Blik - Système de feedback à 360°"
@@ -2571,9 +2579,6 @@ msgstr "Appliquer"
 
 #~ msgid "Share your thoughts..."
 #~ msgstr "Partagez vos commentaires..."
-
-#~ msgid "Create Admin Account"
-#~ msgstr "Créer un compte administrateur"
 
 #~ msgid "Create your administrator account"
 #~ msgstr "Créez votre compte administrateur"

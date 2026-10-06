@@ -9,6 +9,13 @@ body {
     padding: 20px;
 }
 
+.public-language-selector {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+}
+
 /* Auth containers */
 .login-container,
 .register-container {
