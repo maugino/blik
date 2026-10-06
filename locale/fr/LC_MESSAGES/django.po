@@ -1923,6 +1923,10 @@ msgstr "Aucun utilisateur trouvé"
 msgid "Pending Invitations (%(count)s)"
 msgstr "Invitations en attente (%(count)s)"
 
+#: templates/admin_dashboard/review_cycle_detail.html
+msgid "Sent at creation"
+msgstr "Envoyée lors de la création"
+
 #: templates/admin_dashboard/team.html:220
 #: templates/admin_dashboard/team.html:262
 msgid "Invited By"
