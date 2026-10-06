@@ -1921,6 +1921,10 @@ msgstr "Keine Benutzer:innen gefunden"
 msgid "Pending Invitations (%(count)s)"
 msgstr "Ausstehende Einladungen (%(count)s)"
 
+#: templates/admin_dashboard/review_cycle_detail.html
+msgid "Sent at creation"
+msgstr "Bei Erstellung versendet"
+
 #: templates/admin_dashboard/team.html:220
 #: templates/admin_dashboard/team.html:262
 msgid "Invited By"

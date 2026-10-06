@@ -7,11 +7,16 @@ the Organization row and bypasses the test mail outbox.
 from unittest.mock import patch
 
 from django.test import RequestFactory, TestCase, override_settings
+from django.urls import reverse
 
-from accounts.factories import RevieweeFactory
+from accounts.factories import RevieweeFactory, UserProfileFactory
 from core.factories import OrganizationFactory, UserFactory
 from questionnaires.factories import QuestionnaireFactory
-from reviews.factories import ReviewCycleFactory, ReviewerTokenFactory
+from reviews.factories import (
+    ReviewCycleFactory,
+    ReviewerTokenFactory,
+    SelfReviewTokenFactory,
+)
 from reviews.services import (
     send_reviewee_notifications,
     send_reviewer_invitations,
@@ -55,6 +60,31 @@ class SendReviewerInvitationsTests(TestCase):
         }
         self.assertEqual(recipients, {'manager@example.com'})
         self.assertEqual(stats['sent'], 1)
+
+
+class ReviewCycleDetailPendingInvitationTests(TestCase):
+    def test_self_assessment_token_is_not_counted_as_pending_invitation(self):
+        organization = OrganizationFactory()
+        user = UserFactory()
+        reviewee = RevieweeFactory(organization=organization, email=user.email)
+        UserProfileFactory(user=user, organization=organization)
+        cycle = ReviewCycleFactory(
+            reviewee=reviewee,
+            questionnaire=QuestionnaireFactory(organization=organization),
+            created_by=user,
+        )
+        cycle.tokens.all().delete()
+        SelfReviewTokenFactory(cycle=cycle, reviewer_email=user.email)
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse('review_cycle_detail', kwargs={'cycle_uuid': cycle.uuid})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['pending_invites'], 0)
+        self.assertContains(response, 'Sent at creation')
+        self.assertNotContains(response, 'Send Invite')
 
 
 @override_settings(SITE_DOMAIN='public.example.com', SITE_PROTOCOL='https')
