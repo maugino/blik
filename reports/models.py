@@ -1,7 +1,9 @@
 import uuid
 from django.db import models
+from django.core.exceptions import ValidationError
 from core.models import TimeStampedModel
 from core.managers import ReportManager
+from core.languages import normalize_language_code
 from reviews.models import ReviewCycle
 
 
@@ -21,6 +23,13 @@ class Report(TimeStampedModel):
         ReviewCycle,
         on_delete=models.CASCADE,
         related_name='report'
+    )
+
+    language_code = models.CharField(
+        max_length=35,
+        default='',
+        blank=True,
+        help_text="Questionnaire-content language frozen into this report snapshot",
     )
 
     # Secure access token for reviewee to access their report
@@ -62,6 +71,19 @@ class Report(TimeStampedModel):
     access_count = models.IntegerField(default=0, help_text="Number of times report has been accessed")
 
     objects = ReportManager()
+
+    def save(self, *args, **kwargs):
+        if self.language_code:
+            language_code = normalize_language_code(self.language_code)
+            if not language_code:
+                raise ValidationError({'language_code': 'Enter a valid language code.'})
+        else:
+            source_language = self.cycle.questionnaire.source_language
+            language_code = normalize_language_code(source_language)
+        if not language_code:
+            raise ValidationError({'language_code': 'Enter a valid language code.'})
+        self.language_code = language_code
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'reports'

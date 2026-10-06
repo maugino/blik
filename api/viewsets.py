@@ -7,6 +7,7 @@ organization scoping and permission checks.
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count, Q
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -363,7 +364,11 @@ class ReviewCycleViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         tags=["cycles"],
-        description="Manually mark cycle as complete and generate report",
+        description=(
+            "Manually mark a cycle as complete and generate its report. "
+            "Optional language_code selects the questionnaire-content snapshot language; "
+            "omitting it uses the questionnaire source language."
+        ),
     )
     @action(detail=True, methods=["post"])
     def complete(self, request, uuid=None):
@@ -380,7 +385,13 @@ class ReviewCycleViewSet(viewsets.ModelViewSet):
         # Generate report
         from reports.services import generate_report
 
-        report = generate_report(cycle)
+        try:
+            report = generate_report(cycle, language_code=request.data.get("language_code"))
+        except DjangoValidationError as exc:
+            return Response(
+                {"language_code": exc.messages},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Update cycle status
         cycle.status = "completed"
@@ -678,7 +689,10 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         tags=["reports"],
-        description="Regenerate report with updated data",
+        description=(
+            "Regenerate the current report snapshot. Optional language_code selects the "
+            "questionnaire-content language; omitting it uses the questionnaire source language."
+        ),
     )
     @action(detail=True, methods=["post"], permission_classes=[IsOrganizationMember, CanManageOrganization])
     def regenerate(self, request, uuid=None):
@@ -692,7 +706,16 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         # Regenerate
         from reports.services import generate_report
 
-        new_report = generate_report(report.cycle, force=True)
+        try:
+            new_report = generate_report(
+                report.cycle,
+                language_code=request.data.get("language_code"),
+            )
+        except DjangoValidationError as exc:
+            return Response(
+                {"language_code": exc.messages},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = self.get_serializer(new_report)
         return Response(serializer.data)

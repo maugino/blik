@@ -434,6 +434,7 @@ class ReportSerializer(serializers.ModelSerializer):
             "uuid",
             "cycle_uuid",
             "reviewee_name",
+            "language_code",
             "generated_at",
             "available",
             "access_token",
