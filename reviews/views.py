@@ -237,17 +237,21 @@ def submit_feedback(request, token):
 
             # Validate based on question type
             if question.question_type == 'rating':
-                try:
-                    rating = int(answer_value)
-                    min_val = int((question.config or {}).get('min', 1))
-                    max_val = int((question.config or {}).get('max', 5))
-                    if rating < min_val or rating > max_val:
-                        errors.append(f'Rating must be between {min_val} and {max_val}')
+                # Check for "Did not observe" option
+                if answer_value == 'did_not_observe':
+                    answer_data = {'value': None, 'did_not_observe': True}
+                else:
+                    try:
+                        rating = int(answer_value)
+                        min_val = int((question.config or {}).get('min', 1))
+                        max_val = int((question.config or {}).get('max', 5))
+                        if rating < min_val or rating > max_val:
+                            errors.append(f'Rating must be between {min_val} and {max_val}')
+                            continue
+                        answer_data = {'value': rating}
+                    except (TypeError, ValueError):
+                        errors.append('Invalid rating value')
                         continue
-                    answer_data = {'value': rating}
-                except (TypeError, ValueError):
-                    errors.append('Invalid rating value')
-                    continue
             elif question.question_type == 'scale':
                 try:
                     scale_value = int(answer_value)
