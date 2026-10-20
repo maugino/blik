@@ -4,6 +4,11 @@ Context processors for making settings available in templates.
 from django.conf import settings
 
 
+def site_settings(request):
+    """Expose the configured public site URL to templates."""
+    return {'SITE_URL': settings.SITE_URL}
+
+
 def stripe_settings(request):
     """
     Make Stripe configuration available in templates.

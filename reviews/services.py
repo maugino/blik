@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.urls import reverse
 from core.email import send_email
+from core.teams import send_teams_notification
 from datetime import timedelta
 from django.db.models import Q
 from .models import ReviewCycle, ReviewerToken
@@ -80,10 +81,10 @@ def send_reviewer_invitations(cycle, token_ids=None):
         'errors': []
     }
 
-    # Get tokens to send invitations for (exclude 'self' category since
-    # reviewees already receive a dedicated self-assessment email via
-    # send_reviewee_notifications)
-    tokens = cycle.tokens.filter(reviewer_email__isnull=False).exclude(category='self')
+    # Self-assessments use the separate reviewee notification flow.
+    tokens = cycle.tokens.filter(
+        reviewer_email__isnull=False
+    ).exclude(category='self')
 
     if token_ids:
         tokens = tokens.filter(id__in=token_ids)
@@ -114,6 +115,22 @@ def send_reviewer_invitations(cycle, token_ids=None):
                 recipient_list=[token.reviewer_email],
                 html_message=html_message,
                 organization=cycle.reviewee.organization,
+            )
+
+            # Send concise Teams notification
+            teams_message = (
+                f"You have been invited to provide "
+                f"**{token.get_category_display()}** feedback for "
+                f"**{cycle.reviewee.name}**.\n\n"
+                f"Your feedback is anonymous."
+            )
+
+            send_teams_notification(
+                subject=f'360 Feedback Request: {cycle.reviewee.name}',
+                message=teams_message,
+                recipient_list=[token.reviewer_email],
+                html_message=teams_message,
+                action_url=feedback_url
             )
 
             # Mark as sent
@@ -149,7 +166,7 @@ def send_reminder_emails(cycle, token_ids=None):
         reviewer_email__isnull=False,
         invitation_sent_at__isnull=False,
         completed_at__isnull=True
-    )
+    ).exclude(category='self')
 
     if token_ids:
         tokens = tokens.filter(id__in=token_ids)
@@ -178,6 +195,23 @@ def send_reminder_emails(cycle, token_ids=None):
                 html_message=html_message,
                 organization=cycle.reviewee.organization,
             )
+
+            # Send teams reminder
+            teams_message = (
+                f"This is a reminder to provide "
+                f"**{token.get_category_display()}** feedback for "
+                f"**{cycle.reviewee.name}**.\n\n"
+                f"Your feedback is anonymous."
+            )
+
+            send_teams_notification(
+                subject=f'Reminder: 360 Feedback Request for {cycle.reviewee.name}',
+                message=teams_message,
+                recipient_list=[token.reviewer_email],
+                html_message=teams_message,
+                action_url=feedback_url,
+            )
+
 
             # Update last reminder sent timestamp
             token.last_reminder_sent_at = timezone.now()
@@ -216,7 +250,7 @@ def send_reviewee_notifications(cycle, request=None):
     # Always use SITE_DOMAIN for consistent URLs across all email contexts
     base_url = f"{settings.SITE_PROTOCOL}://{settings.SITE_DOMAIN}"
 
-    # 1. Send self-assessment email
+    # 1. Send self-assessment email and Teams notification
     try:
         self_assessment_url = f"{base_url}{reverse('reviews:claim_token', kwargs={'invitation_token': cycle.invitation_token_self})}"
 
@@ -236,6 +270,21 @@ def send_reviewee_notifications(cycle, request=None):
             html_message=html_message,
             organization=cycle.reviewee.organization,
         )
+
+        teams_message = (
+            f"Your **360 Feedback self-assessment** for "
+            f"**{cycle.questionnaire.name}** is ready to complete.\n\n"
+            f"Please complete your self-assessment as part of your 360 feedback."
+        )
+
+        send_teams_notification(
+            subject=f'Complete Your Self-Assessment: {cycle.questionnaire.name}',
+            message=teams_message,
+            recipient_list=[cycle.reviewee.email],
+            html_message=teams_message,
+            action_url=self_assessment_url,
+        )
+
 
         stats['sent'] += 1
 
@@ -265,6 +314,24 @@ def send_reviewee_notifications(cycle, request=None):
             recipient_list=[cycle.reviewee.email],
             html_message=html_message,
             organization=cycle.reviewee.organization,
+        )
+
+        # Send Teams notification
+        teams_message = (
+            f"Your **360 Feedback** links for "
+            f"**{cycle.questionnaire.name}** are ready to share.\n\n"
+            f"Use the buttons below to share the appropriate feedback link "
+            f"with your reviewers."
+        )
+
+        send_teams_notification(
+            subject=f'Share Your 360 Feedback Links: {cycle.questionnaire.name}',
+            message=teams_message,
+            recipient_list=[cycle.reviewee.email],
+            html_message=teams_message,
+            peer_url=peer_url,
+            manager_url=manager_url,
+            direct_report_url=direct_report_url,
         )
 
         stats['sent'] += 1
@@ -339,6 +406,21 @@ def send_close_check_emails(dry_run=False):
                 recipient_list=[cycle.reviewee.email],
                 html_message=html_message,
                 organization=cycle.reviewee.organization,
+            )
+
+            # Send Teams notification
+            teams_message = (
+                f"Your **360 Feedback** cycle for "
+                f"**{cycle.questionnaire.name}** is ready for a progress check.\n\n"
+                f"**{completed_count} of {total_count}** feedback responses are complete."
+            )
+
+            send_teams_notification(
+                subject=f'Review Check-In: {cycle.questionnaire.name}',
+                message=teams_message,
+                recipient_list=[cycle.reviewee.email],
+                html_message=teams_message,
+                action_url=dashboard_url,
             )
 
             cycle.close_check_sent_at = timezone.now()

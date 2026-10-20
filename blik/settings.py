@@ -26,6 +26,9 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-)32-g7%2_@jy@ycdh1lh2*)2
 DEFAULT_ENCRYPTION_KEY = 'si1qWsaNKwavcargvESNiAZVdNmFt-ZieXiaziK-xnA='
 ENCRYPTION_KEY = env('ENCRYPTION_KEY', default=DEFAULT_ENCRYPTION_KEY)
 
+# Power Automate webhook for Teams notifications
+POWER_AUTOMATE_WEBHOOK_URL = env('POWER_AUTOMATE_WEBHOOK_URL', default='')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
@@ -116,6 +119,7 @@ TEMPLATES = [
                 'landing.context_processors.url_namespace',
                 'landing.context_processors.organization_metadata',
                 'blik.context_processors.stripe_settings',
+                'blik.context_processors.site_settings',
             ],
         },
     },
@@ -277,6 +281,7 @@ ORGANIZATION_NAME = env('ORGANIZATION_NAME', default='Blik')
 SITE_NAME = 'Blik360'
 SITE_DOMAIN = env('SITE_DOMAIN', default='localhost:8000' if DEBUG else 'blik360.com')
 SITE_PROTOCOL = env('SITE_PROTOCOL', default='http' if DEBUG else 'https')
+SITE_URL = env('SITE_URL', default=f'{SITE_PROTOCOL}://{SITE_DOMAIN}')
 SITE_DESCRIPTION = 'Open source 360-degree feedback and performance review platform. Anonymous, secure, and easy to deploy.'
 SITE_KEYWORDS = '360 feedback, performance review, peer review, employee feedback, open source, self-hosted'
 
@@ -318,22 +323,12 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': env('DJANGO_LOG_LEVEL', default='INFO'),
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
             'level': env('DJANGO_LOG_LEVEL', default='INFO'),
-            'propagate': False,
-        },
-        'subscriptions': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'api': {
-            'handlers': ['console'],
-            'level': 'INFO',
             'propagate': False,
         },
     },

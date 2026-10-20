@@ -21,6 +21,39 @@ from accounts.services import create_user_with_email_as_username
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
+def _stripe_object_to_dict(value):
+    """Normalize Stripe SDK response objects while allowing plain test/input dicts."""
+    to_dict = getattr(value, 'to_dict', None)
+    return to_dict() if callable(to_dict) else value
+
+
+def _subscription_period(subscription):
+    items = subscription.get('items') or {}
+    item_data = items.get('data') or []
+    first_item = item_data[0] if item_data else {}
+
+    def first_available(*values):
+        return next((value for value in values if value is not None), None)
+
+    return (
+        first_available(
+            first_item.get('current_period_start'),
+            subscription.get('current_period_start'),
+            subscription.get('trial_start'),
+            subscription.get('created'),
+        ),
+        first_available(
+            first_item.get('current_period_end'),
+            subscription.get('current_period_end'),
+            subscription.get('trial_end'),
+        ),
+    )
+
+
+def _stripe_timestamp(value):
+    return datetime.fromtimestamp(value, tz=dt_timezone.utc) if value is not None else None
+
+
 
 
 @require_POST
@@ -79,9 +112,6 @@ def create_checkout_session(request):
 @csrf_exempt
 def stripe_webhook(request):
     """Handle Stripe webhook events"""
-    import logging
-    logger = logging.getLogger(__name__)
-
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
 
@@ -96,6 +126,7 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
+        event = _stripe_object_to_dict(event)
         logger.info(f"[STRIPE WEBHOOK] ✓ Signature verification successful")
         logger.info(f"[STRIPE WEBHOOK] Event type: {event['type']}")
         logger.info(f"[STRIPE WEBHOOK] Event ID: {event.get('id', 'N/A')}")
@@ -165,7 +196,9 @@ def handle_checkout_session_completed(session):
         print(f"Subscription {stripe_subscription_id} already exists, skipping creation")
         return
 
-    stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+    stripe_subscription = _stripe_object_to_dict(
+        stripe.Subscription.retrieve(stripe_subscription_id)
+    )
 
     # Get or create plan
     try:
@@ -215,21 +248,18 @@ def handle_checkout_session_completed(session):
     # Create subscription
     # For trial subscriptions, use trial dates as current period
     # For active subscriptions, use billing period dates
-    sub_dict = dict(stripe_subscription)
-
-    current_start = sub_dict.get('current_period_start') or sub_dict.get('trial_start') or sub_dict.get('created')
-    current_end = sub_dict.get('current_period_end') or sub_dict.get('trial_end')
+    current_start, current_end = _subscription_period(stripe_subscription)
 
     Subscription.objects.create(
         organization=org,
         plan=plan,
         stripe_customer_id=stripe_customer_id,
         stripe_subscription_id=stripe_subscription_id,
-        status=sub_dict.get('status', 'trialing'),
-        current_period_start=datetime.fromtimestamp(current_start, tz=dt_timezone.utc),
-        current_period_end=datetime.fromtimestamp(current_end, tz=dt_timezone.utc),
-        trial_start=datetime.fromtimestamp(sub_dict['trial_start'], tz=dt_timezone.utc) if sub_dict.get('trial_start') else None,
-        trial_end=datetime.fromtimestamp(sub_dict['trial_end'], tz=dt_timezone.utc) if sub_dict.get('trial_end') else None,
+        status=stripe_subscription.get('status', 'trialing'),
+        current_period_start=_stripe_timestamp(current_start),
+        current_period_end=_stripe_timestamp(current_end),
+        trial_start=_stripe_timestamp(stripe_subscription.get('trial_start')),
+        trial_end=_stripe_timestamp(stripe_subscription.get('trial_end')),
     )
 
     # Create one-time login token for auto-login
@@ -250,7 +280,7 @@ def handle_checkout_session_completed(session):
             # Log error but don't fail the signup
             print(f"Failed to send welcome email to {user.email}: {e}")
 
-    print(f"Created organization '{org.name}' with auto-login token: {login_token.token}")
+    logger.info("Created organization %r for %s", org.name, user.email)
 
 
 def handle_subscription_updated(stripe_subscription):
@@ -260,9 +290,10 @@ def handle_subscription_updated(stripe_subscription):
             stripe_subscription_id=stripe_subscription['id']
         )
         subscription.status = stripe_subscription['status']
-        subscription.current_period_start = datetime.fromtimestamp(stripe_subscription['current_period_start'], tz=timezone.utc)
-        subscription.current_period_end = datetime.fromtimestamp(stripe_subscription['current_period_end'], tz=timezone.utc)
-        subscription.cancel_at_period_end = stripe_subscription['cancel_at_period_end']
+        current_start, current_end = _subscription_period(stripe_subscription)
+        subscription.current_period_start = _stripe_timestamp(current_start)
+        subscription.current_period_end = _stripe_timestamp(current_end)
+        subscription.cancel_at_period_end = stripe_subscription.get('cancel_at_period_end', False)
         subscription.save()
     except Subscription.DoesNotExist:
         pass
@@ -298,9 +329,6 @@ def checkout_success(request):
     Handle Stripe checkout success redirect.
     Wait for webhook to create account, then redirect to auto-login.
     """
-    import logging
-    logger = logging.getLogger(__name__)
-
     session_id = request.GET.get('session_id')
     logger.info(f"[CHECKOUT SUCCESS] Received session_id: {session_id}")
 
@@ -310,7 +338,7 @@ def checkout_success(request):
 
     try:
         # Retrieve the session to get customer email
-        session = stripe.checkout.Session.retrieve(session_id)
+        session = _stripe_object_to_dict(stripe.checkout.Session.retrieve(session_id))
         customer_email = session['customer_details']['email']
         logger.info(f"[CHECKOUT SUCCESS] Customer email: {customer_email}")
         logger.info(f"[CHECKOUT SUCCESS] Session status: {session.get('status')}")
@@ -417,11 +445,11 @@ def billing_portal(request):
         # Create billing portal session
         session = stripe.billing_portal.Session.create(
             customer=subscription.stripe_customer_id,
-            return_url=f"{request.scheme}://{request.get_host()}/dashboard/settings/",
+            return_url=f"{settings.SITE_URL}/dashboard/settings/",
         )
 
         return redirect(session.url)
 
     except Exception as e:
-        print(f"Error creating billing portal session: {e}")
+        logger.exception("Error creating billing portal session")
         return redirect('settings')

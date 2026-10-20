@@ -20,7 +20,11 @@ from django.http import HttpResponseRedirect
 from datetime import timedelta
 
 from accounts.models import Reviewee, UserProfile, OrganizationInvitation
-from accounts.permissions import can_view_all_reports, visible_cycles
+from accounts.permissions import (
+    can_manage_organization_required,
+    can_view_all_reports,
+    visible_cycles,
+)
 from reviews.models import ReviewCycle, ReviewerToken
 from reviews.services import assign_tokens_to_emails, send_reviewer_invitations
 from questionnaires.models import (
@@ -2377,7 +2381,11 @@ def send_invitations(request, cycle_uuid):
 
     if request.method == 'POST':
         # Send invitations
-        stats = send_reviewer_invitations(cycle)
+        token_id = request.POST.get('token_id')
+        stats = send_reviewer_invitations(
+            cycle,
+            token_ids=[token_id] if token_id else None,
+        )
 
         if stats['errors']:
             for error in stats['errors']:
@@ -2446,9 +2454,7 @@ def send_individual_reminder(request, cycle_uuid, token_id):
             return redirect('review_cycle_detail', cycle_uuid=cycle.uuid)
 
         # Build feedback URL
-        feedback_url = request.build_absolute_uri(
-            f'/feedback/{token.token}/'
-        )
+        feedback_url = f'{settings.SITE_URL}/feedback/{token.token}/'
 
         # Render email
         context = {
@@ -2585,6 +2591,7 @@ def send_report_email(request, cycle_uuid):
 
 
 @login_required
+@can_manage_organization_required
 def settings_view(request):
     """Organization and email settings page."""
     # Use the organization from the middleware (set based on user's profile)
