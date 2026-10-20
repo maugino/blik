@@ -107,9 +107,10 @@
                                 type="radio"
                                 name="question_{{ question.id }}"
                                 value="did_not_observe"
-                                id="q{{ question.id }}_did_not_observe"
-                                {% if question.required %}required{% endif %}
-                            >
+				id="q{{ question.id }}_did_not_observe" 
+				{% if existing_responses|get_item:question.id == 'did_not_observe' %}checked{% endif %} 
+				{% if question.required %}required{% endif %}
+			    >
                             <label for="q{{ question.id }}_did_not_observe" class="rating-label">
                                 <span class="rating-description">{% trans "Did not observe" %}</span>
                             </label>

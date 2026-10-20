@@ -137,7 +137,14 @@ def feedback_form(request, token):
     existing_responses = {}
     if request.method == 'GET':
         responses = Response.objects.filter(token=reviewer_token).select_related('question')
-        existing_responses = {str(r.question.id): r.answer_data.get('value') for r in responses}
+        existing_responses = {
+            str(r.question.id): (
+                'did_not_observe'
+                if r.answer_data.get('did_not_observe')
+                else r.answer_data.get('value')
+            )
+            for r in responses
+        }
 
     # Get invitation token for localStorage key
     invitation_token = cycle.get_invitation_token(reviewer_token.category)
