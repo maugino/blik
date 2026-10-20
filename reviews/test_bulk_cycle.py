@@ -13,10 +13,10 @@ from reviews.models import ReviewCycle
 # core.email bypasses Django's test email backend (it builds a live SMTP
 # EmailBackend directly), so mail.outbox stays empty even in tests. Instead we
 # assert on calls to send_reviewee_notifications — the single integration
-# seam between the bulk flow and the email machinery. The view imports this
-# function inline (`from reviews.services import ...`), so we patch at the
-# source module.
-NOTIFY_PATH = 'reviews.services.send_reviewee_notifications'
+# seam between the bulk flow and the email machinery. Patched where it is
+# used: admin_views binds the name at import time, so patching the source
+# module would not reach it. admin_views is its only caller.
+NOTIFY_PATH = 'blik.admin_views.send_reviewee_notifications'
 
 
 class BulkCycleCreationTestCase(TestCase):

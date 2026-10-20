@@ -94,28 +94,20 @@ def setup_organization(request):
 
             # Create UserProfile for the setup admin if needed
             from accounts.models import UserProfile
-            from django.contrib.auth.models import Permission
-            from django.contrib.contenttypes.models import ContentType
+            from accounts.permissions import assign_organization_admin
 
             if not hasattr(request.user, 'profile'):
-                profile = UserProfile.objects.create(
+                UserProfile.objects.create(
                     user=request.user,
                     organization=organization,
                     can_create_cycles_for_others=True
                 )
 
-                # Grant organization management permissions to setup admin
+                # Through the group, like every other path that creates an
+                # admin. Permissions granted directly here would miss every
+                # permission added to the group later on.
                 try:
-                    content_type = ContentType.objects.get_for_model(UserProfile)
-                    permissions = Permission.objects.filter(
-                        content_type=content_type,
-                        codename__in=[
-                            'can_invite_members',
-                            'can_manage_organization',
-                            'can_view_all_reports',
-                        ]
-                    )
-                    request.user.user_permissions.add(*permissions)
+                    assign_organization_admin(request.user)
                 except Exception as e:
                     # Log but don't fail setup if permissions aren't available yet
                     import logging
@@ -148,9 +140,10 @@ def setup_email(request):
         messages.error(request, 'No organization found. Please complete organization setup first.')
         return redirect('setup_organization')
 
-    # Check if user has a SaaS subscription
-    from subscriptions.models import Subscription
-    has_subscription = Subscription.objects.filter(organization=organization).exists()
+    # Managed email is offered to every hosted customer: subscribers and
+    # single-round buyers alike, whatever their status or credit balance.
+    from subscriptions.utils import is_hosted_customer
+    is_hosted = is_hosted_customer(organization)
 
     if request.method == 'POST':
         form = SetupEmailForm(request.POST)
@@ -158,7 +151,7 @@ def setup_email(request):
         # Auto-skip for SaaS customers if they choose to use Blik mailer
         use_blik_mailer = request.POST.get('use_blik_mailer') == 'true'
 
-        if use_blik_mailer and has_subscription:
+        if use_blik_mailer and is_hosted:
             # Use default Blik email settings (already configured in Django settings)
             messages.success(request, 'Using Blik\'s managed email service. All set!')
             return redirect('setup_complete')
@@ -191,7 +184,7 @@ def setup_email(request):
 
     return render(request, 'setup/email.html', {
         'form': form,
-        'has_subscription': has_subscription,
+        'is_hosted': is_hosted,
         'step': 3,
         'total_steps': 3,
         'progress_percentage': 100,

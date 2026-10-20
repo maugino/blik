@@ -3,13 +3,16 @@ import json
 import logging
 
 logger = logging.getLogger(__name__)
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.http import require_POST, require_http_methods
-from accounts.services import export_organization_data, delete_user_account, delete_organization
+from django.views.decorators.http import require_POST
+from accounts.services import (
+    export_organization_data,
+    delete_user_account,
+    delete_organization as delete_organization_service,
+)
 from accounts.import_service import (
     import_organization_data,
     validate_import_data,
@@ -18,6 +21,7 @@ from accounts.import_service import (
 from accounts.permissions import (
     can_delete_organization_required,
     can_manage_organization_required,
+    login_required,
 )
 from subscriptions.services import cancel_subscription, reactivate_subscription
 from subscriptions.models import Subscription
@@ -112,7 +116,9 @@ def export_data(request):
         return JsonResponse({'error': 'Export failed. Please try again.'}, status=500)
 
 
-@login_required
+@login_required(as_json=True)
+@can_manage_organization_required(
+    as_json=True, message='Only organization administrators can import data')
 @require_POST
 def preview_import(request):
     """
@@ -122,10 +128,6 @@ def preview_import(request):
     org = request.organization
     if not org:
         return JsonResponse({'error': 'Organization not found'}, status=404)
-
-    # Check if user is org admin
-    if not request.user.has_perm('accounts.can_manage_organization'):
-        return JsonResponse({'error': 'Only organization administrators can import data'}, status=403)
 
     try:
         import_file = request.FILES.get('import_file')
@@ -220,6 +222,11 @@ def import_data(request):
             'reports': request.POST.get('import_reports') == 'on',
         }
 
+        if (import_options['questionnaires']
+                and not request.user.has_perm('accounts.can_manage_questionnaires')):
+            messages.error(request, 'You do not have permission to create or edit questionnaires.')
+            return redirect('settings')
+
         # Get conflict resolution mode
         conflict_resolution = request.POST.get('conflict_resolution', 'skip')
 
@@ -305,8 +312,7 @@ def delete_organization(request):
         return redirect('account_settings')
 
     try:
-        from accounts.services import delete_organization as delete_org_service
-        delete_org_service(org)
+        delete_organization_service(org)
         logout(request)
         messages.success(request, 'Organization and all data have been deleted.')
         return redirect('landing:index')
@@ -315,7 +321,7 @@ def delete_organization(request):
         return redirect('account_settings')
 
 
-@login_required
+@login_required(as_json=True)
 @require_POST
 def mark_welcome_seen(request):
     """Mark the welcome modal as seen for the current user."""

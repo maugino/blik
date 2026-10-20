@@ -2,34 +2,41 @@
 Admin dashboard views for Blik
 """
 import json
+import logging
+import random
+import re
+from datetime import date
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404, JsonResponse
-from django.core.exceptions import ValidationError
-from django.template.loader import render_to_string
+from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.validators import validate_email
 from django.db import transaction
-from django.db.models import Count, Q, Max
+from django.db.models import Avg, Count, Max, OuterRef, Q, Subquery
+from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
-from django.urls import reverse
-from django.http import HttpResponseRedirect
-from datetime import timedelta
 
 from accounts.models import Reviewee, UserProfile, OrganizationInvitation
 from accounts.permissions import (
+    assign_organization_admin,
+    assign_organization_member,
     can_manage_organization_required,
+    can_manage_questionnaires_required,
     can_view_all_reports,
+    is_organization_admin,
+    login_required,
     visible_cycles,
 )
-from reviews.models import ReviewCycle, ReviewerToken
-from reviews.services import assign_tokens_to_emails, send_reviewer_invitations
+from api.models import APIToken, WebhookEndpoint
+from core.languages import normalize_language_code
 from questionnaires.models import (
-    Question,
-    Questionnaire,
     QuestionnaireTranslation,
     QuestionSectionTranslation,
     QuestionTranslation,
@@ -40,13 +47,37 @@ from questionnaires.translations import (
     questionnaire_translation_completeness,
     supported_language_options,
 )
-from core.languages import normalize_language_code
-from reports.models import Report
-from core.models import Organization
-from core.gdpr import GDPRDeletionService
-from core.env_config import env_managed_fields
 
-import logging
+from core.env_config import env_managed_fields
+from core.gdpr import GDPRDeletionService
+from core.models import Organization
+from productreviews.models import ProductReview
+from questionnaires.models import Question, QuestionSection, Questionnaire
+from reports.dreyfus_service import (
+    AGENCY_STAGES,
+    DREYFUS_STAGES,
+    calculate_dreyfus_quadrant,
+    _get_development_focus,
+    _level_to_stage,
+)
+from reports.models import Report
+from reports.services import generate_report, send_report_ready_notification
+from reviews.models import ReviewCycle, ReviewerToken
+from reviews.services import (
+    assign_tokens_to_emails,
+    send_reminder_emails,
+    send_reviewee_notifications,
+    send_reviewer_invitations,
+)
+from subscriptions.models import Subscription
+from subscriptions.utils import (
+    NoCycleCredits,
+    billing_context,
+    check_employee_limit,
+    cycle_credits,
+    get_subscription_status,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -308,8 +339,6 @@ def get_cycle_or_404(request, cycle_uuid):
 @login_required
 def dashboard(request):
     """Admin dashboard homepage"""
-    from subscriptions.utils import get_subscription_status
-
     org = request.organization
 
     # Get statistics filtered by organization
@@ -369,7 +398,6 @@ def dashboard(request):
         pass
 
     # Check if user has submitted a product review (global, not org-scoped)
-    from productreviews.models import ProductReview
     user_has_reviewed = ProductReview.objects.filter(
         reviewer_email=request.user.email,
         is_active=True
@@ -394,8 +422,6 @@ def dashboard(request):
 @login_required
 def team_list(request):
     """Team management - users and invitations"""
-    from subscriptions.utils import get_subscription_status
-
     org = request.organization
 
     if not org:
@@ -451,9 +477,6 @@ def team_list(request):
 @require_POST
 def update_user_permissions(request):
     """Update user permissions and role"""
-    from accounts.permissions import assign_organization_admin, assign_organization_member
-    from django.contrib.auth.models import Group
-
     # Check if requester has permission to manage organization
     if not request.user.has_perm('accounts.can_manage_organization'):
         messages.error(request, 'You do not have permission to manage user permissions.')
@@ -527,9 +550,6 @@ def update_user_permissions(request):
 @login_required
 def reviewee_list(request):
     """List and manage reviewees"""
-    from subscriptions.utils import get_subscription_status
-    from questionnaires.models import Questionnaire
-
     org = request.organization
     # Filter out anonymized reviewees (those with @deleted.invalid emails)
     reviewees_qs = Reviewee.objects.for_organization(org).filter(is_active=True).annotate(
@@ -608,9 +628,6 @@ def reviewee_list(request):
 @login_required
 def reviewee_create(request):
     """Create a new reviewee"""
-    from subscriptions.utils import check_employee_limit
-    from accounts.permissions import is_organization_admin
-
     if request.method == 'POST':
         name = request.POST.get('name')
         email = request.POST.get('email')
@@ -629,7 +646,7 @@ def reviewee_create(request):
                     return redirect('reviewee_list')
 
             # Check employee limit
-            allowed, error_message = check_employee_limit(request)
+            allowed, error_message = check_employee_limit(organization)
             if not allowed:
                 messages.error(request, error_message)
                 return redirect('reviewee_list')
@@ -652,18 +669,13 @@ def reviewee_create(request):
 
 
 @login_required
+@can_manage_organization_required(
+    redirect_url='reviewee_list',
+    message='You do not have permission to edit reviewees. '
+            'Only organization administrators can access this feature.'
+)
 def reviewee_edit(request, reviewee_id):
     """Edit an existing reviewee - admin only"""
-    from accounts.permissions import organization_admin_required
-
-    # Check admin permission
-    if not request.user.has_perm('accounts.can_manage_organization'):
-        messages.error(
-            request,
-            'You do not have permission to edit reviewees. Only organization administrators can access this feature.'
-        )
-        return redirect('reviewee_list')
-
     reviewee = get_object_or_404(Reviewee, id=reviewee_id)
 
     if request.method == 'POST':
@@ -687,18 +699,13 @@ def reviewee_edit(request, reviewee_id):
 
 
 @login_required
+@can_manage_organization_required(
+    redirect_url='reviewee_list',
+    message='You do not have permission to delete reviewees. '
+            'Only organization administrators can access this feature.'
+)
 def reviewee_delete(request, reviewee_id):
     """Soft delete a reviewee - admin only"""
-    from accounts.permissions import organization_admin_required
-
-    # Check admin permission
-    if not request.user.has_perm('accounts.can_manage_organization'):
-        messages.error(
-            request,
-            'You do not have permission to delete reviewees. Only organization administrators can access this feature.'
-        )
-        return redirect('reviewee_list')
-
     reviewee = get_object_or_404(Reviewee, id=reviewee_id)
 
     if request.method == 'POST':
@@ -716,6 +723,11 @@ def reviewee_delete(request, reviewee_id):
 
 @login_required
 @require_POST
+@can_manage_organization_required(
+    redirect_url='reviewee_list',
+    message='You do not have permission to create review cycles. '
+            'Only organization administrators can access this feature.'
+)
 def quick_cycle_create(request, reviewee_id):
     """
     Quick cycle creation from reviewee/cycle list.
@@ -723,16 +735,6 @@ def quick_cycle_create(request, reviewee_id):
     Copies token structure and email assignments from the source cycle.
     If no previous cycle exists, creates default tokens (1 self, 3 peers, 1 manager, 0 direct reports).
     """
-    from accounts.permissions import organization_admin_required
-
-    # Check admin permission
-    if not request.user.has_perm('accounts.can_manage_organization'):
-        messages.error(
-            request,
-            'You do not have permission to create review cycles. Only organization administrators can access this feature.'
-        )
-        return redirect('reviewee_list')
-
     org = request.organization
     reviewee = get_object_or_404(Reviewee, id=reviewee_id, organization=org, is_active=True)
     questionnaire_id = request.POST.get('questionnaire_id')
@@ -749,12 +751,16 @@ def quick_cycle_create(request, reviewee_id):
         return redirect('reviewee_list')
 
     # Create the cycle
-    cycle = ReviewCycle.objects.create(
-        reviewee=reviewee,
-        questionnaire=questionnaire,
-        created_by=request.user,
-        status='active'
-    )
+    try:
+        cycle = ReviewCycle.objects.create(
+            reviewee=reviewee,
+            questionnaire=questionnaire,
+            created_by=request.user,
+            status='active'
+        )
+    except NoCycleCredits as e:
+        messages.error(request, str(e))
+        return redirect('reviewee_list')
 
     # Get the cycle to copy from
     if source_cycle_uuid:
@@ -830,9 +836,6 @@ def quick_cycle_create(request, reviewee_id):
 @login_required
 def questionnaire_list(request):
     """List available questionnaires"""
-    from django.db.models import Subquery, OuterRef
-    from questionnaires.models import Question
-
     org = request.organization
 
     # Subquery to count questions correctly
@@ -884,16 +887,6 @@ def questionnaire_sample_report(request, questionnaire_id):
     can reuse the real Dreyfus diamond + agency SVGs and Chart.js radar/gap
     graphs. Seeded by questionnaire id so reloads look identical.
     """
-    import random
-    from reports.dreyfus_service import (
-        DREYFUS_STAGES,
-        AGENCY_STAGES,
-        QUADRANTS,
-        calculate_dreyfus_quadrant,
-        _level_to_stage,
-        _get_development_focus,
-    )
-
     questionnaire = get_object_or_404(
         Questionnaire.objects.prefetch_related('sections__questions'),
         id=questionnaire_id,
@@ -1001,10 +994,9 @@ def questionnaire_sample_report(request, questionnaire_id):
 
 
 @login_required
+@can_manage_questionnaires_required
 def questionnaire_create(request):
     """Create a new questionnaire"""
-    from questionnaires.models import QuestionSection, Question
-
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description', '')
@@ -1037,10 +1029,9 @@ def questionnaire_create(request):
 
 
 @login_required
+@can_manage_questionnaires_required
 def questionnaire_edit(request, questionnaire_id):
     """Edit an existing questionnaire"""
-    from questionnaires.models import QuestionSection, Question
-
     # Get organization from request context
     org = getattr(request, 'organization', None)
 
@@ -1786,12 +1777,10 @@ def questionnaire_edit(request, questionnaire_id):
     return render(request, 'admin_dashboard/questionnaire_form.html', context)
 
 
-@login_required
+@login_required(as_json=True)
+@can_manage_questionnaires_required(as_json=True)
 def question_dreyfus_config_api(request, question_id):
     """API endpoint to get Dreyfus/Agency configuration for a question"""
-    from django.http import JsonResponse
-    from questionnaires.models import Question
-
     try:
         # Get the organization from request
         org = getattr(request, 'organization', None)
@@ -1912,6 +1901,12 @@ def review_cycle_create(request):
                 # request from stalling on SMTP and avoids surprise blasts.
                 reviewees = Reviewee.objects.for_organization(org).filter(is_active=True)
 
+                # Refuse the whole batch up front so the message can say how
+                # many credits it needs; the model gate still backs this up.
+                credits = cycle_credits(org)
+                if credits is not None and reviewees.count() > credits:
+                    raise NoCycleCredits(needed=reviewees.count(), available=credits)
+
                 with transaction.atomic():
                     for reviewee in reviewees:
                         cycle = ReviewCycle.objects.create(
@@ -1955,15 +1950,11 @@ def review_cycle_create(request):
                 # Send notification emails to reviewee. Defer to after the
                 # transaction commits so a slow SMTP backend can't stall this
                 # request (matches the pattern in api/signals.py).
-                from reviews.services import send_reviewee_notifications
                 transaction.on_commit(
                     lambda c=cycle: send_reviewee_notifications(c, request)
                 )
 
                 # Check if user provided reviewer emails
-                from django.core.validators import validate_email
-                from django.core.exceptions import ValidationError
-                import re
 
                 email_assignments = {}
                 has_emails = False
@@ -2030,6 +2021,9 @@ def review_cycle_create(request):
                     # Redirect to invitations page to add reviewers
                     return redirect('manage_invitations', cycle_uuid=cycle.uuid)
 
+        except NoCycleCredits as e:
+            messages.error(request, str(e))
+            return redirect('review_cycle_create')
         except Exception as e:
             messages.error(request, f'Error creating review cycle: {str(e)}')
             return redirect('review_cycle_create')
@@ -2059,6 +2053,7 @@ def review_cycle_create(request):
         'reviewees': reviewees,
         'questionnaires': questionnaires,
         'can_create_for_others': hasattr(request.user, 'profile') and request.user.profile.can_create_cycles_for_others,
+        **billing_context(org, request.user),
     }
 
     return render(request, 'admin_dashboard/review_cycle_form.html', context)
@@ -2072,8 +2067,6 @@ def bulk_send_invitations(request):
     cycles in the session under 'pending_invitation_cycles'. This view renders
     them for review on GET and defers the actual send on POST.
     """
-    from reviews.services import send_reviewee_notifications
-
     org = request.organization
     uuids = request.session.get('pending_invitation_cycles', [])
 
@@ -2172,8 +2165,6 @@ def review_cycle_detail(request, cycle_uuid):
 @login_required
 def generate_report_view(request, cycle_uuid):
     """Generate or regenerate report for a review cycle"""
-    from reports.services import generate_report, send_report_ready_notification
-
     cycle = get_cycle_or_404(request, cycle_uuid)
 
     try:
@@ -2228,7 +2219,6 @@ def close_cycle(request, cycle_uuid):
     cycle.save()
 
     # Generate report
-    from reports.services import generate_report, send_report_ready_notification
     try:
         report = generate_report(cycle)
 
@@ -2296,14 +2286,10 @@ def manage_invitations(request, cycle_uuid):
 @login_required
 def assign_invitations(request, cycle_uuid):
     """Assign email addresses to reviewer tokens (creating tokens dynamically)"""
-    from django.core.validators import validate_email
-    from django.core.exceptions import ValidationError
-
     cycle = get_cycle_or_404(request, cycle_uuid)
 
     if request.method == 'POST':
         # Parse email assignments by category
-        import re
         email_assignments = {}
 
         for category_code, category_display in ReviewerToken.CATEGORY_CHOICES:
@@ -2404,8 +2390,6 @@ def send_invitations(request, cycle_uuid):
 @login_required
 def send_reminder(request, cycle_uuid):
     """Send reminder emails for pending reviews"""
-    from reviews.services import send_reminder_emails
-
     cycle = get_cycle_or_404(request, cycle_uuid)
 
     if request.method == 'POST':
@@ -2430,9 +2414,6 @@ def send_reminder(request, cycle_uuid):
 @require_POST
 def send_individual_reminder(request, cycle_uuid, token_id):
     """Send a reminder email to a specific reviewer"""
-    from core.email import send_email
-    from django.template.loader import render_to_string
-    from django.conf import settings
 
     cycle = get_cycle_or_404(request, cycle_uuid)
 
@@ -2481,7 +2462,6 @@ def send_individual_reminder(request, cycle_uuid, token_id):
         )
 
         # Update last reminder sent timestamp
-        from django.utils import timezone
         token.last_reminder_sent_at = timezone.now()
         token.save()
 
@@ -2535,7 +2515,6 @@ def remove_reviewer_token(request, cycle_uuid, token_id):
                 cycle.save()
 
                 # Auto-generate report
-                from reports.services import generate_report, send_report_ready_notification
                 try:
                     report = generate_report(cycle)
 
@@ -2544,12 +2523,12 @@ def remove_reviewer_token(request, cycle_uuid, token_id):
                     if organization and organization.auto_send_report_email:
                         email_stats = send_report_ready_notification(report, request)
                         if email_stats.get('errors'):
-                            print(f"Errors sending report email for cycle {cycle.id}: {email_stats['errors']}")
+                            logger.error("Errors sending report email for cycle %s: %s", cycle.id, email_stats['errors'])
 
                     messages.success(request, 'Cycle automatically closed and report generated (all remaining reviewers completed).')
                 except Exception as e:
                     # Log error but don't fail the removal
-                    print(f"Error auto-generating report for cycle {cycle.id}: {e}")
+                    logger.exception("Error auto-generating report for cycle %s", cycle.id)
                     messages.warning(request, f'Cycle closed but error generating report: {str(e)}')
 
     except ReviewerToken.DoesNotExist:
@@ -2564,8 +2543,6 @@ def remove_reviewer_token(request, cycle_uuid, token_id):
 @require_POST
 def send_report_email(request, cycle_uuid):
     """Send report notification email to reviewee"""
-    from reports.services import send_report_ready_notification
-
     cycle = get_cycle_or_404(request, cycle_uuid)
 
     # Check if report exists
@@ -2737,26 +2714,20 @@ def settings_view(request):
     # Get subscription information if exists
     subscription = None
     try:
-        from subscriptions.models import Subscription
         subscription = organization.subscription
-        print(f"DEBUG: Found subscription for {organization.name}: {subscription.plan.name} - {subscription.status}")
-    except (Subscription.DoesNotExist, AttributeError) as e:
-        print(f"DEBUG: No subscription for {organization.name}: {type(e).__name__}")
-    except Exception as e:
-        print(f"DEBUG: Error getting subscription: {type(e).__name__}: {e}")
-
-    print(f"DEBUG: Passing subscription to template: {subscription}")
+    except (Subscription.DoesNotExist, AttributeError):
+        pass
+    except Exception:
+        logger.exception("Error getting subscription for %s", organization.name)
 
     # Check if current user has organization admin permission
     is_org_admin = request.user.has_perm('accounts.can_manage_organization')
 
     # Count total admin users
-    from accounts.models import UserProfile
     admin_profiles = UserProfile.objects.for_organization(organization).select_related('user')
     admin_count = sum(1 for p in admin_profiles if p.user.has_perm('accounts.can_manage_organization'))
 
     # Get API tokens and webhooks for this organization
-    from api.models import APIToken, WebhookEndpoint
     api_tokens = APIToken.objects.for_organization(organization).order_by('-created_at')
     webhooks = WebhookEndpoint.objects.for_organization(organization).order_by('-created_at')
 
@@ -2779,6 +2750,7 @@ def settings_view(request):
         'locked_fields': locked,
         'email_delivery_method': get_email_delivery_method(organization),
         'webhook_url_configured': email_webhook_is_configured(organization),
+        **billing_context(organization, request.user),
     }
 
     return render(request, 'admin_dashboard/settings.html', context)
@@ -2987,9 +2959,6 @@ def gdpr_delete_reviewee_view(request, reviewee_id):
 @login_required
 def product_review_list(request):
     """List and manage product reviews"""
-    from productreviews.models import ProductReview
-    from django.db.models import Avg, Count
-
     org = request.organization
 
     # Get all product reviews (not org-scoped - these are reviews of Blik as a product)
@@ -3045,9 +3014,6 @@ def product_review_list(request):
 @login_required
 def product_review_create(request):
     """Create a new product review"""
-    from productreviews.models import ProductReview
-    from datetime import date
-
     if not request.user.is_superuser:
         messages.error(request, 'You do not have permission to create product reviews.')
         return redirect('product_review_list')
@@ -3112,8 +3078,6 @@ def product_review_create(request):
 @login_required
 def product_review_detail(request, review_id):
     """View product review details"""
-    from productreviews.models import ProductReview
-
     review = get_object_or_404(
         ProductReview.objects,
         id=review_id
@@ -3129,9 +3093,6 @@ def product_review_detail(request, review_id):
 @login_required
 def product_review_edit(request, review_id):
     """Edit an existing product review"""
-    from productreviews.models import ProductReview
-    from datetime import date
-
     if not request.user.is_superuser:
         messages.error(request, 'You do not have permission to edit product reviews.')
         return redirect('product_review_list')
@@ -3207,8 +3168,6 @@ def product_review_edit(request, review_id):
 @login_required
 def product_review_delete(request, review_id):
     """Delete (soft delete) a product review"""
-    from productreviews.models import ProductReview
-
     if not request.user.is_superuser:
         messages.error(request, 'You do not have permission to delete product reviews.')
         return redirect('product_review_list')
@@ -3237,9 +3196,6 @@ def quick_product_review(request):
     Quick review submission for logged-in users.
     Pre-fills user information from their profile.
     """
-    from productreviews.models import ProductReview
-    from datetime import date
-
     user = request.user
     org = request.organization
 
@@ -3321,9 +3277,6 @@ def quick_product_review(request):
 @require_POST
 def product_review_approve(request, review_id):
     """Quick approve a product review"""
-    from productreviews.models import ProductReview
-    from datetime import date
-
     if not request.user.is_superuser:
         messages.error(request, 'You do not have permission to approve reviews.')
         return redirect('product_review_list')
@@ -3346,8 +3299,6 @@ def product_review_approve(request, review_id):
 @require_POST
 def product_review_reject(request, review_id):
     """Quick reject a product review"""
-    from productreviews.models import ProductReview
-
     if not request.user.is_superuser:
         messages.error(request, 'You do not have permission to reject reviews.')
         return redirect('product_review_list')
@@ -3369,6 +3320,7 @@ def product_review_reject(request, review_id):
 # =============================================================================
 
 @login_required
+@can_manage_organization_required
 def create_api_token(request):
     """Create a new API token"""
     if request.method != 'POST':
@@ -3382,8 +3334,6 @@ def create_api_token(request):
     if not org:
         messages.error(request, 'No organization found.')
         return redirect('settings')
-
-    from api.models import APIToken
 
     name = request.POST.get('name')
     rate_limit = request.POST.get('rate_limit', 1000)
@@ -3408,6 +3358,7 @@ def create_api_token(request):
 
 
 @login_required
+@can_manage_organization_required
 def update_api_token(request, token_id):
     """Update an existing API token"""
     if request.method != 'POST':
@@ -3421,8 +3372,6 @@ def update_api_token(request, token_id):
     if not org:
         messages.error(request, 'No organization found.')
         return redirect('settings')
-
-    from api.models import APIToken
 
     try:
         token = APIToken.objects.for_organization(org).get(id=token_id)
@@ -3442,6 +3391,7 @@ def update_api_token(request, token_id):
 
 
 @login_required
+@can_manage_organization_required
 def delete_api_token(request, token_id):
     """Delete (revoke) an API token"""
     if request.method != 'POST':
@@ -3455,8 +3405,6 @@ def delete_api_token(request, token_id):
     if not org:
         messages.error(request, 'No organization found.')
         return redirect('settings')
-
-    from api.models import APIToken
 
     try:
         token = APIToken.objects.for_organization(org).get(id=token_id)
@@ -3473,6 +3421,7 @@ def delete_api_token(request, token_id):
 
 
 @login_required
+@can_manage_organization_required
 def create_webhook(request):
     """Create a new webhook endpoint"""
     if request.method != 'POST':
@@ -3486,8 +3435,6 @@ def create_webhook(request):
     if not org:
         messages.error(request, 'No organization found.')
         return redirect('settings')
-
-    from api.models import WebhookEndpoint
 
     name = request.POST.get('name')
     url = request.POST.get('url')
@@ -3512,6 +3459,7 @@ def create_webhook(request):
 
 
 @login_required
+@can_manage_organization_required
 def update_webhook(request, webhook_id):
     """Update an existing webhook endpoint"""
     if request.method != 'POST':
@@ -3525,8 +3473,6 @@ def update_webhook(request, webhook_id):
     if not org:
         messages.error(request, 'No organization found.')
         return redirect('settings')
-
-    from api.models import WebhookEndpoint
 
     try:
         webhook = WebhookEndpoint.objects.for_organization(org).get(id=webhook_id)
@@ -3547,6 +3493,7 @@ def update_webhook(request, webhook_id):
 
 
 @login_required
+@can_manage_organization_required
 def delete_webhook(request, webhook_id):
     """Delete a webhook endpoint"""
     if request.method != 'POST':
@@ -3560,8 +3507,6 @@ def delete_webhook(request, webhook_id):
     if not org:
         messages.error(request, 'No organization found.')
         return redirect('settings')
-
-    from api.models import WebhookEndpoint
 
     try:
         webhook = WebhookEndpoint.objects.for_organization(org).get(id=webhook_id)

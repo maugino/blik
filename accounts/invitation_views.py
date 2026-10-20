@@ -64,10 +64,7 @@ def send_invitation(request):
         )
 
         # Build invitation URL
-        invite_url = (
-            f"{settings.SITE_URL}"
-            f"{reverse('accept_invitation', kwargs={'token': invitation.token})}"
-        )
+        invite_url = settings.SITE_URL + reverse('accept_invitation', kwargs={'token': invitation.token})
 
         # Send invitation email
         try:
@@ -103,8 +100,7 @@ Best regards,
 </body>
 </html>
                 ''',
-                from_email=org.from_email if org.from_email else None,
-                organization=org,
+                from_email=org.from_email if org.from_email else None
             )
             messages.success(request, f'Invitation sent to {email}')
         except Exception as e:

@@ -8,9 +8,9 @@
 
 {% block content %}
     <section class="section">
-        <div class="container" style="max-width: 800px;">
-            <h1 style="margin-bottom: 1rem;">Terms of Service</h1>
-            <p style="color: var(--text-secondary); margin-bottom: 3rem;"><strong>Last updated:</strong> January 2025</p>
+        <div class="container legal-page">
+            <h1>Terms of Service</h1>
+            <p class="legal-updated"><strong>Last updated:</strong> October 2026</p>
 
             <h2>Simple Version</h2>
             <p><strong>We try our best to keep things online</strong> (it's kind of my job), but no guarantees.</p>
@@ -22,7 +22,7 @@
             <h2>Two Ways to Use Blik</h2>
 
             <h3>1. Self-Hosted (Free, Open Source)</h3>
-            <p>Download from <a href="https://github.com/thijsdezoete/blik" target="_blank" rel="noopener" style="color: var(--primary);">GitHub</a> and run on your own servers.</p>
+            <p>Download from <a href="https://github.com/thijsdezoete/blik" target="_blank" rel="noopener">GitHub</a> and run on your own servers.</p>
             <ul>
                 <li><strong>License:</strong> AGPL-3.0</li>
                 <li><strong>Cost:</strong> Free forever</li>
@@ -33,9 +33,9 @@
             <h3>2. Hosted Service (Paid SaaS)</h3>
             <p>We host and manage everything for you.</p>
             <ul>
-                <li><strong>Pricing:</strong> €49/month (up to 50 employees) or €199/month (up to 200 employees)</li>
-                <li><strong>Billing:</strong> Monthly via Stripe. Cancel anytime.</li>
-                <li><strong>Location:</strong> EU servers (Germany)</li>
+                <li><strong>Pricing:</strong> €{{ plan_single_price }} once for a single review round ({{ plan_single_max }} review cycles), or a subscription at €{{ plan_saas_price }}/month (up to {{ plan_saas_max }} employees) or €{{ plan_ent_price }}/month (up to {{ plan_ent_max }} employees)</li>
+                <li><strong>Billing:</strong> Via Stripe. A single review round is a one-time payment; subscriptions are billed monthly and can be cancelled anytime.</li>
+                <li><strong>Location:</strong> EU servers</li>
             </ul>
 
             <h2>Service Availability</h2>
@@ -68,7 +68,8 @@
 
             <h2>What You Own</h2>
             <ul>
-                <li><strong>Your data:</strong> You own all feedback, reports, and content you create</li>
+                <li><strong>Your data:</strong> You own all feedback, reports, questionnaires, and content you create</li>
+                <li><strong>Kept private:</strong> Your questionnaires and questions are never shared with or visible to other customers, and we don't look at them without your consent</li>
                 <li><strong>Export anytime:</strong> Download your data in JSON format</li>
                 <li><strong>We don't claim rights:</strong> Your data is yours</li>
             </ul>
@@ -78,6 +79,7 @@
                 <li><strong>Cancel anytime:</strong> No long-term contracts</li>
                 <li><strong>Prorated refunds:</strong> If we terminate for our reasons</li>
                 <li><strong>No refunds:</strong> For violations of terms or voluntary cancellation</li>
+                <li><strong>Single review rounds:</strong> Unused rounds (no review cycle has been created from that purchase) are refunded on request within 14 days of purchase</li>
                 <li><strong>Data export:</strong> 30 days after cancellation, then permanent deletion</li>
             </ul>
 
@@ -104,7 +106,7 @@
             <ul>
                 <li>Free to use, modify, distribute</li>
                 <li>If you modify and offer as a service, you must share your source code</li>
-                <li>See <a href="https://github.com/thijsdezoete/blik/blob/master/LICENSE" target="_blank" rel="noopener" style="color: var(--primary);">full license on GitHub</a></li>
+                <li>See <a href="https://github.com/thijsdezoete/blik/blob/master/LICENSE" target="_blank" rel="noopener">full license on GitHub</a></li>
             </ul>
 
             <h2>Changes to Terms</h2>
@@ -119,11 +121,11 @@
             <p>These terms are governed by Dutch law. Disputes resolved in Amsterdam courts.</p>
 
             <h2>Contact</h2>
-            <p>Questions? Email: <a href="mailto:legal@blik360.com" style="color: var(--primary);">legal@blik360.com</a></p>
-            <p>Or open an issue on <a href="https://github.com/thijsdezoete/blik" target="_blank" rel="noopener" style="color: var(--primary);">GitHub</a></p>
+            <p>Questions? Email: <a href="mailto:legal@blik360.com">legal@blik360.com</a></p>
+            <p>Or open an issue on <a href="https://github.com/thijsdezoete/blik" target="_blank" rel="noopener">GitHub</a></p>
 
-            <div style="margin-top: 4rem; padding: 2rem; background: var(--card-background); border-left: 4px solid var(--primary);">
-                <p style="margin: 0;"><strong>Bottom line:</strong> We try our best to keep things running, but no guarantees. Use it responsibly. Self-host = AGPL license. Hosted = pay monthly, cancel anytime.</p>
+            <div class="legal-summary">
+                <p><strong>Bottom line:</strong> We try our best to keep things running, but no guarantees. Use it responsibly. Self-host = AGPL license. Hosted = pay once per review round, or monthly with cancel anytime.</p>
             </div>
         </div>
     </section>

@@ -47,7 +47,7 @@ def get_aggregate_rating_data():
     for review in reviews[:10]:
         review_data = {
             'author': {
-                'name': review.reviewer_name,
+                'name': review.public_name,
             },
             'datePublished': review.published_date.isoformat(),
             'reviewBody': review.review_text,

@@ -7,17 +7,26 @@ This module provides:
 3. Utility functions for permission assignment
 """
 from functools import wraps
+from django.contrib.auth.decorators import login_required as django_login_required
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
 from accounts.models import UserProfile
 
 
 # Group names
 ORG_ADMIN_GROUP = 'Organization Admin'
 ORG_MEMBER_GROUP = 'Organization Member'
+
+# The grants that make an account an admin. can_view_all_reports and
+# can_manage_questionnaires are left out: they may be granted per user.
+ADMIN_ROLE_CODENAMES = (
+    'can_invite_members',
+    'can_manage_organization',
+    'can_delete_organization',
+)
 
 
 def ensure_permission_groups():
@@ -30,6 +39,7 @@ def ensure_permission_groups():
     - Delete organization
     - View all reports
     - Create cycles for others
+    - Create and edit questionnaires
 
     Organization Member group has permissions to:
     - View own data
@@ -46,37 +56,53 @@ def ensure_permission_groups():
     # Create or get permissions
     invite_permission, _ = Permission.objects.get_or_create(
         codename='can_invite_members',
-        name='Can invite team members',
         content_type=content_type,
+        defaults={'name': 'Can invite team members'},
     )
 
     manage_org_permission, _ = Permission.objects.get_or_create(
         codename='can_manage_organization',
-        name='Can manage organization settings',
         content_type=content_type,
+        defaults={'name': 'Can manage organization settings'},
     )
 
     delete_org_permission, _ = Permission.objects.get_or_create(
         codename='can_delete_organization',
-        name='Can delete organization',
         content_type=content_type,
+        defaults={'name': 'Can delete organization'},
     )
 
     view_all_reports_permission, _ = Permission.objects.get_or_create(
         codename='can_view_all_reports',
-        name='Can view all organization reports',
         content_type=content_type,
+        defaults={'name': 'Can view all organization reports'},
     )
+
+    manage_questionnaires_permission, _ = Permission.objects.get_or_create(
+        codename='can_manage_questionnaires',
+        content_type=content_type,
+        defaults={'name': 'Can create and edit questionnaires'},
+    )
+
+    admin_permissions = [
+        invite_permission,
+        manage_org_permission,
+        delete_org_permission,
+        view_all_reports_permission,
+        manage_questionnaires_permission,
+    ]
 
     # Create Organization Admin group
     admin_group, created = Group.objects.get_or_create(name=ORG_ADMIN_GROUP)
     if created or admin_group.permissions.count() == 0:
-        admin_group.permissions.set([
-            invite_permission,
-            manage_org_permission,
-            delete_org_permission,
-            view_all_reports_permission,
-        ])
+        admin_group.permissions.set(admin_permissions)
+    else:
+        # Existing installs: add permissions introduced after the group was
+        # created. set() would undo manual grants, add() only fills gaps.
+        existing = set(admin_group.permissions.values_list('id', flat=True))
+        missing = [p for p in admin_permissions if p.id not in existing]
+        if missing:
+            admin_group.permissions.add(*missing)
 
     # Create Organization Member group
     member_group, _ = Group.objects.get_or_create(name=ORG_MEMBER_GROUP)
@@ -104,6 +130,10 @@ def assign_organization_admin(user):
 
     # Add to admin group
     user.groups.add(admin_group)
+
+    # The group grants these now; a direct copy would survive a later demotion.
+    _drop_direct_grants(
+        user, admin_group.permissions.values_list('codename', flat=True))
 
     # Set is_staff flag for backward compatibility
     user.is_staff = True
@@ -138,6 +168,10 @@ def assign_organization_member(user, can_create_cycles_for_others=False):
     # Add to member group
     user.groups.add(member_group)
 
+    # Accounts made admin by a direct grant (the old setup page and import)
+    # would otherwise stay admin.
+    _drop_direct_grants(user, ADMIN_ROLE_CODENAMES)
+
     # Ensure is_staff is False (not an admin)
     user.is_staff = False
     user.save()
@@ -146,6 +180,14 @@ def assign_organization_member(user, can_create_cycles_for_others=False):
     if hasattr(user, 'profile'):
         user.profile.can_create_cycles_for_others = can_create_cycles_for_others
         user.profile.save()
+
+
+def _drop_direct_grants(user, codenames):
+    """Remove the user's direct grants of these accounts permissions."""
+    user.user_permissions.remove(*Permission.objects.filter(
+        content_type=ContentType.objects.get_for_model(UserProfile),
+        codename__in=list(codenames),
+    ))
 
 
 def remove_from_all_org_groups(user):
@@ -158,100 +200,126 @@ def remove_from_all_org_groups(user):
         user.groups.remove(member_group)
 
 
-def organization_admin_required(view_func=None, redirect_url='admin_dashboard'):
-    """
-    Decorator to ensure user is an organization admin.
+def login_required(view_func=None, as_json=False, **kwargs):
+    """Drop-in replacement for django.contrib.auth.decorators.login_required.
+
+    Without as_json it delegates to Django's decorator, keeping login_url
+    and redirect_field_name — so it can be imported in its place.
+
+    as_json=True answers 401 instead. Django's version redirects to the HTML
+    login page; a caller parsing JSON follows that redirect, gets a page of
+    markup and fails on the parse.
 
     Usage:
         @login_required
-        @organization_admin_required
-        def my_view(request):
+        def dashboard(request):
             ...
 
-    Or with custom redirect:
-        @login_required
-        @organization_admin_required(redirect_url='home')
-        def my_view(request):
+        @login_required(as_json=True)
+        def some_api(request):
             ...
     """
     def decorator(func):
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            # Check if user has permission
-            if not request.user.has_perm('accounts.can_invite_members'):
-                messages.error(
-                    request,
-                    'You do not have permission to perform this action. '
-                    'Only organization administrators can access this feature.'
-                )
-                return redirect(redirect_url)
+        if not as_json:
+            return django_login_required(func, **kwargs)
 
-            return func(request, *args, **kwargs)
+        @wraps(func)
+        def wrapper(request, *args, **kw):
+            if not request.user.is_authenticated:
+                return JsonResponse(
+                    {'error': 'Authentication required'}, status=401)
+
+            return func(request, *args, **kw)
         return wrapper
 
-    # Handle both @organization_admin_required and @organization_admin_required()
+    # Handle both @login_required and @login_required(...)
     if view_func is None:
         return decorator
-    else:
-        return decorator(view_func)
+
+    return decorator(view_func)
 
 
-def can_manage_organization_required(view_func=None, redirect_url='admin_dashboard'):
-    """
-    Decorator to ensure user can manage organization settings.
+def build_permission_decorator(name, permission, default_message,
+                               default_redirect='admin_dashboard'):
+    """Build a view decorator that gates access on a single permission.
+
+    Users without the permission get an error message and are redirected
+    rather than shown a 403.
 
     Usage:
         @login_required
         @can_manage_organization_required
         def settings_view(request):
             ...
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            if not request.user.has_perm('accounts.can_manage_organization'):
-                messages.error(
-                    request,
-                    'You do not have permission to manage organization settings.'
-                )
-                return redirect(redirect_url)
 
-            return func(request, *args, **kwargs)
-        return wrapper
-
-    if view_func is None:
-        return decorator
-    else:
-        return decorator(view_func)
-
-
-def can_delete_organization_required(view_func=None, redirect_url='admin_dashboard'):
-    """
-    Decorator to ensure user can delete the organization.
-
-    Usage:
-        @login_required
-        @can_delete_organization_required
-        def delete_org_view(request):
+    Or with a redirect and a message specific to the view:
+        @can_manage_organization_required(
+            redirect_url='reviewee_list',
+            message='You do not have permission to edit reviewees.')
+        def reviewee_edit(request, reviewee_id):
             ...
+
+    Endpoints whose callers parse JSON pass as_json=True to get a 403 with
+    the message in the body; pair it with @login_required(as_json=True).
+    They must not queue a message: it would sit in the session and surface
+    on whatever page the user opens next, long after the request that
+    caused it.
     """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(request, *args, **kwargs):
-            if not request.user.has_perm('accounts.can_delete_organization'):
-                messages.error(
-                    request,
-                    'Only organization administrators can delete the organization.'
-                )
-                return redirect(redirect_url)
 
-            return func(request, *args, **kwargs)
-        return wrapper
+    def decorator_factory(view_func=None, redirect_url=default_redirect,
+                          message=default_message, as_json=False):
+        def decorator(func):
+            @wraps(func)
+            def wrapper(request, *args, **kwargs):
+                if not request.user.has_perm(permission):
+                    if as_json:
+                        return JsonResponse({'error': message}, status=403)
 
-    if view_func is None:
-        return decorator
-    else:
+                    messages.error(request, message)
+                    return redirect(redirect_url)
+
+                return func(request, *args, **kwargs)
+            return wrapper
+
+        # Handle both @foo and @foo()
+        if view_func is None:
+            return decorator
+
         return decorator(view_func)
+
+    # So tracebacks and repr() name the decorator, not the factory.
+    decorator_factory.__name__ = name
+    decorator_factory.__qualname__ = name
+    decorator_factory.__doc__ = f"Require the '{permission}' permission."
+
+    return decorator_factory
+
+
+organization_admin_required = build_permission_decorator(
+    'organization_admin_required',
+    'accounts.can_invite_members',
+    'You do not have permission to perform this action. '
+    'Only organization administrators can access this feature.',
+)
+
+can_manage_organization_required = build_permission_decorator(
+    'can_manage_organization_required',
+    'accounts.can_manage_organization',
+    'You do not have permission to manage organization settings.',
+)
+
+can_delete_organization_required = build_permission_decorator(
+    'can_delete_organization_required',
+    'accounts.can_delete_organization',
+    'Only organization administrators can delete the organization.',
+)
+
+can_manage_questionnaires_required = build_permission_decorator(
+    'can_manage_questionnaires_required',
+    'accounts.can_manage_questionnaires',
+    'You do not have permission to create or edit questionnaires.',
+    default_redirect='questionnaire_list',
+)
 
 
 def is_organization_admin(user):
@@ -291,6 +359,18 @@ def can_view_all_reports(user):
     """
     return (user.has_perm('accounts.can_view_all_reports')
             or user.has_perm('accounts.can_manage_organization'))
+
+
+def can_manage_questionnaires(user):
+    """
+    Check if user can create and edit questionnaires.
+
+    Deliberately a permission of its own rather than a synonym for
+    can_manage_organization: the two are meant to be grantable separately.
+    Existing admins receive it through the Organization Admin group, which
+    migration accounts.0009 backfills.
+    """
+    return user.has_perm('accounts.can_manage_questionnaires')
 
 
 def visible_cycles(user, queryset, email_field='reviewee__email'):

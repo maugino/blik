@@ -7,111 +7,119 @@ from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.contrib.auth.models import User
 from django.utils import timezone
 from django.shortcuts import redirect
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django_ratelimit.decorators import ratelimit
-from datetime import datetime, timezone as dt_timezone
-from core.models import Organization
-from .models import Plan, Subscription, OneTimeLoginToken
-from accounts.services import create_user_with_email_as_username
+from .models import Subscription, OneTimeLoginToken
+from .fulfilment import _period, _ts, fulfil_checkout
+from .utils import price_id_for
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def _stripe_object_to_dict(value):
-    """Normalize Stripe SDK response objects while allowing plain test/input dicts."""
-    to_dict = getattr(value, 'to_dict', None)
-    return to_dict() if callable(to_dict) else value
 
 
-def _subscription_period(subscription):
-    items = subscription.get('items') or {}
-    item_data = items.get('data') or []
-    first_item = item_data[0] if item_data else {}
-
-    def first_available(*values):
-        return next((value for value in values if value is not None), None)
-
-    return (
-        first_available(
-            first_item.get('current_period_start'),
-            subscription.get('current_period_start'),
-            subscription.get('trial_start'),
-            subscription.get('created'),
-        ),
-        first_available(
-            first_item.get('current_period_end'),
-            subscription.get('current_period_end'),
-            subscription.get('trial_end'),
-        ),
-    )
+def _base_url(request):
+    """Public base URL of the main app (request host in local dev)."""
+    if settings.DEBUG:
+        scheme = 'https' if request.is_secure() else 'http'
+        return f"{scheme}://{request.get_host()}"
+    return settings.MAIN_APP_URL
 
 
-def _stripe_timestamp(value):
-    return datetime.fromtimestamp(value, tz=dt_timezone.utc) if value is not None else None
+def _create_session(plan_type, *, base_url, cancel_url, organization=None, user=None):
+    """Create a Stripe Checkout session. Raises ValueError for an unknown plan.
 
+    `organization` is passed only by the authenticated in-app view; it binds
+    the purchase to that organization via client_reference_id.
 
+    No `payment_method_types`: Stripe API versions from 2026-09-30 reject it,
+    and the methods offered come from the Stripe Dashboard settings. Some of
+    those settle later (bank debits), which is why the webhook also handles
+    checkout.session.async_payment_succeeded.
+    """
+    params = {
+        'line_items': [{'price': price_id_for(plan_type), 'quantity': 1}],
+        'success_url': f'{base_url}/api/stripe/checkout-success/?session_id={{CHECKOUT_SESSION_ID}}',
+        'cancel_url': cancel_url,
+        'metadata': {'plan_type': plan_type},
+    }
+    if plan_type == 'single':
+        params.update(mode='payment', customer_creation='always',
+                      invoice_creation={'enabled': True})
+    else:
+        params.update(mode='subscription', subscription_data={'trial_period_days': 14})
+    if organization is not None:
+        params['client_reference_id'] = str(organization.pk)
+        params['customer_email'] = user.email
+        params['metadata']['user_id'] = str(user.pk)
+    return stripe.checkout.Session.create(**params)
 
 
 @require_POST
-@csrf_exempt  # Required: Called from landing page (different domain)
+@csrf_exempt  # Required: called from the landing page (different domain)
 @ratelimit(key='ip', rate='10/m', method='POST', block=True)
 def create_checkout_session(request):
-    """
-    Create Stripe Checkout session
+    """Public checkout for new customers. Never binds to an existing organization.
 
-    Security: CSRF exemption is necessary because this endpoint is called
-    from the public landing page (different subdomain). Protected by:
-    - Rate limiting (10 requests/minute per IP)
-    - CORS restrictions (only allowed origins)
-    - Stripe API validation
-    - No sensitive data exposure (only creates a Stripe session)
+    CSRF-exempt because the landing page is on another origin. Protected by
+    rate limiting and CORS; it only creates a Stripe session.
     """
+    plan_type = None
     try:
-        data = json.loads(request.body)
-        price_id = data.get('price_id')
-        plan_type = data.get('plan_type')
-
-        if not price_id or not plan_type:
-            return JsonResponse({'error': 'Missing required fields'}, status=400)
-
-        # Build base URL from request for local dev, or use configured domain
-        if settings.DEBUG:
-            scheme = 'https' if request.is_secure() else 'http'
-            base_url = f"{scheme}://{request.get_host()}"
-        else:
-            base_url = settings.MAIN_APP_URL
-
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price': price_id,
-                'quantity': 1,
-            }],
-            mode='subscription',
-            success_url=f'{base_url}/api/stripe/checkout-success/?session_id={{CHECKOUT_SESSION_ID}}',
+        plan_type = json.loads(request.body).get('plan_type')
+        base_url = _base_url(request)
+        session = _create_session(
+            plan_type, base_url=base_url,
             cancel_url=f'{base_url}/landing/signup/?canceled=true',
-            subscription_data={
-                'trial_period_days': 14,
-            },
-            metadata={
-                'plan_type': plan_type,
-            },
         )
-
-        return JsonResponse({'session_id': session.id})
-    except Exception as e:
+    except ValueError:
+        if plan_type in ('saas', 'enterprise', 'single'):
+            logger.error('Checkout for plan %r failed: its Stripe price setting is empty', plan_type)
+        return JsonResponse({'error': 'Unknown plan'}, status=400)
+    except Exception:
         logger.exception('Error creating checkout session')
         return JsonResponse({'error': 'Could not create checkout session. Please try again.'}, status=400)
+    return JsonResponse({'session_id': session.id, 'url': session.url})
+
+
+@login_required
+@require_POST
+def start_checkout(request):
+    """In-app purchase for an existing organization: another round, or a first subscription."""
+    organization = getattr(request, 'organization', None)
+    profile = getattr(request.user, 'profile', None)
+    if (not organization or profile is None or profile.organization_id != organization.pk
+            or not request.user.has_perm('accounts.can_manage_organization')):
+        messages.error(request, 'Only organization administrators can manage billing.')
+        return redirect('settings')
+
+    plan_type = request.POST.get('plan_type')
+    if plan_type != 'single' and Subscription.objects.filter(organization=organization).exists():
+        messages.error(request, 'This organization already has a subscription.')
+        return redirect('settings')
+
+    base_url = _base_url(request)
+    try:
+        session = _create_session(
+            plan_type, base_url=base_url, cancel_url=f'{base_url}/dashboard/settings/',
+            organization=organization, user=request.user,
+        )
+    except Exception:
+        logger.exception('Error starting in-app checkout')
+        messages.error(request, 'Could not start checkout. Please try again.')
+        return redirect('settings')
+    return redirect(session.url)
 
 
 @require_POST
 @csrf_exempt
 def stripe_webhook(request):
     """Handle Stripe webhook events"""
+
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
 
@@ -123,10 +131,10 @@ def stripe_webhook(request):
     logger.info(f"[STRIPE WEBHOOK] Webhook secret length: {len(settings.STRIPE_WEBHOOK_SECRET) if settings.STRIPE_WEBHOOK_SECRET else 0}")
 
     try:
+        # ponytail: .to_dict() because StripeObject stopped being a dict in stripe>=8
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
-        event = _stripe_object_to_dict(event)
+        ).to_dict()
         logger.info(f"[STRIPE WEBHOOK] ✓ Signature verification successful")
         logger.info(f"[STRIPE WEBHOOK] Event type: {event['type']}")
         logger.info(f"[STRIPE WEBHOOK] Event ID: {event.get('id', 'N/A')}")
@@ -141,11 +149,15 @@ def stripe_webhook(request):
 
     # Handle the event
     try:
-        if event['type'] == 'checkout.session.completed':
-            logger.info(f"[STRIPE WEBHOOK] Processing checkout.session.completed")
+        # async_payment_succeeded is the "now it is paid" event for payment
+        # methods that settle after the session completes. fulfil_checkout is
+        # idempotent and ignores unpaid sessions, so both events go through it.
+        if event['type'] in ('checkout.session.completed',
+                             'checkout.session.async_payment_succeeded'):
+            logger.info("[STRIPE WEBHOOK] Processing %s", event['type'])
             session = event['data']['object']
-            handle_checkout_session_completed(session)
-            logger.info(f"[STRIPE WEBHOOK] ✓ Successfully processed checkout.session.completed")
+            fulfil_checkout(session)
+            logger.info("[STRIPE WEBHOOK] ✓ Successfully processed %s", event['type'])
 
         elif event['type'] == 'customer.subscription.updated':
             logger.info(f"[STRIPE WEBHOOK] Processing customer.subscription.updated")
@@ -167,120 +179,14 @@ def stripe_webhook(request):
         else:
             logger.warning(f"[STRIPE WEBHOOK] Unhandled event type: {event['type']}")
 
-    except Exception as e:
-        logger.error(f"[STRIPE WEBHOOK] ✗ Error processing event {event['type']}: {str(e)}")
-        logger.exception(e)
-        # Still return 200 to prevent Stripe from retrying
-        return HttpResponse(status=200)
+    except Exception:
+        logger.exception("[STRIPE WEBHOOK] ✗ Error processing event %s", event['type'])
+        # 500 so Stripe retries. Every handler is idempotent, and a failed
+        # fulfilment leaves nothing behind.
+        return HttpResponse(status=500)
 
     logger.info(f"[STRIPE WEBHOOK] ✓ Webhook processing complete")
     return HttpResponse(status=200)
-
-
-def handle_checkout_session_completed(session):
-    """
-    Handle successful checkout - create organization and user
-    This is the PRIMARY registration path for new customers
-    """
-    # Extract metadata from checkout session
-    customer_email = session['customer_details']['email']
-    customer_name = session['customer_details']['name']
-    plan_type = session['metadata'].get('plan_type')  # 'saas' or 'enterprise'
-
-    # Get Stripe subscription details
-    stripe_customer_id = session['customer']
-    stripe_subscription_id = session['subscription']
-
-    # Check if subscription already exists (idempotency)
-    if Subscription.objects.filter(stripe_subscription_id=stripe_subscription_id).exists():
-        print(f"Subscription {stripe_subscription_id} already exists, skipping creation")
-        return
-
-    stripe_subscription = _stripe_object_to_dict(
-        stripe.Subscription.retrieve(stripe_subscription_id)
-    )
-
-    # Get or create plan
-    try:
-        plan = Plan.objects.get(plan_type=plan_type)
-    except Plan.DoesNotExist:
-        print(f"ERROR: Plan type '{plan_type}' not found. Please create plans in admin.")
-        return
-
-    # Check if user already exists
-    existing_user = User.objects.filter(email=customer_email).first()
-    if existing_user:
-        print(f"WARNING: User {customer_email} already exists. Linking to existing user.")
-        user = existing_user
-        password = None  # Don't generate new password for existing user
-    else:
-        # Create admin user with random password (will be sent via email)
-        try:
-            user, password = create_user_with_email_as_username(
-                email=customer_email,
-                password=None,  # Generate random password
-                is_staff=True,  # Organization admin can manage their org
-                is_active=True
-            )
-            # password now contains the generated password for the welcome email
-        except ValueError as e:
-            print(f"ERROR: Could not create user: {e}")
-            return HttpResponse(status=400)
-
-    # Create organization
-    org = Organization.objects.create(
-        name=customer_name,
-        email=customer_email
-    )
-
-    # Create user profile
-    from accounts.models import UserProfile
-    UserProfile.objects.create(
-        user=user,
-        organization=org,
-        can_create_cycles_for_others=True
-    )
-
-    # Assign organization admin permissions (Django permission system)
-    from accounts.permissions import assign_organization_admin
-    assign_organization_admin(user)
-
-    # Create subscription
-    # For trial subscriptions, use trial dates as current period
-    # For active subscriptions, use billing period dates
-    current_start, current_end = _subscription_period(stripe_subscription)
-
-    Subscription.objects.create(
-        organization=org,
-        plan=plan,
-        stripe_customer_id=stripe_customer_id,
-        stripe_subscription_id=stripe_subscription_id,
-        status=stripe_subscription.get('status', 'trialing'),
-        current_period_start=_stripe_timestamp(current_start),
-        current_period_end=_stripe_timestamp(current_end),
-        trial_start=_stripe_timestamp(stripe_subscription.get('trial_start')),
-        trial_end=_stripe_timestamp(stripe_subscription.get('trial_end')),
-    )
-
-    # Create one-time login token for auto-login
-    from .models import OneTimeLoginToken
-    from datetime import timedelta
-
-    login_token = OneTimeLoginToken.objects.create(
-        user=user,
-        expires_at=timezone.now() + timedelta(hours=1)
-    )
-
-    # Send welcome email (only if new user with password)
-    if password:
-        from core.email import send_welcome_email
-        try:
-            send_welcome_email(user, org, password=password)
-        except Exception as e:
-            # Log error but don't fail the signup
-            print(f"Failed to send welcome email to {user.email}: {e}")
-
-    logger.info("Created organization %r for %s", org.name, user.email)
 
 
 def handle_subscription_updated(stripe_subscription):
@@ -289,10 +195,10 @@ def handle_subscription_updated(stripe_subscription):
         subscription = Subscription.objects.get(
             stripe_subscription_id=stripe_subscription['id']
         )
+        start, end = _period(stripe_subscription)
         subscription.status = stripe_subscription['status']
-        current_start, current_end = _subscription_period(stripe_subscription)
-        subscription.current_period_start = _stripe_timestamp(current_start)
-        subscription.current_period_end = _stripe_timestamp(current_end)
+        subscription.current_period_start = _ts(start)
+        subscription.current_period_end = _ts(end)
         subscription.cancel_at_period_end = stripe_subscription.get('cancel_at_period_end', False)
         subscription.save()
     except Subscription.DoesNotExist:
@@ -325,106 +231,74 @@ def handle_payment_failed(invoice):
 
 
 def checkout_success(request):
-    """
-    Handle Stripe checkout success redirect.
-    Wait for webhook to create account, then redirect to auto-login.
-    """
+    """Stripe's success redirect. Fulfil (or confirm) the purchase, then route the buyer."""
     session_id = request.GET.get('session_id')
-    logger.info(f"[CHECKOUT SUCCESS] Received session_id: {session_id}")
-
     if not session_id:
-        logger.warning("[CHECKOUT SUCCESS] No session_id provided, redirecting to login")
         return redirect('login')
 
     try:
-        # Retrieve the session to get customer email
-        session = _stripe_object_to_dict(stripe.checkout.Session.retrieve(session_id))
-        customer_email = session['customer_details']['email']
-        logger.info(f"[CHECKOUT SUCCESS] Customer email: {customer_email}")
-        logger.info(f"[CHECKOUT SUCCESS] Session status: {session.get('status')}")
-        logger.info(f"[CHECKOUT SUCCESS] Payment status: {session.get('payment_status')}")
-
-        # Poll for the user to be created (webhook might still be processing)
-        import time
-        max_attempts = 10
-        for attempt in range(max_attempts):
-            logger.info(f"[CHECKOUT SUCCESS] Poll attempt {attempt + 1}/{max_attempts}")
-            user = User.objects.filter(email=customer_email).first()
-            if user:
-                logger.info(f"[CHECKOUT SUCCESS] User found: {user.username}")
-                # Get the latest login token for this user
-                token = OneTimeLoginToken.objects.filter(
-                    user=user,
-                    used=False,
-                    expires_at__gt=timezone.now()
-                ).order_by('-created_at').first()
-
-                if token:
-                    logger.info(f"[CHECKOUT SUCCESS] Login token found, redirecting to auto-login")
-                    return redirect('subscriptions:auto_login', token=token.token)
-                else:
-                    logger.warning(f"[CHECKOUT SUCCESS] User exists but no valid login token found")
-
-            if attempt < max_attempts - 1:
-                time.sleep(1)  # Wait 1 second before retrying
-
-        # If we get here, webhook didn't fire - create user manually as fallback
-        logger.warning(f"[CHECKOUT SUCCESS] Webhook timeout - creating user manually for {customer_email}")
-
-        try:
-            # Manually trigger the user creation (same as webhook would do)
-            handle_checkout_session_completed(session)
-            logger.info(f"[CHECKOUT SUCCESS] User created manually, retrying login token lookup")
-
-            # Try one more time to get the user and token
-            user = User.objects.filter(email=customer_email).first()
-            if user:
-                token = OneTimeLoginToken.objects.filter(
-                    user=user,
-                    used=False,
-                    expires_at__gt=timezone.now()
-                ).order_by('-created_at').first()
-
-                if token:
-                    logger.info(f"[CHECKOUT SUCCESS] Manual creation successful, redirecting to auto-login")
-                    return redirect('subscriptions:auto_login', token=token.token)
-
-        except Exception as e:
-            logger.error(f"[CHECKOUT SUCCESS] Failed to create user manually: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-
-        # If still no success, redirect to login
-        logger.error(f"[CHECKOUT SUCCESS] All attempts failed for {customer_email}")
+        session = stripe.checkout.Session.retrieve(session_id).to_dict()
+    except Exception:
+        logger.exception("[CHECKOUT SUCCESS] Could not retrieve session %s", session_id)
         return redirect('login')
 
-    except Exception as e:
-        logger.error(f"[CHECKOUT SUCCESS] Error: {e}")
-        logger.exception(e)
+    try:
+        # Same idempotent call the webhook makes; whichever runs first does the work.
+        fulfilment = fulfil_checkout(session)
+    except Exception:
+        logger.exception("[CHECKOUT SUCCESS] Fulfilment failed for %s", session_id)
+        messages.info(request, "Payment received. We're finishing your setup; "
+                               "you'll get an email shortly.")
         return redirect('login')
+
+    if fulfilment is None:
+        if session.get('status') == 'complete' and session.get('payment_status') == 'unpaid':
+            messages.info(request, "Your payment is being processed. You'll get an email "
+                                   "as soon as it arrives and your account is ready.")
+        return redirect('login')
+
+    signed_in = request.user.is_authenticated
+
+    if fulfilment.outcome == 'fulfilled' and fulfilment.user_created:
+        # Only this checkout's own token. Never looked up by email.
+        token = OneTimeLoginToken.objects.filter(
+            fulfilment=fulfilment, used=False, expires_at__gt=timezone.now(),
+        ).first()
+        if token and (not signed_in or request.user == fulfilment.user):
+            return redirect('subscriptions:auto_login', token=token.token)
+
+    if fulfilment.outcome == 'fulfilled':
+        messages.success(request, 'Payment received. Your purchase has been added to your account.')
+        return redirect('admin_dashboard' if signed_in else 'login')
+
+    if fulfilment.outcome == 'rejected_existing_account':
+        messages.error(request, 'This email address already has an account. The new subscription '
+                                'was cancelled and nothing was charged. Sign in and choose a plan '
+                                'under Settings.')
+    else:
+        messages.error(request, 'This organization already has a subscription. The new one was '
+                                'cancelled and nothing was charged.')
+    return redirect('settings' if signed_in else 'login')
 
 
 def auto_login(request, token):
-    """Auto-login user with one-time token"""
-    try:
-        login_token = OneTimeLoginToken.objects.get(
-            token=token,
-            used=False,
-            expires_at__gt=timezone.now()
-        )
-
-        # Mark token as used
-        login_token.used = True
-        login_token.save()
-
-        # Log the user in
-        login(request, login_token.user, backend='django.contrib.auth.backends.ModelBackend')
-
-        # Redirect to setup wizard for onboarding
-        return redirect('setup_organization')
-
-    except OneTimeLoginToken.DoesNotExist:
+    """Log in with a one-time token. Single use; never replaces another user's session."""
+    login_token = OneTimeLoginToken.objects.filter(token=token).select_related('user').first()
+    if login_token is None:
         return redirect('login')
+
+    if request.user.is_authenticated and request.user != login_token.user:
+        return redirect('admin_dashboard')
+
+    # Conditional update: of two simultaneous requests, exactly one consumes it.
+    consumed = OneTimeLoginToken.objects.filter(
+        pk=login_token.pk, used=False, expires_at__gt=timezone.now(),
+    ).update(used=True)
+    if consumed != 1:
+        return redirect('login')
+
+    login(request, login_token.user, backend='django.contrib.auth.backends.ModelBackend')
+    return redirect('setup_organization')
 
 
 @login_required

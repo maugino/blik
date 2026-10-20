@@ -114,6 +114,14 @@ class ProductReview(TimeStampedModel):
         return '★' * self.rating + '☆' * (5 - self.rating)
 
     @property
+    def public_name(self):
+        """Reviewer name safe for public output. Hides names that are emails."""
+        # ponytail: the quick review falls back to username, which is often an email
+        if '@' in self.reviewer_name:
+            return 'Verified customer'
+        return self.reviewer_name
+
+    @property
     def is_published(self):
         """Check if review is approved and active"""
         return self.status == 'approved' and self.is_active
