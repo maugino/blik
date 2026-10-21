@@ -25,6 +25,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.models import Reviewee, UserProfile, OrganizationInvitation
 from accounts.permissions import (
+    assign_hr_ld_admin,
     assign_organization_admin,
     assign_organization_member,
     can_manage_organization_required,
@@ -199,6 +200,7 @@ def team_list(request):
     for user_profile in users:
         user_profile.is_org_admin = user_profile.user.has_perm('accounts.can_manage_organization')
         user_profile.can_read_all_reports = can_view_all_reports(user_profile.user)
+        user_profile.is_hr_ld_admin = user_profile.user.groups.filter(name='HR/L&D Admin').exists()
 
     # Get pending invitations
     invitations = OrganizationInvitation.objects.filter(
@@ -223,9 +225,9 @@ def team_list(request):
 @require_POST
 def update_user_permissions(request):
     """Update user permissions and role"""
-    # Check if requester has permission to manage organization
-    if not request.user.has_perm('accounts.can_manage_organization'):
-        messages.error(request, 'You do not have permission to manage user permissions.')
+    # Check if requester has permission to manage organization members
+    if not request.user.has_perm('accounts.can_manage_members'):
+        messages.error(request, 'You do not have permission to manage organization members.')
         return redirect('team_list')
 
     org = request.organization
@@ -261,7 +263,7 @@ def update_user_permissions(request):
             return redirect('team_list')
 
         # Check if this would be the last admin
-        if target_user.has_perm('accounts.can_manage_organization') and role == 'member':
+        if target_user.has_perm('accounts.can_manage_organization') and role != 'admin':
             # Count users with organization admin permission
             admin_profiles = UserProfile.objects.filter(organization=org).select_related('user')
             admin_count = sum(1 for p in admin_profiles if p.user.has_perm('accounts.can_manage_organization'))
@@ -274,6 +276,9 @@ def update_user_permissions(request):
         if role == 'admin':
             assign_organization_admin(target_user)
             messages.success(request, f'Successfully promoted {target_user.username} to Organization Admin.')
+        elif role == 'hr_ld':
+            assign_hr_ld_admin(target_user)
+            messages.success(request, f'Successfully updated {target_user.username} to HR/L&D Admin.')
         else:  # member
             # Remove admin permissions
             assign_organization_member(target_user, can_create_cycles_for_others=False)
@@ -302,6 +307,64 @@ def update_user_permissions(request):
 
     return redirect('team_list')
 
+@login_required
+@require_POST
+def send_user_password_reset(request):
+    """Send a password-reset email to a user in the same organization."""
+    if not request.user.has_perm('accounts.can_manage_members'):
+        messages.error(
+            request,
+            'You do not have permission to manage organization members.'
+        )
+        return redirect('team_list')
+
+    org = request.organization
+    if not org:
+        messages.error(request, 'No organization found.')
+        return redirect('team_list')
+
+    user_profile = get_object_or_404(
+        UserProfile,
+        id=request.POST.get('user_profile_id'),
+        organization=org,
+    )
+    target_user = user_profile.user
+
+    if target_user == request.user:
+        messages.error(request, 'Use the forgot-password page to reset your own password.')
+        return redirect('team_list')
+
+    if target_user.is_superuser:
+        messages.error(request, 'Super Admin passwords cannot be reset here.')
+        return redirect('team_list')
+
+    if not target_user.email:
+        messages.error(request, 'This user does not have an email address.')
+        return redirect('team_list')
+
+    try:
+        from accounts.models import PasswordResetToken
+        from core.email import send_password_reset_email
+
+        token = PasswordResetToken.objects.create(user=target_user)
+        sent_count = send_password_reset_email(target_user, token)
+
+        if sent_count:
+            messages.success(
+                request,
+                f'Password reset email sent to {target_user.email}.'
+            )
+        else:
+            token.delete()
+            messages.error(request, 'The password reset email could not be sent.')
+    except Exception:
+        logger.exception(
+            'Failed to send password reset email to %s',
+            target_user.email,
+        )
+        messages.error(request, 'The password reset email could not be sent.')
+
+    return redirect('team_list')
 
 @login_required
 def reviewee_list(request):

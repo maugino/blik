@@ -62,13 +62,13 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Joined</th>
-                        <th>Permissions</th>
-                        {% if perms.accounts.can_manage_organization %}
-                        <th>Actions</th>
+                        <th>{% translate "Name" %}</th>
+                        <th>{% translate "Email" %}</th>
+                        <th>{% translate "Role" %}</th>
+                        <th>{% translate "Joined" %}</th>
+                        <th>{% translate "Permissions" %}</th>
+                        {% if perms.accounts.can_manage_members %}
+                        <th>{% translate "Actions" %}</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -87,7 +87,11 @@
                             {% if user_profile.user.is_superuser %}
                                 <span class="badge" style="background: #7c3aed; color: white;">Super Admin</span>
                             {% elif user_profile.is_org_admin %}
-                                <span class="badge" style="background: #059669; color: white;">Organization Admin</span>
+                                <span class="badge" style="background: #059669; color: white;">{% translate "Organization Admin" %}</span>
+                            {% elif user_profile.is_hr_ld_admin %}
+                                <span class="badge" style="background: #2563eb; color: white;">
+                                    {% translate "HR/L&D Admin" %}
+                                </span>
                             {% else %}
                                 <span class="badge" style="background: #6b7280; color: white;">Member</span>
                             {% endif %}
@@ -103,11 +107,11 @@
                                 <span class="badge" style="background: #8b5cf6; color: white;">All reports</span>
                             {% endif %}
                         </td>
-                        {% if perms.accounts.can_manage_organization %}
+                        {% if perms.accounts.can_manage_members %}
                         <td>
                             {% if user_profile.user.id != request.user.id and not user_profile.user.is_superuser %}
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="showManagePermissionsModal({{ user_profile.id }}, '{{ user_profile.user.username }}', {{ user_profile.is_org_admin|lower }}, {{ user_profile.can_create_cycles_for_others|lower }}, {{ user_profile.can_read_all_reports|lower }})">
-                                Manage
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="showManagePermissionsModal({{ user_profile.id }}, '{{ user_profile.user.username }}', {{ user_profile.is_org_admin|lower }}, {{ user_profile.is_hr_ld_admin|lower }}, {{ user_profile.can_create_cycles_for_others|lower }}, {{ user_profile.can_read_all_reports|lower }})">
+                                {% translate "Manage" %}
                             </button>
                             {% else %}
                             <span style="color: var(--text-tertiary); font-size: 12px;">—</span>
@@ -137,6 +141,10 @@
                             <span class="badge" style="background: #7c3aed; color: white; font-size: 11px;">Super Admin</span>
                         {% elif user_profile.is_org_admin %}
                             <span class="badge" style="background: #059669; color: white; font-size: 11px;">Organization Admin</span>
+                        {% elif user_profile.is_hr_ld_admin %}
+                            <span class="badge" style="background: #2563eb; color: white; font-size: 11px;">
+                                {% translate "HR/L&D Admin" %}
+                            </span>
                         {% else %}
                             <span class="badge" style="background: #6b7280; color: white; font-size: 11px;">Member</span>
                         {% endif %}
@@ -164,10 +172,10 @@
                             {% endif %}
                         </span>
                     </div>
-                    {% if perms.accounts.can_manage_organization %}
+                    {% if perms.accounts.can_manage_members %}
                         {% if user_profile.user.id != request.user.id and not user_profile.user.is_superuser %}
-                        <button type="button" class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="showManagePermissionsModal({{ user_profile.id }}, '{{ user_profile.user.username }}', {{ user_profile.is_org_admin|lower }}, {{ user_profile.can_create_cycles_for_others|lower }}, {{ user_profile.can_read_all_reports|lower }})">
-                            Manage Permissions
+                        <button type="button" class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="showManagePermissionsModal({{ user_profile.id }}, '{{ user_profile.user.username }}', {{ user_profile.is_org_admin|lower }}, {{ user_profile.is_hr_ld_admin|lower }}, {{ user_profile.can_create_cycles_for_others|lower }}, {{ user_profile.can_read_all_reports|lower }})">
+                            {% translate "Manage Permissions" %}
                         </button>
                         {% endif %}
                     {% endif %}
@@ -286,7 +294,7 @@
 </div>
 
 <!-- Manage Permissions Modal -->
-{% if perms.accounts.can_manage_organization %}
+{% if perms.accounts.can_manage_members %}
 <div id="manage-permissions-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
     <div style="background: var(--bg-card); padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
         <h2 style="margin-top: 0;">Manage User Permissions</h2>
@@ -309,6 +317,15 @@
                             </small>
                         </label>
                     </div>
+                <div class="form-check">
+                    <input type="radio" id="role-hr-ld" name="role" value="hr_ld" class="form-check-input">
+                    <label for="role-hr-ld" style="display: inline; font-weight: normal;">
+                        <strong>{% translate "HR/L&D Admin" %}</strong>
+                        <small style="display: block; color: var(--text-secondary); margin-left: 24px;">
+                            {% translate "Can manage users, questionnaires, review cycles, and reports" %}
+                        </small>
+                    </label>
+                </div>
                     <div class="form-check">
                         <input type="radio" id="role-member" name="role" value="member" class="form-check-input">
                         <label for="role-member" style="display: inline; font-weight: normal;">
@@ -348,21 +365,25 @@
             </div>
 
             <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-                <button type="button" class="btn btn-secondary" onclick="hideManagePermissionsModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Update Permissions</button>
+                <button type="submit" class="btn btn-secondary" formaction="{% url 'send_user_password_reset' %}" formmethod="post" formnovalidate onclick="return confirm('{% translate "Send a password reset email to this user?" %}');">{% translate "Send Password Reset" %}</button>
+                <button type="button" class="btn btn-secondary" onclick="hideManagePermissionsModal()">{% translate "Cancel" %}</button>
+                <button type="submit" class="btn btn-primary">{% translate "Update Permissions" %}</button>
+
             </div>
         </form>
     </div>
 </div>
 
 <script>
-function showManagePermissionsModal(userId, username, isStaff, canCreateCycles, canViewReports) {
+    function showManagePermissionsModal(userId, username, isOrgAdmin, isHrLdAdmin, canCreateCycles, canViewReports) {
     document.getElementById('modal-user-id').value = userId;
     document.getElementById('modal-username').textContent = username;
 
     // Set role radio buttons
-    if (isStaff) {
+    if (isOrgAdmin) {
         document.getElementById('role-admin').checked = true;
+    } else if (isHrLdAdmin) {
+        document.getElementById('role-hr-ld').checked = true;
     } else {
         document.getElementById('role-member').checked = true;
     }

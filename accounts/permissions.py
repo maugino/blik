@@ -19,6 +19,7 @@ from accounts.models import UserProfile
 # Group names
 ORG_ADMIN_GROUP = 'Organization Admin'
 ORG_MEMBER_GROUP = 'Organization Member'
+HR_LD_GROUP = 'HR/L&D Admin'
 
 # The grants that make an account an admin. can_view_all_reports and
 # can_manage_questionnaires are left out: they may be granted per user.
@@ -59,7 +60,11 @@ def ensure_permission_groups():
         content_type=content_type,
         defaults={'name': 'Can invite team members'},
     )
-
+    manage_members_permission, _ = Permission.objects.get_or_create(
+        codename='can_manage_members',
+        content_type=content_type,
+        defaults={'name': 'Can manage organization members'},
+    )
     manage_org_permission, _ = Permission.objects.get_or_create(
         codename='can_manage_organization',
         content_type=content_type,
@@ -90,7 +95,18 @@ def ensure_permission_groups():
         delete_org_permission,
         view_all_reports_permission,
         manage_questionnaires_permission,
+        manage_members_permission,
     ]
+
+    # Create HR/L&D Admin group
+    hr_ld_group, _ = Group.objects.get_or_create(name=HR_LD_GROUP)
+    hr_ld_permissions = [
+        invite_permission,
+        manage_members_permission,
+        view_all_reports_permission,
+        manage_questionnaires_permission,
+    ]
+    hr_ld_group.permissions.set(hr_ld_permissions)
 
     # Create Organization Admin group
     admin_group, created = Group.objects.get_or_create(name=ORG_ADMIN_GROUP)
@@ -140,6 +156,29 @@ def assign_organization_admin(user):
     user.save()
 
     # Set can_create_cycles_for_others flag
+    if hasattr(user, 'profile'):
+        user.profile.can_create_cycles_for_others = True
+        user.profile.save()
+
+def assign_hr_ld_admin(user):
+    """Assign HR/L&D Admin permissions to a user."""
+    ensure_permission_groups()
+    hr_ld_group, _ = Group.objects.get_or_create(name=HR_LD_GROUP)
+
+    # Remove from any existing organization role first
+    remove_from_all_org_groups(user)
+
+    # Add to HR/L&D Admin group
+    user.groups.add(hr_ld_group)
+
+    # Remove old direct admin grants that could survive a role change
+    _drop_direct_grants(user, ADMIN_ROLE_CODENAMES)
+
+    # HR/L&D Admin is not a Django staff/admin user
+    user.is_staff = False
+    user.save()
+
+    # HR/L&D Admins can create cycles for others
     if hasattr(user, 'profile'):
         user.profile.can_create_cycles_for_others = True
         user.profile.save()
@@ -210,9 +249,13 @@ def set_user_permission(user, codename, granted):
 def remove_from_all_org_groups(user):
     """Remove user from all organization groups (without deleting the groups)."""
     admin_group = Group.objects.filter(name=ORG_ADMIN_GROUP).first()
+    hr_ld_group = Group.objects.filter(name=HR_LD_GROUP).first()
     member_group = Group.objects.filter(name=ORG_MEMBER_GROUP).first()
+
     if admin_group:
         user.groups.remove(admin_group)
+    if hr_ld_group:
+        user.groups.remove(hr_ld_group)
     if member_group:
         user.groups.remove(member_group)
 
