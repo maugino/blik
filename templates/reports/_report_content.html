@@ -134,6 +134,7 @@
 {% endif %}
 
 {% if report_data.charts.section_scores %}
+<div id="performance-overview">
 <div class="report-section">
     <h2>{% trans 'Performance Overview' %}</h2>
     <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
@@ -141,7 +142,7 @@
     </p>
 
     <div class="chart-container" style="position: relative; margin: 2rem 0; padding: 1.5rem; background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow-sm);">
-        <canvas id="sectionRadarChart" style="max-height: 500px;"></canvas>
+        <canvas id="sectionRadarChart" width="900" height="600" style="max-height: 500px;"></canvas>
     </div>
 </div>
 
@@ -152,8 +153,9 @@
     </p>
 
     <div class="chart-container" style="position: relative; margin: 2rem 0; padding: 1.5rem; background: var(--bg-card); border-radius: 12px; box-shadow: var(--shadow-sm);">
-        <canvas id="gapChart" style="max-height: 400px;"></canvas>
+        <canvas id="gapChart" width="900" height="600" style="max-height: 400px;"></canvas>
     </div>
+</div>
 </div>
 {% endif %}
 
