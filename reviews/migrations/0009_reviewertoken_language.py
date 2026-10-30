@@ -3,6 +3,67 @@
 from django.db import migrations, models
 
 
+def ensure_reviewer_token_language_column(apps, schema_editor):
+    """
+    Reuse the language column created by the earlier Enovis schema.
+
+    Fresh databases do not have the column, so create it normally.
+    Existing Enovis databases have a nullable varchar(10) column; align it
+    with upstream's non-null varchar(20) definition while preserving values.
+    """
+    ReviewerToken = apps.get_model('reviews', 'ReviewerToken')
+    table_name = ReviewerToken._meta.db_table
+
+    with schema_editor.connection.cursor() as cursor:
+        columns = {
+            column.name
+            for column in schema_editor.connection.introspection.get_table_description(
+                cursor,
+                table_name,
+            )
+        }
+
+    new_field = models.CharField(
+        blank=True,
+        default='',
+        help_text=(
+            'Language of the form and of emails to this reviewer. '
+            'Empty until the form is first opened.'
+        ),
+        max_length=20,
+        verbose_name='language',
+    )
+    new_field.set_attributes_from_name('language')
+    new_field.model = ReviewerToken
+
+    if 'language' not in columns:
+        schema_editor.add_field(ReviewerToken, new_field)
+        return
+
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            f'UPDATE "{table_name}" SET "language" = %s '
+            f'WHERE "language" IS NULL',
+            [''],
+        )
+
+    old_field = models.CharField(
+        blank=True,
+        max_length=10,
+        null=True,
+        verbose_name='language',
+    )
+    old_field.set_attributes_from_name('language')
+    old_field.model = ReviewerToken
+
+    schema_editor.alter_field(
+        ReviewerToken,
+        old_field,
+        new_field,
+        strict=False,
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,9 +71,28 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='reviewertoken',
-            name='language',
-            field=models.CharField(blank=True, default='', help_text='Language of the form and of emails to this reviewer. Empty until the form is first opened.', max_length=20, verbose_name='language'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    ensure_reviewer_token_language_column,
+                    migrations.RunPython.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='reviewertoken',
+                    name='language',
+                    field=models.CharField(
+                        blank=True,
+                        default='',
+                        help_text=(
+                            'Language of the form and of emails to this reviewer. '
+                            'Empty until the form is first opened.'
+                        ),
+                        max_length=20,
+                        verbose_name='language',
+                    ),
+                ),
+            ],
         ),
     ]
