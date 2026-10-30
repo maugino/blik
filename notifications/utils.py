@@ -1,5 +1,4 @@
-from django.core.mail import send_mail
-from django.conf import settings
+from core.email import send_email
 from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.translation import gettext as _
@@ -31,13 +30,11 @@ def send_feedback_invitation(token, reviewer_email=None):
 
     # Send email
     if reviewer_email:
-        send_mail(
+        send_email(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[reviewer_email],
             html_message=html_message,
-            fail_silently=False,
         )
         return True
 
