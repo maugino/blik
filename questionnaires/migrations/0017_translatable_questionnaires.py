@@ -2,6 +2,52 @@
 
 from django.db import migrations, models
 
+def ensure_source_language_column(apps, schema_editor):
+    """
+    Reuse the source_language column created by the earlier Enovis migration.
+
+    Fresh databases will not have the column, so create it normally.
+    Existing Enovis databases have varchar(35); align that with upstream's
+    varchar(20) definition while preserving the existing data.
+    """
+    Questionnaire = apps.get_model('questionnaires', 'Questionnaire')
+    table_name = Questionnaire._meta.db_table
+
+    with schema_editor.connection.cursor() as cursor:
+        columns = {
+            column.name
+            for column in schema_editor.connection.introspection.get_table_description(
+                cursor,
+                table_name,
+            )
+        }
+
+    new_field = models.CharField(
+        default='en',
+        max_length=20,
+        verbose_name='source language',
+    )
+    new_field.set_attributes_from_name('source_language')
+    new_field.model = Questionnaire
+
+    if 'source_language' not in columns:
+        schema_editor.add_field(Questionnaire, new_field)
+        return
+
+    old_field = models.CharField(
+        max_length=35,
+        verbose_name='source language',
+    )
+    old_field.set_attributes_from_name('source_language')
+    old_field.model = Questionnaire
+
+    schema_editor.alter_field(
+        Questionnaire,
+        old_field,
+        new_field,
+        strict=False,
+    )
+
 
 class Migration(migrations.Migration):
 
@@ -10,10 +56,24 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='Questionnaire',
-            name='source_language',
-            field=models.CharField(default='en', max_length=20, verbose_name='source language'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    ensure_source_language_column,
+                    migrations.RunPython.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='Questionnaire',
+                    name='source_language',
+                    field=models.CharField(
+                        default='en',
+                        max_length=20,
+                        verbose_name='source language',
+                    ),
+                ),
+            ],
         ),
         migrations.AddField(
             model_name='Questionnaire',
