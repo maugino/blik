@@ -34,7 +34,7 @@ class PowerAutomateBackend(BaseEmailBackend):
                 'to': list(message.to),
                 'subject': message.subject,
                 'body': message.body,
-                'html_body': html_body,
+                'html_body': html_body or '',
                 'from_email': message.from_email,
             }
 
