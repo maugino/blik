@@ -184,7 +184,7 @@ class TeamListDisplayTests(TeamPermissionTestCase):
     member's own row: the modal call that opens it states the member's state."""
 
     def _member_modal_call(self, grants_reports):
-        return "'member', false, false, {}".format(
+        return "'member', false, false, false, {}".format(
             'true' if grants_reports else 'false')
 
     def test_member_row_starts_without_report_access(self):
