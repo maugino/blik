@@ -118,7 +118,6 @@ TEMPLATES = [
                 'landing.context_processors.organization_metadata',
                 'blik.context_processors.stripe_settings',
                 'blik.context_processors.billing',
-                'blik.context_processors.site_settings',
             ],
         },
     },
@@ -270,6 +269,11 @@ AXES_FAILURE_LIMIT = 5  # Lock after 5 failed attempts
 AXES_COOLOFF_TIME = 1  # Hours
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # Lock by combination
 AXES_RESET_ON_SUCCESS = True
+# Visitor IP behind Cloudflare: set to HTTP_CF_CONNECTING_IP in production.
+# Empty (default) uses REMOTE_ADDR and never trusts a header.
+TRUSTED_CLIENT_IP_HEADER = env('TRUSTED_CLIENT_IP_HEADER', default='')
+AXES_CLIENT_IP_CALLABLE = 'core.client_ip.client_ip'
+RATELIMIT_IP_META_KEY = 'core.client_ip.client_ip'
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',  # AxesStandaloneBackend should be first
     'django.contrib.auth.backends.ModelBackend',
@@ -283,7 +287,6 @@ ORGANIZATION_NAME = env('ORGANIZATION_NAME', default='Blik')
 SITE_NAME = 'Blik360'
 SITE_DOMAIN = env('SITE_DOMAIN', default='localhost:8000' if DEBUG else 'blik360.com')
 SITE_PROTOCOL = env('SITE_PROTOCOL', default='http' if DEBUG else 'https')
-SITE_URL = f'{SITE_PROTOCOL}://{SITE_DOMAIN}'
 SITE_DESCRIPTION = 'Open source 360-degree feedback and performance review platform. Anonymous, secure, and easy to deploy.'
 SITE_KEYWORDS = '360 feedback, performance review, peer review, employee feedback, open source, self-hosted'
 
