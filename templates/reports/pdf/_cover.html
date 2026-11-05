@@ -1,6 +1,14 @@
 {% load i18n feedback_tags %}
 <section class="cover">
-    <div class="brand">Blik360</div>
+    <div class="brand">
+        {% if report_logo %}
+            <span class="brand-product">Blik360</span>
+            <span class="brand-for">for</span>
+            <img class="brand-client" src="{{ report_logo }}" alt="">
+        {% else %}
+            Blik360
+        {% endif %}
+    </div>
     <div class="cover-body">
         <div class="eyebrow">{% trans '360 Feedback Report' %} · {% trans 'Confidential' %}</div>
         <h1 class="cover-name">{{ reviewee_name }}</h1>

@@ -125,7 +125,29 @@ li { margin-bottom: 0.6mm; }
 .lvl-text { color: var(--lvl); }
 /* Cover */
 .cover { position: relative; height: 255mm; }
-.cover .brand { font-size: 14pt; }
+.cover .brand {
+    font-size: 14pt;
+}
+
+.cover .brand-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 3mm;
+}
+
+.cover .brand-for {
+    color: #6b7280;
+    font-size: 10pt;
+    font-weight: 400;
+}
+
+.cover .brand-client {
+    display: block;
+    max-width: 45mm;
+    max-height: 18mm;
+    object-fit: contain;
+    margin-top: 4mm;
+}
 .cover-body { position: absolute; top: 70mm; left: 0; right: 0; }
 .cover-name { font-size: 32pt; margin: 2mm 0 0; }
 .cover-rule { border-top: 1.2pt solid #111827; width: 30mm; margin: 6mm 0 8mm; }
