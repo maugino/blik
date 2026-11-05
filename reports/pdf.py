@@ -175,6 +175,7 @@ def _pdf_context(report):
         'matrix': _matrix(insights.get('dreyfus_quadrant')),
         'detail_sections': _detail_sections(data),
         'font_dir': FONT_DIR.as_uri(),
+        'report_logo': f"file://{settings.REPORT_LOGO}" if settings.REPORT_LOGO else '',
     })
     return context
 
