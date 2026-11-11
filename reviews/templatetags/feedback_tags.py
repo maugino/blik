@@ -15,6 +15,8 @@ CATEGORY_LABELS = {
     'peer': _('Peer'),
     'manager': _('Manager'),
     'direct_report': _('Direct Report'),
+    'combined_anonymous': _('Combined Anonymous Feedback'),
+
 }
 
 
