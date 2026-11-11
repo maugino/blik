@@ -33,6 +33,14 @@ class Organization(TimeStampedModel):
         help_text=_('Minimum number of responses required to show results (for anonymity). Set to 1 for small teams.'),
         verbose_name=_('minimum responses for anonymity')
     )
+    combine_small_reviewer_groups = models.BooleanField(
+        default=False,
+        help_text=_(
+            'Combine peer and direct-report feedback when either group is below '
+            'the anonymity threshold but they meet it together.'
+        ),
+        verbose_name=_('combine small reviewer groups')
+    )
     auto_send_report_email = models.BooleanField(
         default=True,
         help_text=_('Automatically send email to reviewee when their report is generated'),
