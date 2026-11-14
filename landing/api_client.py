@@ -25,7 +25,7 @@ class BlikAPIClient:
         self.api_token = getattr(settings, 'LANDING_SERVICE_API_TOKEN', None)
 
         if not self.api_token:
-            logger.warning("LANDING_SERVICE_API_TOKEN not configured")
+            logger.debug("LANDING_SERVICE_API_TOKEN not configured")
 
         self.headers = {
             'Authorization': f'Bearer {self.api_token}',
