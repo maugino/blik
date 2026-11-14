@@ -41,7 +41,7 @@ def billing(request):
 
 def branding(request):
     """Expose optional co-branding only when the private brand assets exist."""
-    static_img = Path(settings.BASE_DIR) / 'static' / 'img'
+    static_img = Path(settings.BASE_DIR) / 'static' / 'img' / 'logos'
     color_logo = static_img / 'enovis-logo-color.svg'
     white_logo = static_img / 'enovis-logo-white.svg'
 
