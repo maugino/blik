@@ -36,3 +36,10 @@ def billing(request):
         # A failed payment also counts as lapsed, so check it first: Stripe is still retrying.
         'billing_problem': 'unpaid' if unpaid else 'lapsed' if entitlement(organization) == 'lapsed' else None,
     }
+
+def branding(request):
+    """Expose optional co-branding to application templates."""
+    return {
+        'cobranding_enabled': bool(settings.REPORT_LOGO),
+    }
+

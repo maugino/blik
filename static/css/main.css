@@ -2987,3 +2987,48 @@ body.setup-page {
     border-radius: 6px;
     font-size: 0.8125rem;
 }
+
+/* Optional client co-branding */
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.navbar-brand-cobrand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.navbar-brand-for {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.navbar-client-logo {
+    display: block;
+    width: auto;
+    height: 20px;
+    max-width: 80px;
+}
+
+@media (max-width: 767px) {
+    .navbar-brand-cobrand {
+        display: none;
+    }
+}
+
+.navbar-client-logo-dark {
+    display: none;
+}
+
+[data-theme="dark"] .navbar-client-logo-light {
+    display: none;
+}
+
+[data-theme="dark"] .navbar-client-logo-dark {
+    display: block;
+}
+
