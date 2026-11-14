@@ -38,6 +38,7 @@ def billing(request):
     }
 
 
+
 def sender_identity(request):
     """The names a user must give before an invitation goes out: see accounts/sender_identity.py."""
     from accounts.sender_identity import missing
@@ -47,3 +48,10 @@ def sender_identity(request):
     if not organization or user is None or not user.is_authenticated:
         return {}
     return {'sender_identity_missing': missing(user, organization)}
+
+
+def branding(request):
+    """Expose optional co-branding to application templates."""
+    return {
+        'cobranding_enabled': bool(settings.REPORT_LOGO),
+    }
