@@ -10543,3 +10543,31 @@ msgstr ""
 msgctxt "organization status"
 msgid "Inactive"
 msgstr ""
+
+msgid "Combine peer and direct-report feedback when either group is below the anonymity threshold but they meet it together."
+msgstr "Feedback von Kollegen und direkt unterstellten Mitarbeitenden zusammenfassen, wenn eine der Gruppen unter dem Anonymitätsschwellenwert liegt, beide Gruppen zusammen diesen jedoch erreichen."
+
+msgid "combine small reviewer groups"
+msgstr "kleine Bewertergruppen zusammenfassen"
+
+msgid "Combine small reviewer groups"
+msgstr "Kleine Bewertergruppen zusammenfassen"
+
+# Combined Feedback
+msgid "Combine small anonymous reviewer groups when needed to preserve feedback without compromising anonymity."
+msgstr "Kleine anonyme Bewertergruppen bei Bedarf zusammenfassen, um Feedback zu erhalten, ohne die Anonymität zu gefährden."
+
+msgid "When anonymous reviewer groups are below the anonymity threshold but meet it when pooled together, show them as Combined Feedback. This setting is off by default."
+msgstr "Wenn anonyme Bewertergruppen unter dem Anonymitätsschwellenwert liegen, diesen aber zusammen erreichen, werden sie als kombiniertes Feedback angezeigt. Diese Einstellung ist standardmäßig deaktiviert."
+
+msgid "Combined Feedback:"
+msgstr "Kombiniertes Feedback:"
+
+msgid "To preserve anonymity, feedback from small reviewer groups has been combined. Scores and written comments from those groups are shown together and cannot be attributed to a specific group."
+msgstr "Um die Anonymität zu wahren, wurde das Feedback kleiner Bewertergruppen zusammengefasst. Bewertungen und schriftliche Kommentare dieser Gruppen werden gemeinsam angezeigt und können keiner bestimmten Gruppe zugeordnet werden."
+
+#, python-format
+msgid "%(count)s combined feedback response"
+msgid_plural "%(count)s combined feedback responses"
+msgstr[0] "%(count)s kombinierte Feedback-Antwort"
+msgstr[1] "%(count)s kombinierte Feedback-Antworten"

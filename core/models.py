@@ -41,8 +41,8 @@ class Organization(TimeStampedModel):
     combine_small_reviewer_groups = models.BooleanField(
         default=False,
         help_text=_(
-            'Combine peer and direct-report feedback when either group is below '
-            'the anonymity threshold but they meet it together.'
+            'Combine small anonymous reviewer groups when needed to preserve '
+            'feedback without compromising anonymity.'
         ),
         verbose_name=_('combine small reviewer groups')
     )
