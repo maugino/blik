@@ -69,6 +69,16 @@ urlpatterns = [
         admin_views.reviewer_nomination_export,
         name='reviewer_nomination_export',
     ),
+    path(
+        'dashboard/org-chart/reviewer-nominations/import/preview/',
+        admin_views.reviewer_nomination_import_preview,
+        name='reviewer_nomination_import_preview',
+    ),
+    path(
+        'dashboard/org-chart/reviewer-nominations/import/confirm/',
+        admin_views.reviewer_nomination_import_confirm,
+        name='reviewer_nomination_import_confirm',
+    ),
     path('dashboard/org-chart/import/', admin_views.org_chart_import, name='org_chart_import'),
     path('dashboard/org-chart/import/columns/', admin_views.org_chart_import_map, name='org_chart_import_map'),
     path('dashboard/org-chart/units/create/', admin_views.org_chart_unit_create, name='org_chart_unit_create'),

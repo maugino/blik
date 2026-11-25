@@ -2640,7 +2640,7 @@ def bulk_send_invitations(request):
         # self-assessment and the links to share.
         reviewer_tokens = 0
         reviewer_emails = 0
-        if bulk_source not in ('chart', 'previous'):
+        if bulk_source not in ('chart', 'previous', 'nominations'):
             for cycle in cycles:
                 queue_reviewee_notifications(cycle)
         else:
@@ -4454,6 +4454,321 @@ def org_chart_place(request):
         messages.warning(request, _('Some people were not placed: the org chart or a reviewer list changed '
                                     'since the page was loaded.'))
     return redirect('org_chart')
+def reviewer_nomination_import_preview(request):
+    """Validate a reviewer nomination CSV without changing any data."""
+    if not request.user.has_perm('accounts.can_manage_organization'):
+        raise Http404
+
+    organization = request.organization
+    if not organization:
+        raise Http404
+
+    questionnaire_id = request.POST.get('questionnaire')
+    try:
+        questionnaire = (
+            Questionnaire.objects.for_organization(organization)
+            .filter(is_active=True)
+            .get(pk=questionnaire_id)
+        )
+    except (Questionnaire.DoesNotExist, TypeError, ValueError):
+        messages.error(request, _('Choose an active questionnaire.'))
+        return redirect('review_cycle_create')
+
+    upload = request.FILES.get('file')
+    if not upload:
+        messages.error(request, _('Choose a reviewer nomination CSV file.'))
+        return redirect('review_cycle_create')
+
+    if upload.size > 2 * 1024 * 1024:
+        messages.error(request, _('The CSV file must be 2 MB or smaller.'))
+        return redirect('review_cycle_create')
+
+    try:
+        raw = upload.read()
+        from accounts.org_import import read_table
+        from accounts.reviewer_nominations import parse_nomination_csv
+        preview = parse_nomination_csv(raw, read_table)
+    except (UnicodeDecodeError, csv.Error):
+        messages.error(request, _('The file could not be read as a UTF-8 CSV file.'))
+        return redirect('review_cycle_create')
+
+    participant_emails = [
+        participant['email'] for participant in preview['participants']
+    ]
+    known_participants = {
+        email.lower()
+        for email in Reviewee.objects.for_organization(organization)
+        .filter(email__in=participant_emails, is_active=True)
+        .values_list('email', flat=True)
+    }
+    for participant in preview['participants']:
+        participant['known'] = participant['email'] in known_participants
+        if not participant['known']:
+            preview['errors'].append(
+                _('Participant %(email)s is not an active person in this organization.')
+                % {'email': participant['email']}
+            )
+
+    known_raters = {
+        email.lower()
+        for email in Reviewee.objects.for_organization(organization)
+        .filter(email__in=preview['rater_emails'])
+        .values_list('email', flat=True)
+    }
+    preview['stats']['existing_raters'] = len(
+        preview['rater_emails'] & known_raters
+    )
+    preview['stats']['new_raters'] = len(
+        preview['rater_emails'] - known_raters
+    )
+
+    for participant in preview['participants']:
+        for assignment in participant['assignments']:
+            assignment['known'] = (
+                assignment['rater_email'] in known_raters
+            )
+
+    # Keep the original file server-side for the confirmation step.
+    # Confirmation re-parses and re-validates this content instead of
+    # trusting reviewer assignments submitted by the browser.
+    if preview['errors']:
+        request.session.pop('reviewer_nomination_import', None)
+    else:
+        request.session['reviewer_nomination_import'] = {
+            'csv': raw.decode('utf-8-sig'),
+            'filename': upload.name,
+            'questionnaire_id': questionnaire.pk,
+        }
+
+    return render(
+        request,
+        'admin_dashboard/org_chart/reviewer_nomination_preview.html',
+        {
+            'preview': preview,
+            'filename': upload.name,
+            'questionnaire': questionnaire,
+        },
+    )
+
+
+@login_required
+@require_POST
+def reviewer_nomination_import_confirm(request):
+    """Create cycles and reviewer assignments from a validated nomination CSV.
+
+    This operation deliberately sends no email. The existing bulk invitation
+    review screen is the explicit next step.
+    """
+    if not request.user.has_perm('accounts.can_manage_organization'):
+        raise Http404
+
+    organization = request.organization
+    if not organization:
+        raise Http404
+
+    pending = request.session.get('reviewer_nomination_import')
+    if not pending:
+        messages.error(
+            request,
+            _('The reviewer nomination preview has expired. Upload the CSV again.'),
+        )
+        return redirect('review_cycle_create')
+
+    try:
+        questionnaire = (
+            Questionnaire.objects.for_organization(organization)
+            .filter(is_active=True)
+            .get(pk=pending.get('questionnaire_id'))
+        )
+    except (Questionnaire.DoesNotExist, TypeError, ValueError):
+        request.session.pop('reviewer_nomination_import', None)
+        messages.error(request, _('The selected questionnaire is no longer available.'))
+        return redirect('review_cycle_create')
+
+    from accounts.org_import import read_table
+    from accounts.reviewer_nominations import parse_nomination_csv
+
+    try:
+        preview = parse_nomination_csv(pending.get('csv', ''), read_table)
+    except (UnicodeDecodeError, csv.Error):
+        request.session.pop('reviewer_nomination_import', None)
+        messages.error(request, _('The reviewer nomination CSV can no longer be read.'))
+        return redirect('review_cycle_create')
+
+    participant_emails = [
+        participant['email'] for participant in preview['participants']
+    ]
+    participants = {
+        reviewee.email.lower(): reviewee
+        for reviewee in Reviewee.objects.for_organization(organization)
+        .filter(email__in=participant_emails, is_active=True)
+    }
+
+    for participant in preview['participants']:
+        if participant['email'] not in participants:
+            preview['errors'].append(
+                _('Participant %(email)s is not an active person in this organization.')
+                % {'email': participant['email']}
+            )
+
+    if preview['errors']:
+        request.session.pop('reviewer_nomination_import', None)
+        for error in preview['errors']:
+            messages.error(request, error)
+        return redirect('review_cycle_create')
+
+    needed = len(preview['participants'])
+    credits = cycle_credits(organization)
+    if credits is not None and needed > credits:
+        error = NoCycleCredits(needed=needed, available=credits)
+        messages.error(request, str(error))
+        if can_see_billing(organization, request.user):
+            return redirect(
+                f"{reverse('billing')}?reviews={error.needed - error.available}"
+            )
+        return redirect('review_cycle_create')
+
+    # One email address should represent one name throughout the file.
+    names_by_email = {}
+    for participant in preview['participants']:
+        for assignment in participant['assignments']:
+            email = assignment['rater_email']
+            name = assignment['rater_name']
+            existing_name = names_by_email.get(email)
+            if existing_name and existing_name != name:
+                messages.error(
+                    request,
+                    _(
+                        'The email %(email)s has more than one rater name in the CSV.'
+                    ) % {'email': email},
+                )
+                return redirect('review_cycle_create')
+            names_by_email[email] = name
+
+    created_cycles = []
+    new_people = 0
+
+    try:
+        with transaction.atomic():
+            # Match people case-insensitively. Existing inactive people are
+            # reused and reactivated rather than duplicated.
+            rater_emails = set(names_by_email)
+            existing_people = {
+                person.email.lower(): person
+                for person in Reviewee.objects.for_organization(organization)
+                .filter(email__in=rater_emails)
+            }
+
+            for email, name in names_by_email.items():
+                person = existing_people.get(email)
+
+                if person is None:
+                    person = Reviewee.objects.create(
+                        organization=organization,
+                        name=name,
+                        email=email,
+                        is_active=True,
+                    )
+                    existing_people[email] = person
+                    new_people += 1
+                else:
+                    update_fields = []
+
+                    if not person.is_active:
+                        person.is_active = True
+                        update_fields.append('is_active')
+
+                    # Preserve existing names. Only fill an empty name from
+                    # the nomination file.
+                    if not person.name and name:
+                        person.name = name
+                        update_fields.append('name')
+
+                    if update_fields:
+                        person.save(update_fields=update_fields)
+
+            for participant_data in preview['participants']:
+                participant = participants[participant_data['email']]
+
+                assignments = {
+                    category: []
+                    for category in CATEGORY_ORDER
+                }
+                for assignment in participant_data['assignments']:
+                    assignments[assignment['category']].append(
+                        assignment['rater_email']
+                    )
+
+                category_flags = {
+                    f'include_{category}': bool(assignments[category])
+                    for category in CATEGORY_ORDER
+                }
+
+                cycle = ReviewCycle.objects.create(
+                    reviewee=participant,
+                    questionnaire=questionnaire,
+                    created_by=request.user,
+                    status='active',
+                    **category_flags,
+                )
+
+                for category, emails in assignments.items():
+                    for _email in emails:
+                        ReviewerToken.objects.create(
+                            cycle=cycle,
+                            category=category,
+                        )
+
+                assign_tokens_to_emails(cycle, assignments)
+                created_cycles.append(cycle)
+
+    except NoCycleCredits as error:
+        messages.error(request, str(error))
+        if can_see_billing(organization, request.user):
+            return redirect(
+                f"{reverse('billing')}?reviews={error.needed - error.available}"
+            )
+        return redirect('review_cycle_create')
+    except ReviewerLimit as error:
+        limit_error(request, error)
+        return redirect('review_cycle_create')
+    except Exception as error:
+        logger.exception('Failed to create cycles from reviewer nominations')
+        messages.error(
+            request,
+            _('The cycles could not be created: %(error)s')
+            % {'error': str(error)},
+        )
+        return redirect('review_cycle_create')
+
+    request.session.pop('reviewer_nomination_import', None)
+    request.session['pending_invitation_cycles'] = [
+        str(cycle.uuid) for cycle in created_cycles
+    ]
+    request.session['pending_bulk_source'] = 'nominations'
+
+    messages.success(
+        request,
+        ngettext(
+            'Created %(count)s review cycle from the nomination CSV. '
+            'No invitations have been sent.',
+            'Created %(count)s review cycles from the nomination CSV. '
+            'No invitations have been sent.',
+            len(created_cycles),
+        ) % {'count': len(created_cycles)}
+    )
+
+    if new_people:
+        messages.info(
+            request,
+            ngettext(
+                'Added %(count)s new person without changing the org chart.',
+                'Added %(count)s new people without changing the org chart.',
+                new_people,
+            ) % {'count': new_people}
+        )
+
+    return redirect('bulk_send_invitations')
 
 
 @login_required

@@ -1,0 +1,137 @@
+{% extends "admin_dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans 'Reviewer nomination preview' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{% trans 'Reviewer nomination preview' %}</h1>
+        <p>{{ filename }}</p>
+        <p class="help-text">
+            {% trans 'Questionnaire' %}: <strong>{{ questionnaire.name }}</strong>
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'review_cycle_create' %}" class="btn btn-secondary">{% trans 'Back to cycle creation' %}</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">{% trans 'Summary' %}</h2>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem;">
+            <div><strong>{{ preview.stats.participants }}</strong><br><span class="help-text">{% trans 'Participants' %}</span></div>
+            <div><strong>{{ preview.stats.assignments }}</strong><br><span class="help-text">{% trans 'Assignments' %}</span></div>
+            <div><strong>{{ preview.stats.existing_raters }}</strong><br><span class="help-text">{% trans 'Existing people' %}</span></div>
+            <div><strong>{{ preview.stats.new_raters }}</strong><br><span class="help-text">{% trans 'New people' %}</span></div>
+            <div><strong>{{ preview.stats.duplicates }}</strong><br><span class="help-text">{% trans 'Duplicates skipped' %}</span></div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <span class="badge">Self: {{ preview.stats.self }}</span>
+            <span class="badge">Manager: {{ preview.stats.manager }}</span>
+            <span class="badge">Direct Report: {{ preview.stats.direct_report }}</span>
+            <span class="badge">Peer: {{ preview.stats.peer }}</span>
+        </div>
+    </div>
+</div>
+
+{% if preview.errors %}
+<div class="alert alert-error" role="alert">
+    <strong>{% trans 'The file cannot be imported yet.' %}</strong>
+    <ul>
+        {% for error in preview.errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if preview.warnings %}
+<div class="alert alert-warning" role="alert">
+    <strong>{% trans 'Review these warnings.' %}</strong>
+    <ul>
+        {% for warning in preview.warnings %}<li>{{ warning }}</li>{% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% for participant in preview.participants %}
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">{{ participant.name }}</h2>
+            <p class="help-text">{{ participant.email }}</p>
+        </div>
+        {% if participant.known %}
+            <span class="badge badge-success">{% trans 'Existing participant' %}</span>
+        {% else %}
+            <span class="badge">{% trans 'Unknown participant' %}</span>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <p class="help-text">
+            Self {{ participant.counts.self }} ·
+            Manager {{ participant.counts.manager }} ·
+            Direct Report {{ participant.counts.direct_report }} ·
+            Peer {{ participant.counts.peer }}
+        </p>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{% trans 'Rater' %}</th>
+                        <th>{% trans 'Email' %}</th>
+                        <th>{% trans 'Group' %}</th>
+                        <th>{% trans 'Source' %}</th>
+                        <th>{% trans 'Person' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in participant.assignments %}
+                    <tr>
+                        <td>{{ assignment.rater_name }}</td>
+                        <td>{{ assignment.rater_email }}</td>
+                        <td>{{ assignment.group }}</td>
+                        <td>{{ assignment.source|default:'Participant' }}</td>
+                        <td>
+                            {% if assignment.known %}
+                                {% trans 'Existing' %}
+                            {% else %}
+                                {% trans 'New' %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">{% trans 'No valid reviewer assignments.' %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: flex-end;">
+    <a href="{% url 'review_cycle_create' %}" class="btn btn-secondary">
+        {% trans 'Back to cycle creation' %}
+    </a>
+
+    {% if not preview.errors %}
+    <form method="post" action="{% url 'reviewer_nomination_import_confirm' %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-primary"
+                onclick="this.disabled=true; this.form.submit();">
+            {% trans 'Confirm and Create Cycles' %}
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<p class="help-text" style="margin-top: 1rem;">
+    {% trans 'No people, cycles, reviewer assignments, or emails are created until you confirm.' %}
+</p>
+{% endblock %}
