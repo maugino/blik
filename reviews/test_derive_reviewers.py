@@ -283,20 +283,52 @@ class ChartSettingsFormTests(TestCase):
         from django.urls import reverse
         self.client.post(reverse('settings'), {'section': 'chart', **data})
         self.org.refresh_from_db()
-        return self.org.chart_depth, self.org.chart_managers_only
+        return (
+            self.org.chart_depth,
+            self.org.chart_managers_only,
+            self.org.managers_can_view_reports,
+        )
 
     def test_default_is_one_level_and_only_managers(self):
-        self.assertEqual((self.org.chart_depth, self.org.chart_managers_only), (1, True))
+        self.assertEqual(
+            (
+                self.org.chart_depth,
+                self.org.chart_managers_only,
+                self.org.managers_can_view_reports,
+            ),
+            (1, True, True),
+        )
 
     def test_levels_and_teams_are_saved(self):
-        self.assertEqual(self.post(chart_depth='3', chart_who='teams'), (3, False))
+        self.assertEqual(
+            self.post(
+                chart_depth='3',
+                chart_who='teams',
+                managers_can_view_reports='on',
+            ),
+            (3, False, True),
+        )
 
     def test_all_the_way_down_is_saved_as_no_limit(self):
         # A disabled number input is not sent at all.
-        self.assertEqual(self.post(chart_depth_all='on', chart_who='managers'), (None, True))
+        self.assertEqual(
+            self.post(
+                chart_depth_all='on',
+                chart_who='managers',
+                managers_can_view_reports='on',
+            ),
+            (None, True, True),
+        )
+
+    def test_manager_report_access_can_be_turned_off(self):
+        self.assertEqual(
+            self.post(chart_depth='1', chart_who='managers'),
+            (1, True, False),
+        )
 
     def test_a_wrong_number_changes_nothing(self):
-        self.assertEqual(self.post(chart_depth='0', chart_who='teams'), (1, True))
+
+        self.assertEqual(self.post(chart_depth='0', chart_who='teams'), (1, True,True))
 
 
 class ChartReviewerCountsTests(TestCase):
@@ -343,3 +375,4 @@ class ChartReviewerCountsTests(TestCase):
                         counts = chart_reviewer_counts(self.org, everyone)
                     self.assertEqual(counts, expected)
                     self.assertGreater(len(expected), 8)
+

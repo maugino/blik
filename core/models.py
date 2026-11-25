@@ -80,6 +80,13 @@ class Organization(TimeStampedModel):
         help_text=_('Below the first level, only people who manage a unit give feedback'),
         verbose_name=_('only managers below the first level')
     )
+    managers_can_view_reports = models.BooleanField(
+        default=True,
+        help_text=_(
+            'Allow managers to view feedback reports for people in the units they manage.'
+        ),
+        verbose_name=_('managers can view direct-report feedback reports')
+    )
 
     org_chart_offer_dismissed = models.BooleanField(
         default=False,
