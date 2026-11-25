@@ -4,7 +4,16 @@
         <span class="oc-person-name">{{ p.reviewee.name }}</span>
         {% if p.change %}<span class="badge badge-success">{% if p.change == 'new' %}{% trans 'New' context 'mark in the org chart' %}{% elif p.change == 'moved' %}{% trans 'New here' context 'mark in the org chart' %}{% else %}{% trans 'Active again' %}{% endif %}</span>{% endif %}
         {% if p.other_units %}<svg class="oc-person-also" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="{% blocktrans with units=p.other_units %}Also in: {{ units }}{% endblocktrans %}"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 16 9 5 9-5"/></svg>{% endif %}
-        {% if can_manage %}<button type="button" class="oc-person-remove" aria-label="{% blocktrans with name=p.reviewee.name unit=unit.name %}Remove {{ name }} from {{ unit }}{% endblocktrans %}">&times;</button>{% endif %}
+        {% if can_manage %}
+        <a href="{% url 'reviewer_nomination_export' p.reviewee.uuid %}"
+           class="btn btn-sm btn-secondary"
+           draggable="false"
+           title="{% trans 'Export reviewer nomination CSV' %}"
+           aria-label="{% blocktrans with name=p.reviewee.name %}Export reviewer nominations for {{ name }}{% endblocktrans %}">
+            {% trans 'Reviewers' %}
+        </a>
+        <button type="button" class="oc-person-remove" aria-label="{% blocktrans with name=p.reviewee.name unit=unit.name %}Remove {{ name }} from {{ unit }}{% endblocktrans %}">&times;</button>
+        {% endif %}
     </li>
     {% empty %}
     <li class="oc-zone-empty">{% if role == 'manager' %}{% trans 'No manager yet' %}{% else %}{% trans 'No members yet' %}{% endif %}</li>

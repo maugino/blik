@@ -1,6 +1,7 @@
 """
 Admin dashboard views for Blik
 """
+import csv
 import json
 import logging
 import math
@@ -18,7 +19,7 @@ from django.db import transaction
 from django.db.models import ProtectedError
 from django.db.models import Avg, Count, Exists, F, Max, OuterRef, Q, Subquery
 from django.db.models.functions import Lower
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -4347,6 +4348,71 @@ def org_chart(request):
         if context['managers_to_invite']:
             context['invite_language_name'] = language_name(default_language(org))
     return render(request, 'admin_dashboard/org_chart/index.html', context)
+
+
+@login_required
+def reviewer_nomination_export(request, reviewee_uuid):
+    """Export the org-chart reviewer suggestions for one participant as CSV."""
+    if not request.user.has_perm('accounts.can_manage_organization'):
+        raise Http404
+
+    organization = request.organization
+    if not organization:
+        raise Http404
+
+    participant = get_object_or_404(
+        Reviewee.objects.for_organization(organization).filter(is_active=True),
+        uuid=reviewee_uuid,
+    )
+    reviewers = derive_reviewers(participant)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = (
+        f'attachment; filename="reviewer-nominations-{participant.uuid}.csv"'
+    )
+
+    # UTF-8 BOM lets Excel open names containing accents and umlauts correctly.
+    response.write('\ufeff')
+    writer = csv.writer(response)
+    writer.writerow([
+        'Participant Name',
+        'Participant Email',
+        'Rater Name',
+        'Rater Email',
+        'Rater Group',
+        'Source',
+    ])
+
+    labels = {
+        'self': 'Self',
+        'manager': 'Manager',
+        'peer': 'Peer',
+        'direct_report': 'Direct Report',
+    }
+
+    for category in ('self', 'manager', 'direct_report', 'peer'):
+        for reviewer in reviewers.get(category, []):
+            writer.writerow([
+                participant.name,
+                participant.email,
+                reviewer.name,
+                reviewer.email,
+                labels[category],
+                'Org chart',
+            ])
+
+    # Give the participant space to nominate additional developmental peers.
+    for _ in range(5):
+        writer.writerow([
+            participant.name,
+            participant.email,
+            '',
+            '',
+            'Peer',
+            '',
+        ])
+
+    return response
 
 
 @login_required

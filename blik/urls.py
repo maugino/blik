@@ -62,7 +62,13 @@ urlpatterns = [
     path('dashboard/questionnaires/<uuid:questionnaire_uuid>/sample-report/', admin_views.questionnaire_sample_report, name='questionnaire_sample_report'),
     # Org chart
     path('dashboard/org-chart/', admin_views.org_chart, name='org_chart'),
+
     path('dashboard/org-chart/place/', admin_views.org_chart_place, name='org_chart_place'),
+    path(
+        'dashboard/org-chart/reviewer-nominations/<uuid:reviewee_uuid>/export/',
+        admin_views.reviewer_nomination_export,
+        name='reviewer_nomination_export',
+    ),
     path('dashboard/org-chart/import/', admin_views.org_chart_import, name='org_chart_import'),
     path('dashboard/org-chart/import/columns/', admin_views.org_chart_import_map, name='org_chart_import_map'),
     path('dashboard/org-chart/units/create/', admin_views.org_chart_unit_create, name='org_chart_unit_create'),
