@@ -10,6 +10,7 @@ from django.utils import translation
 from django.utils.translation import gettext as _, gettext_lazy
 from .languages import user_language
 from .models import Organization
+from .email_backends import PowerAutomateBackend
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,11 @@ def get_email_backend():
     is configured — that fallback must honour EMAIL_BACKEND, otherwise console
     and locmem (test) backends are bypassed in favour of a real SMTP connection.
     """
+    if settings.POWER_AUTOMATE_WEBHOOK_URL:
+        return PowerAutomateBackend(
+            webhook_url=settings.POWER_AUTOMATE_WEBHOOK_URL
+        )
+
     try:
         org = platform_organization()
 
