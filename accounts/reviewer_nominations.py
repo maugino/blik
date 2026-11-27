@@ -24,6 +24,9 @@ GROUPS = {
     "direct report": "direct_report",
     "direct reports": "direct_report",
     "directreport": "direct_report",
+    "other": "other",
+    "other stakeholder": "other",
+    "other stakeholders": "other",
 }
 
 
@@ -75,6 +78,7 @@ def parse_nomination_csv(raw, read_table):
             "manager": 0,
             "peer": 0,
             "direct_report": 0,
+            "other": 0,
         },
         "rater_emails": set(),
     }
@@ -133,7 +137,7 @@ def parse_nomination_csv(raw, read_table):
         if category is None:
             line_errors.append(
                 f'rater group "{raw_group}" must be Self, Manager, '
-                "Supervisor, Peer, or Direct Report"
+                "Supervisor, Peer, Direct Report, or Other"
             )
 
         if line_errors:
@@ -177,6 +181,7 @@ def parse_nomination_csv(raw, read_table):
                 "manager": "Manager",
                 "peer": "Peer",
                 "direct_report": "Direct Report",
+                "other": "Other",
             }[category],
             "source": source,
         })
@@ -209,6 +214,7 @@ def parse_nomination_csv(raw, read_table):
                 "manager": categories["manager"],
                 "peer": categories["peer"],
                 "direct_report": categories["direct_report"],
+                "other": categories["other"],
             },
         })
 

@@ -89,6 +89,27 @@ class ReviewerNominationPreviewTests(TestCase):
         self.assertEqual(preview["stats"]["new_raters"], 1)
         self.assertEqual(preview["errors"], [])
 
+    def test_other_reviewer_group_is_accepted(self):
+        response = self.upload(
+            HEADERS
+            + "Participant One,participant@example.com,"
+              "External Stakeholder,stakeholder@example.com,Other,\\n"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        preview = response.context["preview"]
+
+        self.assertEqual(preview["errors"], [])
+        self.assertEqual(preview["stats"]["other"], 1)
+        self.assertEqual(
+            preview["participants"][0]["assignments"][0]["category"],
+            "other",
+        )
+        self.assertEqual(
+            preview["participants"][0]["assignments"][0]["group"],
+            "Other",
+        )
+
     def test_missing_rater_email_is_rejected(self):
         response = self.upload(
             HEADERS
