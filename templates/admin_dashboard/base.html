@@ -41,7 +41,20 @@
     <nav class="navbar">
         <div class="navbar-content">
             <div class="navbar-header">
-                <a href="{% url 'admin_dashboard' %}" class="navbar-brand">Blik</a>
+                <a href="{% url 'admin_dashboard' %}" class="navbar-brand">
+                    <span>Blik</span>
+                    {% if cobranding_enabled %}
+                    <span class="navbar-brand-cobrand">
+                        <span class="navbar-brand-for">for</span>
+                        <img src="{% static 'img/logos/enovis-logo-color.svg' %}"
+                             class="navbar-client-logo navbar-client-logo-light"
+                             alt="Enovis">
+                        <img src="{% static 'img/logos/enovis-logo-white.svg' %}"
+                             class="navbar-client-logo navbar-client-logo-dark"
+                             alt="Enovis">
+                    </span>
+                    {% endif %}
+                </a>
                 <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="{% trans 'Toggle menu' %}">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="12" x2="21" y2="12"></line>

@@ -1,6 +1,8 @@
 """
 Context processors for making settings available in templates.
 """
+from pathlib import Path
+
 from django.conf import settings
 
 
@@ -38,6 +40,7 @@ def billing(request):
     }
 
 
+
 def sender_identity(request):
     """The names a user must give before an invitation goes out: see accounts/sender_identity.py."""
     from accounts.sender_identity import missing
@@ -47,3 +50,18 @@ def sender_identity(request):
     if not organization or user is None or not user.is_authenticated:
         return {}
     return {'sender_identity_missing': missing(user, organization)}
+
+
+def branding(request):
+    """Expose optional co-branding only when the private brand assets exist."""
+    static_img = Path(settings.BASE_DIR) / 'static' / 'img' / 'logos'
+    color_logo = static_img / 'enovis-logo-color.svg'
+    white_logo = static_img / 'enovis-logo-white.svg'
+
+    return {
+        'cobranding_enabled': bool(
+            settings.REPORT_LOGO
+            and color_logo.is_file()
+            and white_logo.is_file()
+        ),
+    }
