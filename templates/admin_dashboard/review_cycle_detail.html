@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {% endif %}
 
             {% if pending_tokens > 0 %}
-            <a href="{% url 'send_reminder_form' cycle.uuid %}" class="btn btn-warning" style="color: white;">
+            <a href="{% url 'send_reminder_form' cycle.uuid %}" class="btn btn-secondary">
                 {% if shows_reviewer_status %}{% blocktrans trimmed with count=pending_tokens %}Send Reminders ({{ count }}){% endblocktrans %}{% else %}{% trans 'Send Reminder' %}{% endif %}
             </a>
             {% endif %}
