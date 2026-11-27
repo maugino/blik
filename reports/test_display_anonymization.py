@@ -6,7 +6,7 @@ from reviews.templatetags.feedback_tags import others_average
 
 from .services import REPORT_SCHEMA, apply_display_anonymization, reviewer_counts
 
-SCORES = {'self': 4.0, 'peer': 2.0, 'manager': 2.8, 'direct_report': 3.6}
+SCORES = {'self': 4.0, 'peer': 2.0, 'manager': 2.8, 'direct_report': 3.6, 'other': 4.0}
 
 
 def _report_data(counts, schema=REPORT_SCHEMA):
@@ -210,6 +210,67 @@ class CombinedSmallReviewerGroupsTests(TestCase):
             [2, 4],
         )
         self.assertTrue(filtered['combined_anonymous_feedback'])
+
+    def test_combines_peer_and_other_when_together_they_meet_threshold(self):
+        data = _report_data({'peer': 2, 'other': 2})
+
+        question = data['by_section']['1']['questions']['10']
+        question['category_order'] = ['peer', 'other']
+        question['by_category']['peer']['responses'] = [2, 4]
+        question['by_category']['other']['responses'] = [4, 4]
+
+        filtered = apply_display_anonymization(
+            data,
+            min_threshold=4,
+            combine_small_groups=True,
+        )
+
+        categories = filtered[
+            'by_section'
+        ]['1']['questions']['10']['by_category']
+
+        self.assertNotIn('peer', categories)
+        self.assertNotIn('other', categories)
+        self.assertIn('combined_anonymous', categories)
+
+        combined = categories['combined_anonymous']
+        self.assertEqual(combined['count'], 4)
+        self.assertEqual(combined['avg'], 3.5)
+        self.assertTrue(filtered['combined_anonymous_feedback'])
+
+    def test_rescues_small_direct_report_with_peer_and_leaves_other_separate(self):
+        data = _report_data({
+            'peer': 4,
+            'direct_report': 1,
+            'other': 4,
+        })
+
+        question = data['by_section']['1']['questions']['10']
+        question['category_order'] = ['peer', 'direct_report', 'other']
+        question['by_category']['peer']['responses'] = [2, 3, 4, 5]
+        question['by_category']['direct_report']['responses'] = [5]
+        question['by_category']['other']['responses'] = [3, 4, 4, 5]
+
+        filtered = apply_display_anonymization(
+            data,
+            min_threshold=4,
+            combine_small_groups=True,
+        )
+
+        categories = filtered[
+            'by_section'
+        ]['1']['questions']['10']['by_category']
+
+        self.assertNotIn('peer', categories)
+        self.assertNotIn('direct_report', categories)
+        self.assertIn('other', categories)
+        self.assertIn('combined_anonymous', categories)
+
+        self.assertEqual(categories['combined_anonymous']['count'], 5)
+        self.assertEqual(categories['combined_anonymous']['avg'], 3.8)
+
+        self.assertEqual(categories['other']['count'], 4)
+        self.assertEqual(categories['other']['avg'], 4.0)
 
     def test_does_not_combine_when_total_is_below_threshold(self):
         data = _report_data({'peer': 1, 'direct_report': 1})
