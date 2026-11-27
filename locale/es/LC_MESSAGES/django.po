@@ -14261,3 +14261,31 @@ msgstr "Inactivo"
 
 #~ msgid "Without this, user can only create cycles for themselves"
 #~ msgstr "Sin esto, el usuario solo puede crear ciclos para sí mismo"
+
+msgid "Combine peer and direct-report feedback when either group is below the anonymity threshold but they meet it together."
+msgstr "Combinar el feedback de pares y colaboradores directos cuando uno de los grupos esté por debajo del umbral de anonimato, pero juntos alcancen dicho umbral."
+
+msgid "Combine small reviewer groups"
+msgstr "Combinar grupos pequeños de evaluadores"
+
+msgid "combine small reviewer groups"
+msgstr "combinar grupos pequeños de evaluadores"
+
+# Combined Feedback
+msgid "Combine small anonymous reviewer groups when needed to preserve feedback without compromising anonymity."
+msgstr "Combinar pequeños grupos anónimos de evaluadores cuando sea necesario para conservar el feedback sin comprometer el anonimato."
+
+msgid "When anonymous reviewer groups are below the anonymity threshold but meet it when pooled together, show them as Combined Feedback. This setting is off by default."
+msgstr "Cuando los grupos anónimos de evaluadores estén por debajo del umbral de anonimato, pero juntos alcancen dicho umbral, se mostrarán como Feedback combinado. Esta opción está desactivada de forma predeterminada."
+
+msgid "Combined Feedback:"
+msgstr "Feedback combinado:"
+
+msgid "To preserve anonymity, feedback from small reviewer groups has been combined. Scores and written comments from those groups are shown together and cannot be attributed to a specific group."
+msgstr "Para preservar el anonimato, se ha combinado el feedback de pequeños grupos de evaluadores. Las puntuaciones y los comentarios escritos de estos grupos se muestran juntos y no pueden atribuirse a un grupo específico."
+
+#, python-format
+msgid "%(count)s combined feedback response"
+msgid_plural "%(count)s combined feedback responses"
+msgstr[0] "%(count)s respuesta de feedback combinado"
+msgstr[1] "%(count)s respuestas de feedback combinado"

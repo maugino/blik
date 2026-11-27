@@ -266,6 +266,13 @@
         {% endblocktrans %}
     </p>
 </div>
+{% if report_data.combined_anonymous_feedback %}
+    <p class="notice small">
+        <b>{% trans 'Combined Feedback:' %}</b>
+        {% trans 'To preserve anonymity, feedback from small reviewer groups has been combined. Scores and written comments from those groups are shown together and cannot be attributed to a specific group.' %}
+    </p>
+{% endif %}
+
 {% endif %}
 
 <h2 id="detailed-feedback" style="font-size: 1.75rem; font-weight: 600; margin: 2rem 0 1rem; color: var(--text-primary);">{% trans 'Detailed Feedback' %}</h2>

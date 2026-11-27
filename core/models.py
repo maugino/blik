@@ -38,6 +38,14 @@ class Organization(TimeStampedModel):
         help_text=_('Hide the answers of groups below the anonymity threshold in the manager view of a report'),
         verbose_name=_('hide answers below the threshold from managers')
     )
+    combine_small_reviewer_groups = models.BooleanField(
+        default=False,
+        help_text=_(
+            'Combine small anonymous reviewer groups when needed to preserve '
+            'feedback without compromising anonymity.'
+        ),
+        verbose_name=_('combine small reviewer groups')
+    )
     auto_send_report_email = models.BooleanField(
         default=True,
         help_text=_('Automatically send email to reviewee when their report is generated'),

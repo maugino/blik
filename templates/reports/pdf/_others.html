@@ -60,5 +60,13 @@
         {% plural %}
         Results are only shown when there are at least {{ counter }} responses per category to protect anonymity.
         {% endblocktrans %}</p>
+
+{% if report_data.combined_anonymous_feedback %}
+    <p class="notice small muted">
+        <b>{% trans 'Combined Feedback:' %}</b>
+        {% trans 'To preserve anonymity, feedback from small reviewer groups has been combined. Scores and written comments from those groups are shown together and cannot be attributed to a specific group.' %}
+    </p>
+{% endif %}
+
 </section>
 {% endwith %}
