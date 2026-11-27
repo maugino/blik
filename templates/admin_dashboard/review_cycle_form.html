@@ -23,7 +23,10 @@
         </div>
     </div>
     {% endif %}
-    <form method="post" id="cycleForm" data-sends-mail="reviewer">
+    <form method="post"
+          id="cycleForm"
+          enctype="multipart/form-data"
+          data-sends-mail="reviewer">
         {% csrf_token %}
 
         {% if can_create_for_others %}
@@ -47,7 +50,43 @@
                             <div style="font-size: 0.875rem; color: #64748b;">{% if creates_for_whole_organization %}{% trans 'Create for all active reviewees' %}{% else %}{% trans 'Create for you and your direct reports' %}{% endif %}</div>
                         </div>
                     </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; flex: 1;">
+                        <input type="radio"
+                               name="creation_mode"
+                               value="nominations"
+                               onchange="toggleRevieweeSelect()">
+                        <div>
+                            <div style="font-weight: 600;">{% trans 'Import Nominations' %}</div>
+                            <div style="font-size: 0.875rem; color: #64748b;">
+                                {% trans 'Create cycles from a completed reviewer nomination CSV' %}
+                            </div>
+                        </div>
+                    </label>
                 </div>
+
+                <div id="nominationModeNote" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label" for="nominationFile">
+                            {% trans 'Reviewer nomination CSV' %}
+                        </label>
+                        <input type="file"
+                               id="nominationFile"
+                               name="file"
+                               accept=".csv,text/csv"
+                               class="form-control">
+                        <small class="help-text">
+                            {% trans 'Upload a CSV exported from the org chart and completed with the participant nominations.' %}
+                        </small>
+                    </div>
+
+                    <div class="alert alert-info" style="font-size: 0.875rem;">
+                        {% blocktrans trimmed %}
+                            Blik validates and previews the file first. Previewing creates no people,
+                            cycles, reviewer assignments, or emails.
+                        {% endblocktrans %}
+                    </div>
+                </div>
+
                 <div id="bulkModeNote" style="display: none;">
                     {% if bulk_units %}
                     <fieldset class="form-group" style="margin-bottom: 1rem; border: 0; padding: 0;">
@@ -432,31 +471,58 @@ function toggleRevieweeSelect() {
     const submitBtn = document.getElementById('submitBtn');
     const inviteSection = document.getElementById('inviteSection');
 
+    const form = document.getElementById('cycleForm');
     const bulkNote = document.getElementById('bulkModeNote');
+    const nominationNote = document.getElementById('nominationModeNote');
+    const nominationFile = document.getElementById('nominationFile');
     const source = document.querySelector('input[name="bulk_source"]:checked');
     // The form of a self-only member has no mode: the source decides, as in the view.
     const mode = modeRadio ? modeRadio.value
         : (source && ['chart', 'previous'].includes(source.value) ? 'bulk' : 'single');
     // Reusing earlier cycles takes the questionnaire and categories from each of them.
     const reuse = mode === 'bulk' && source && source.value === 'previous';
-    document.getElementById('setupCard').style.display = reuse ? 'none' : '';
-    document.getElementById('categoriesCard').style.display = reuse ? 'none' : '';
-    document.getElementById('questionnaire').required = !reuse;
-    document.getElementById('setupTitle').textContent = mode === 'bulk'
-        ? '{{ _('Questionnaire')|escapejs }}' : '{{ _('Reviewee and questionnaire')|escapejs }}';
+    const nominationMode = mode === 'nominations';
 
-    if (mode === 'bulk') {
+    document.getElementById('setupCard').style.display = reuse ? 'none' : '';
+    document.getElementById('categoriesCard').style.display =
+        (reuse || nominationMode) ? 'none' : '';
+    document.getElementById('questionnaire').required = !reuse;
+    document.getElementById('setupTitle').textContent =
+        mode === 'single'
+            ? '{{ _('Reviewee and questionnaire')|escapejs }}'
+            : '{{ _('Questionnaire')|escapejs }}';
+
+    if (nominationFile) nominationFile.required = nominationMode;
+    if (nominationNote) nominationNote.style.display = nominationMode ? 'block' : 'none';
+
+    if (nominationMode) {
         revieweeGroup.style.display = 'none';
         revieweeSelect.removeAttribute('required');
-        if (submitBtn && modeRadio) submitBtn.textContent = '{{ _('Create Cycles (no emails yet)')|escapejs }}';
-        inviteSection.style.display = 'none'; // Hide invite section for bulk mode
+        inviteSection.style.display = 'none';
+        if (bulkNote) bulkNote.style.display = 'none';
+        if (submitBtn) submitBtn.textContent = '{{ _('Preview Nominations')|escapejs }}';
+        form.setAttribute(
+            'action',
+            '{% url "reviewer_nomination_import_preview" %}'
+        );
+    } else if (mode === 'bulk') {
+        revieweeGroup.style.display = 'none';
+        revieweeSelect.removeAttribute('required');
+        if (submitBtn && modeRadio) {
+            submitBtn.textContent = '{{ _('Create Cycles (no emails yet)')|escapejs }}';
+        }
+        inviteSection.style.display = 'none';
         if (bulkNote) bulkNote.style.display = 'block';
+        form.removeAttribute('action');
     } else {
         revieweeGroup.style.display = 'block';
         revieweeSelect.setAttribute('required', 'required');
-        if (submitBtn) submitBtn.textContent = '{{ _('Create Review Cycle')|escapejs }}';
-        inviteSection.style.display = 'block'; // Show invite section for single mode
+        if (submitBtn) {
+            submitBtn.textContent = '{{ _('Create Review Cycle')|escapejs }}';
+        }
+        inviteSection.style.display = 'block';
         if (bulkNote) bulkNote.style.display = 'none';
+        form.removeAttribute('action');
     }
 }
 

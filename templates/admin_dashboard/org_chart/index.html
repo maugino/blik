@@ -12,8 +12,10 @@
     </div>
     <div class="oc-page-actions">
         {% if managers_without_account %}<button type="button" class="btn btn-secondary" data-oc-open="ocAccountsDialog">{% blocktrans trimmed count counter=managers_without_account|length %}{{ counter }} manager without an account{% plural %}{{ counter }} managers without an account{% endblocktrans %}</button>{% endif %}
-        {% if can_manage %}<button type="button" class="btn btn-secondary" data-oc-open="ocImportDialog">{% trans 'Import CSV' %}</button>
-        <button type="button" class="btn btn-primary" data-oc-new-unit>{% trans 'New unit' %}</button>{% endif %}
+        {% if can_manage %}
+        <button type="button" class="btn btn-secondary" data-oc-open="ocImportDialog">{% trans 'Import CSV' %}</button>
+        <button type="button" class="btn btn-primary" data-oc-new-unit>{% trans 'New unit' %}</button>
+        {% endif %}
     </div>
 </div>
 
