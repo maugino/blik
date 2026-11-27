@@ -23,6 +23,7 @@
                 <label class="form-check"><input type="checkbox" class="form-check-input" name="include_manager"{% if 'manager' in item.start_categories %} checked{% endif %}>{% trans 'Manager review' %}</label>
                 <label class="form-check"><input type="checkbox" class="form-check-input" name="include_peer"{% if 'peer' in item.start_categories %} checked{% endif %}>{% trans 'Peer review' %}</label>
                 <label class="form-check"><input type="checkbox" class="form-check-input" name="include_direct_report"{% if 'direct_report' in item.start_categories %} checked{% endif %}>{% trans 'Direct report review' %}</label>
+                <label class="form-check"><input type="checkbox" class="form-check-input" name="include_other"{% if 'other' in item.start_categories %} checked{% endif %}>{% trans 'Other' %}</label>
             </fieldset>
             {% if item.has_saved_list %}
             <p class="help-text">{% trans "Reviewers come from the list on the person's page." %}</p>

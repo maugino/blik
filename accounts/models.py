@@ -287,6 +287,7 @@ class ReviewSetup(TimeStampedModel):
     include_manager = models.BooleanField(default=True)
     include_peer = models.BooleanField(default=True)
     include_direct_report = models.BooleanField(default=True)
+    include_other = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'review_setups'
@@ -301,6 +302,7 @@ class SetupReviewer(TimeStampedModel):
         ('manager', 'Manager'),
         ('peer', 'Peer'),
         ('direct_report', 'Direct report'),
+        ('other', 'Other'),
     ]
 
     setup = models.ForeignKey(

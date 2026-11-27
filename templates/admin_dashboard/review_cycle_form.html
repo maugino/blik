@@ -298,6 +298,17 @@
                     </label>
                 </div>
 
+                <div class="form-check">
+                    <input type="checkbox" id="includeOther" name="include_other"
+                           class="form-check-input category-toggle" data-category="other">
+                    <label for="includeOther" style="display: inline; font-weight: normal;">
+                        {% trans 'Other' %}
+                        <small style="display: block; color: var(--text-secondary);">
+                            {% trans 'Project partners, customers or other key stakeholders' %}
+                        </small>
+                    </label>
+                </div>
+
                 <div id="noCategoryWarning" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; color: #92400e; font-size: 0.875rem;">
                     {% trans 'Select at least one category.' %}
                 </div>
@@ -525,7 +536,7 @@ async function updateChipsFromReviewee() {
 
     // Clear the derived-from-chart pickers too (before fetch). We leave them
     // empty if the admin hadn't selected a reviewee yet.
-    ['manager', 'peer', 'direct_report'].forEach(cat => {
+    ['manager', 'peer', 'direct_report', 'other'].forEach(cat => {
         const p = _pickerForCategory(cat);
         if (p) _clearPicker(p);
         const field = document.querySelector(`textarea[name="${cat}_emails"]`);
@@ -551,7 +562,7 @@ async function updateChipsFromReviewee() {
         const data = await resp.json();
 
         let nonSelfTotal = 0;
-        ['manager', 'peer', 'direct_report'].forEach(cat => {
+        ['manager', 'peer', 'direct_report', 'other'].forEach(cat => {
             const picker = _pickerForCategory(cat);
             if (!picker) return;
             (data[cat] || []).forEach(p => {
@@ -561,7 +572,7 @@ async function updateChipsFromReviewee() {
         });
 
         // Emails of the saved list or the previous review go in the advanced block.
-        ['manager', 'peer', 'direct_report'].forEach(cat => {
+        ['manager', 'peer', 'direct_report', 'other'].forEach(cat => {
             const field = document.querySelector(`textarea[name="${cat}_emails"]`);
             const emails = (data.emails && data.emails[cat]) || [];
             if (!field || !emails.length) return;

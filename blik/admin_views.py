@@ -793,6 +793,10 @@ REVIEWER_CARD_CATEGORIES = (
      gettext_lazy('Search for a peer…'), gettext_lazy('Peers')),
     ('direct_report', gettext_lazy('Direct report review'), gettext_lazy('People who report to this reviewee'),
      gettext_lazy('Search for a direct report…'), gettext_lazy('Direct Reports')),
+    ('other', gettext_lazy('Other'),
+     gettext_lazy('Project partners, customers or other key stakeholders'),
+     gettext_lazy('Search for another stakeholder…'),
+     gettext_lazy('Other')),
 )
 
 
@@ -883,7 +887,7 @@ def save_posted_reviewers(request, reviewee, chart=False):
         messages.error(request, _('Questionnaire is required.'))
         return
 
-    listed = ('manager', 'peer', 'direct_report')
+    listed = ('manager', 'peer', 'direct_report', 'other')
     flags = selected_category_flags(request)
     # A category that is switched off keeps its people in the list, for a later review.
     people, emails, warnings = posted_setup(request, org, listed)
@@ -976,7 +980,7 @@ def reviewee_detail(request, reviewee_uuid):
             'initial': json.dumps([{'uuid': str(p.uuid), 'name': p.name, 'email': p.email} for p in people]),
             # Without the picker, the people of the list are edited as email addresses.
             'email_text': ', '.join(emails if access['manage'] else [p.email for p in people] + emails),
-            'under_threshold': code in ('peer', 'direct_report') and len(people) + len(emails) < threshold,
+            'under_threshold': code in ('peer', 'direct_report', 'other') and len(people) + len(emails) < threshold,
             'chart_questions': [question for question in chart_questions if question],
         })
 
@@ -2498,7 +2502,7 @@ def review_cycle_create(request):
                 # The form hides categories this cycle skips; a stale or
                 # hand-made POST must not reinstate them.
                 active = [c for c in CATEGORY_ORDER if category_flags.get(f'include_{c}', True)]
-                listed = ('manager', 'peer', 'direct_report')
+                listed = ('manager', 'peer', 'direct_report', 'other')
                 # A category that is switched off keeps its people in the saved list, as on the page.
                 people, emails, warnings = posted_setup(request, org, set(active) | set(listed))
                 email_assignments = {
@@ -2669,7 +2673,7 @@ def bulk_send_invitations(request):
     # Per-cycle reviewer counts for the preview table.
     cycle_summaries = []
     for cycle in cycles:
-        counts = {'self': 0, 'manager': 0, 'peer': 0, 'direct_report': 0}
+        counts = {'self': 0, 'manager': 0, 'peer': 0, 'direct_report': 0, 'other': 0}
         for t in cycle.tokens.all():
             if t.category in counts and t.reviewer_email:
                 counts[t.category] += 1
@@ -2765,7 +2769,10 @@ def cycle_progress(cycle):
     }
     progress = []
     # The order of the reviewers card, not the report order
-    for category in sorted(cycle.active_categories, key=('self', 'manager', 'peer', 'direct_report').index):
+    for category in sorted(
+            cycle.active_categories,
+            key=('self', 'manager', 'peer', 'direct_report', 'other').index,
+    ):
         invited = counts.get(category, {}).get('invited', 0)
         answered = counts.get(category, {}).get('answered', 0)
         needed = 0
@@ -4802,9 +4809,12 @@ def derive_reviewers_for_cycle(request):
     except Reviewee.DoesNotExist:
         return JsonResponse({'error': 'Reviewee not found.'}, status=404)
 
-    shown = {c: [] for c in ('manager', 'peer', 'direct_report')}
+    shown = {c: [] for c in ('manager', 'peer', 'direct_report', 'other')}
     emails = {c: [] for c in shown}
-    flags = {f'include_{c}': True for c in CATEGORY_ORDER}
+    flags = {
+        f'include_{c}': c != 'other'
+        for c in CATEGORY_ORDER
+    }
     source, questionnaire = 'chart', None
     # The saved list and the previous review hold more than the chart (emails
     # someone typed): only a user who may start a cycle for the person gets them.
