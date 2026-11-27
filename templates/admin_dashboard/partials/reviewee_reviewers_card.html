@@ -1,3 +1,9 @@
+<form id="reviewee-nomination-import-form"
+      method="post"
+      enctype="multipart/form-data"
+      action="{% url 'reviewee_nomination_import' reviewee.uuid %}">
+    {% csrf_token %}
+</form>
 {% load i18n %}
 <section class="card" aria-labelledby="reviewers-title">
 {% if access.setup %}
@@ -8,6 +14,14 @@
         <h2 class="card-title" id="reviewers-title">{% trans 'Reviewers' %}</h2>
         <div class="rv-actions">
             <button type="button" class="btn btn-sm btn-secondary" data-fill="chart">{% trans 'Fill from org chart' %}</button>
+            <label for="reviewee-nomination-file" class="btn btn-sm btn-secondary">{% trans 'Import nominations' %}</label>
+            <input id="reviewee-nomination-file"
+                   type="file"
+                   name="file"
+                   accept=".csv,text/csv"
+                   form="reviewee-nomination-import-form"
+                   hidden
+                   onchange="this.form.submit();">
             {% if has_previous_review %}<button type="button" class="btn btn-sm btn-secondary" data-fill="previous">{% trans 'Fill from the previous review' %}</button>{% endif %}
         </div>
     </div>

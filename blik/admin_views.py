@@ -4388,9 +4388,10 @@ def reviewer_nomination_export(request, reviewee_uuid):
         'manager': 'Manager',
         'peer': 'Peer',
         'direct_report': 'Direct Report',
+        'other': 'Other',
     }
 
-    for category in ('self', 'manager', 'direct_report', 'peer'):
+    for category in ('self', 'manager', 'direct_report', 'peer', 'other'):
         for reviewer in reviewers.get(category, []):
             writer.writerow([
                 participant.name,
@@ -4454,6 +4455,208 @@ def org_chart_place(request):
         messages.warning(request, _('Some people were not placed: the org chart or a reviewer list changed '
                                     'since the page was loaded.'))
     return redirect('org_chart')
+@login_required
+@require_POST
+def reviewee_nomination_import(request, reviewee_uuid):
+    """Preview reviewer nominations for one Reviewee without changing data."""
+    organization = request.organization
+    reviewee = get_object_or_404(
+        Reviewee.objects.for_organization(organization).filter(is_active=True),
+        uuid=reviewee_uuid,
+    )
+    access = reviewee_page_access(request.user, organization, reviewee)
+    if access is None or not access['setup']:
+        raise Http404
+
+    upload = request.FILES.get('file')
+    if not upload:
+        messages.error(request, _('Choose a reviewer nomination CSV file.'))
+        return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+    if upload.size > 2 * 1024 * 1024:
+        messages.error(request, _('The CSV file must be 2 MB or smaller.'))
+        return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+    try:
+        raw = upload.read()
+        from accounts.org_import import read_table
+        from accounts.reviewer_nominations import parse_nomination_csv
+        preview = parse_nomination_csv(raw, read_table)
+    except (UnicodeDecodeError, csv.Error):
+        messages.error(
+            request,
+            _('The file could not be read as a UTF-8 CSV file.'),
+        )
+        return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+    matching = [
+        participant
+        for participant in preview['participants']
+        if participant['email'].lower() == reviewee.email.lower()
+    ]
+
+    if not matching:
+        preview['errors'].append(
+            _('The CSV does not contain reviewer nominations for %(email)s.')
+            % {'email': reviewee.email}
+        )
+        participant = None
+    else:
+        participant = matching[0]
+
+    ignored = len(preview['participants']) - len(matching)
+    if ignored:
+        preview['warnings'].append(
+            ngettext(
+                '%(count)s other participant in the CSV will be ignored.',
+                '%(count)s other participants in the CSV will be ignored.',
+                ignored,
+            ) % {'count': ignored}
+        )
+
+    known_people = {
+        person.email.lower(): person
+        for person in Reviewee.objects.for_organization(organization)
+        .filter(email__in=preview['rater_emails'], is_active=True)
+    }
+
+    if participant is not None:
+        for assignment in participant['assignments']:
+            assignment['known'] = (
+                assignment['rater_email'].lower() in known_people
+            )
+
+    if preview['errors']:
+        request.session.pop('reviewee_nomination_import', None)
+    else:
+        request.session['reviewee_nomination_import'] = {
+            'csv': raw.decode('utf-8-sig'),
+            'filename': upload.name,
+            'reviewee_uuid': str(reviewee.uuid),
+        }
+
+    return render(
+        request,
+        'admin_dashboard/reviewee_nomination_preview.html',
+        {
+            'reviewee': reviewee,
+            'participant': participant,
+            'preview': preview,
+            'filename': upload.name,
+        },
+    )
+
+
+@login_required
+@require_POST
+def reviewee_nomination_import_confirm(request, reviewee_uuid):
+    """Replace one Reviewee's saved reviewer list from a validated CSV."""
+    organization = request.organization
+    reviewee = get_object_or_404(
+        Reviewee.objects.for_organization(organization).filter(is_active=True),
+        uuid=reviewee_uuid,
+    )
+    access = reviewee_page_access(request.user, organization, reviewee)
+    if access is None or not access['setup']:
+        raise Http404
+
+    pending = request.session.get('reviewee_nomination_import')
+    if (
+        not pending
+        or pending.get('reviewee_uuid') != str(reviewee.uuid)
+    ):
+        messages.error(
+            request,
+            _('The reviewer nomination preview has expired. Upload the CSV again.'),
+        )
+        return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+    from accounts.org_import import read_table
+    from accounts.reviewer_nominations import parse_nomination_csv
+
+    try:
+        preview = parse_nomination_csv(pending.get('csv', ''), read_table)
+    except (UnicodeDecodeError, csv.Error):
+        request.session.pop('reviewee_nomination_import', None)
+        messages.error(
+            request,
+            _('The reviewer nomination CSV can no longer be read.'),
+        )
+        return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+    participant = next(
+        (
+            item for item in preview['participants']
+            if item['email'].lower() == reviewee.email.lower()
+        ),
+        None,
+    )
+
+    if participant is None or preview['errors']:
+        request.session.pop('reviewee_nomination_import', None)
+        messages.error(
+            request,
+            _('The reviewer nomination CSV is no longer valid for this person.'),
+        )
+        return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+    listed = ('manager', 'peer', 'direct_report', 'other')
+    assignments = {category: [] for category in listed}
+
+    for assignment in participant['assignments']:
+        category = assignment['category']
+        if category in assignments:
+            assignments[category].append(assignment['rater_email'].lower())
+
+    existing_people = {
+        person.email.lower(): person
+        for person in Reviewee.objects.for_organization(organization)
+        .filter(
+            email__in={
+                email
+                for emails in assignments.values()
+                for email in emails
+            },
+            is_active=True,
+        )
+    }
+
+    people = {category: [] for category in listed}
+    emails = {category: [] for category in listed}
+
+    for category, category_emails in assignments.items():
+        for email in category_emails:
+            person = existing_people.get(email)
+            if person is not None:
+                people[category].append(person)
+            else:
+                emails[category].append(email)
+
+    current = review_setup(reviewee)
+    flags = {
+        'include_self': current.flags.get('include_self', True),
+        **{
+            f'include_{category}': bool(assignments[category])
+            for category in listed
+        },
+    }
+
+    save_review_setup(
+        reviewee,
+        current.questionnaire,
+        flags,
+        people,
+        emails,
+    )
+
+    request.session.pop('reviewee_nomination_import', None)
+    messages.success(
+        request,
+        _('Reviewer nominations imported. Review the list and save any further changes.'),
+    )
+    return redirect('reviewee_detail', reviewee_uuid=reviewee.uuid)
+
+
 def reviewer_nomination_import_preview(request):
     """Validate a reviewer nomination CSV without changing any data."""
     if not request.user.has_perm('accounts.can_manage_organization'):

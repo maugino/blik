@@ -35,6 +35,7 @@
             <span class="badge">Manager: {{ preview.stats.manager }}</span>
             <span class="badge">Direct Report: {{ preview.stats.direct_report }}</span>
             <span class="badge">Peer: {{ preview.stats.peer }}</span>
+            <span class="badge">Other: {{ preview.stats.other }}</span>
         </div>
     </div>
 </div>
@@ -75,7 +76,8 @@
             Self {{ participant.counts.self }} ·
             Manager {{ participant.counts.manager }} ·
             Direct Report {{ participant.counts.direct_report }} ·
-            Peer {{ participant.counts.peer }}
+            Peer {{ participant.counts.peer }} ·
+            Other {{ participant.counts.other }}
         </p>
 
         <div class="table-responsive">
