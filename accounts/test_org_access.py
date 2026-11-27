@@ -70,6 +70,30 @@ class OrgAccessTests(TestCase):
         self.assertEqual(other_unit.status_code, 404)
         self.assertEqual(boss.status_code, 404)
 
+    def test_a_manager_cannot_read_direct_report_reports_when_disabled(self):
+        self.org.managers_can_view_reports = False
+        self.org.save(update_fields=['managers_can_view_reports'])
+        self._login('hank@acme.example')
+
+        response = self.client.get(
+            reverse(
+                'reports:view_report',
+                args=[self.cycles['sam@acme.example'].uuid],
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_report_only_cycles_are_hidden_when_manager_report_access_is_disabled(self):
+        self.org.managers_can_view_reports = False
+        self.org.save(update_fields=['managers_can_view_reports'])
+        self._login('hank@acme.example')
+
+        response = self.client.get(reverse('review_cycle_list'))
+
+        listed = {cycle.reviewee.email for cycle in response.context['cycles']}
+        self.assertEqual(listed, {'hank@acme.example'})
+
     def test_a_manager_cannot_run_the_cycles_below_them(self):
         self._login('hank@acme.example')
         sam_cycle = self.cycles['sam@acme.example']

@@ -2150,8 +2150,14 @@ def review_cycle_list(request):
             'reviewee', 'questionnaire', 'created_by'
         )
 
-    below = set() if can_view_all_reports(request.user) else direct_report_emails(request.user, org)
     run_team = run_team_emails(request.user, org)
+    report_below = (
+        set()
+        if can_view_all_reports(request.user)
+        or not getattr(org, 'managers_can_view_reports', True)
+        else direct_report_emails(request.user, org)
+    )
+    below = report_below | run_team
     if below:
         # Managers also see the cycles of their direct reports in the org
         # chart: to run them when they may create cycles for others, else
@@ -2245,7 +2251,7 @@ def review_cycle_list(request):
     saved_lists = {saved.reviewee_id: saved for saved in ReviewSetup.objects.filter(reviewee__in=reviewee_ids)}
     in_chart = chart_reviewer_counts(org, reviewee_ids)
     for cycle in cycles:
-        cycle.report_only = cycle.reviewee.email.lower() in below - run_team
+        cycle.report_only = cycle.reviewee.email.lower() in report_below - run_team
         cycle.start = {
             'reviewee': cycle.reviewee,
             'source_cycle': cycle,
@@ -3331,6 +3337,9 @@ def settings_view(request):
                     messages.error(request, _('The number of levels must be a number from 1 to 99.'))
                     return redirect('settings')
                 organization.chart_managers_only = request.POST.get('chart_who') != 'teams'
+                organization.managers_can_view_reports = (
+                    request.POST.get('managers_can_view_reports') == 'on'
+                )
                 organization.save()
                 messages.success(request, _('Org chart settings updated successfully.'))
 

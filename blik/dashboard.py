@@ -245,7 +245,11 @@ def personal_state(user, org, threshold, runs_team):
                 continue
             seen.add(cycle.reviewee_id)
             team.append({'cycle': cycle, 'runs': runs_team, **_progress(cycle, threshold)})
-        team_reports = latest_reports(in_org.filter(pk__in=[c.pk for c in team_cycles]), threshold)
+        if getattr(org, 'managers_can_view_reports', True):
+            team_reports = latest_reports(
+                in_org.filter(pk__in=[c.pk for c in team_cycles]),
+                threshold,
+            )
         # People of the team who have no cycle running.
         idle = sorted((people[e] for e in below if e in people and people[e].pk not in seen), key=lambda r: r.name)
         team += [{'reviewee': reviewee} for reviewee in idle]

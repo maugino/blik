@@ -32,8 +32,11 @@ def get_cycle_or_404(request, cycle_uuid):
 
 
 def can_view_report(request, cycle):
+    organization = request.organization
     return can_view_all_reports(request.user) or (
-        cycle.reviewee.email.lower() in direct_report_emails(request.user, request.organization)
+        organization is not None
+        and organization.managers_can_view_reports
+        and cycle.reviewee.email.lower() in direct_report_emails(request.user, organization)
     )
 
 
