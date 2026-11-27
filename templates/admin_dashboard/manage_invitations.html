@@ -118,6 +118,18 @@
             </div>
             {% endif %}
 
+            {% if cycle.include_other %}
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">{% trans 'Other' %}</label>
+                <div data-reviewee-picker
+                     data-field-name="other_reviewees"
+                     data-placeholder="{% trans 'Search for another stakeholder…' %}"></div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    {% trans 'Project partners, customers or other key stakeholders' %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" for="language">{% trans 'Language' %}</label>
                 <select id="language" name="language" class="form-control">
@@ -158,9 +170,15 @@
                     </div>
                     {% endif %}
                     {% if cycle.include_direct_report %}
-                    <div class="form-group" style="margin-bottom: 0;">
+                    <div class="form-group" style="margin-bottom: 1rem;">
                         <label class="form-label">{% trans 'Direct Reports' %}</label>
                         <textarea name="direct_report_emails" class="form-control" rows="2" placeholder="report1@example.com"></textarea>
+                    </div>
+                    {% endif %}
+                    {% if cycle.include_other %}
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">{% trans 'Other' %}</label>
+                        <textarea name="other_emails" class="form-control" rows="2" placeholder="stakeholder@example.com"></textarea>
                     </div>
                     {% endif %}
                 </div>

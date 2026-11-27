@@ -21,7 +21,7 @@ from reports.services import _hidden_groups, reviewer_counts
 from reviews.models import ReviewCycle, ReviewerToken
 
 # The groups of reviewers a report hides below the threshold.
-GROUPS = ('peer', 'manager', 'direct_report')
+GROUPS = ('peer', 'manager', 'direct_report', 'other')
 
 # A cycle with no new answer for this long is worth a reminder.
 STALE_AFTER = timedelta(days=7)

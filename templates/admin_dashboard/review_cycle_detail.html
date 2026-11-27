@@ -274,9 +274,21 @@
                 </button>
             </div>
             {% endif %}
+
+            {% if cycle.include_other and cycle.invitation_token_other %}
+            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-light); border-radius: 6px;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">{% trans 'Other' %}</div>
+                    <code id="invite-other" style="font-size: 0.875rem; color: var(--text-secondary); background: var(--bg-card); padding: 0.5rem; border-radius: 4px; display: block; overflow-x: auto;">{% absolute_url 'reviews:claim_token' invitation_token=cycle.invitation_token_other %}</code>
+                </div>
+                <button onclick="copyInvitationLink('other')" class="btn btn-sm btn-secondary" style="white-space: nowrap;">
+                    {% trans 'Copy Link' %}
+                </button>
+            </div>
+            {% endif %}
         </div>
 
-        {% if cycle.include_peer or cycle.include_manager or cycle.include_direct_report %}
+        {% if cycle.include_peer or cycle.include_manager or cycle.include_direct_report or cycle.include_other %}
         {% if cycle.links_email_queued_at and cycle.links_email_error %}
         <p style="margin: 1.5rem 0 0; font-size: 0.875rem; color: var(--danger); overflow-wrap: anywhere;">
             {% blocktrans trimmed with email=cycle.reviewee.email error=cycle.links_email_error %}The email with these links to {{ email }} failed: {{ error }}{% endblocktrans %}

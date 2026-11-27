@@ -28,7 +28,14 @@ from .pdf_summary import executive_summary
 
 FONT_DIR = settings.BASE_DIR / 'static' / 'fonts' / 'roboto'
 # One colour per reviewer group in the radars; self is a dashed dark outline
-GROUP_COLOURS = {'self': '#111827', 'peer': '#4f46e5', 'manager': '#0891b2', 'direct_report': '#db2777','combined_anonymous': '#8b5cf6',}
+GROUP_COLOURS = {
+    'self': '#111827',
+    'peer': '#4f46e5',
+    'manager': '#0891b2',
+    'direct_report': '#db2777',
+    'other': '#d97706',
+    'combined_anonymous': '#8b5cf6',
+}
 
 # What it takes to reach an agency level: the same texts as the web report (_dreyfus_profile.html)
 AGENCY_NEXT_STEPS = {

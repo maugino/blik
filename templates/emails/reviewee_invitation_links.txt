@@ -15,6 +15,10 @@
 {% trans 'Direct Report Reviews' %}
 {{ direct_report_url }}
 {% trans 'For the people who report to you. Each person who opens it gets their own review.' %}
+{% endif %}{% if other_url %}
+{% trans 'Other' %}
+{{ other_url }}
+{% trans 'For project partners, customers or other key stakeholders. Each person who opens it gets their own review.' %}
 {% endif %}
 {% trans 'You can share each link with more than one person. Reviewers stay anonymous. They can stop and continue later.' %}
 

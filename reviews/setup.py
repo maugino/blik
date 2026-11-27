@@ -9,9 +9,9 @@ from questionnaires.models import Questionnaire
 from reviews.models import CATEGORY_ORDER, ReviewerToken
 from reviews.services import derive_reviewers
 
-LISTED = ('manager', 'peer', 'direct_report')
+LISTED = ('manager', 'peer', 'direct_report', 'other')
 # When one person lands in two categories, the first one here keeps them.
-SAVE_PRIORITY = ('manager', 'direct_report', 'peer')
+SAVE_PRIORITY = ('manager', 'direct_report', 'other', 'peer')
 
 
 @dataclass
@@ -112,7 +112,10 @@ def review_setup(reviewee, source=None, with_previous=False):
     if source == 'previous' and not with_previous:
         source = None
     saved = ReviewSetup.objects.filter(reviewee=reviewee).select_related('questionnaire').first()
-    flags = {f'include_{c}': True for c in CATEGORY_ORDER}
+    flags = {
+        f'include_{c}': c != 'other'
+        for c in CATEGORY_ORDER
+    }
     questionnaire = None
     if saved is not None:
         flags = {f'include_{c}': getattr(saved, f'include_{c}') for c in CATEGORY_ORDER}
@@ -132,7 +135,10 @@ def review_setup(reviewee, source=None, with_previous=False):
     elif source in (None, 'chart') and (buckets := _chart(reviewee)):
         setup.source = 'chart'
         for category in LISTED:
-            setup.people[category] = [p for p in buckets[category] if p.pk != reviewee.pk]
+            setup.people[category] = [
+                p for p in buckets.get(category, [])
+                if p.pk != reviewee.pk
+            ]
     elif with_previous and source in (None, 'previous') and (previous := previous_cycle_reviewers(reviewee)):
         cycle, assignments = previous
         setup.source = 'previous'

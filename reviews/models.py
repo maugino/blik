@@ -10,7 +10,7 @@ from questionnaires.models import Questionnaire, Question
 
 # The order feedback categories are collected, displayed and reported in.
 # Single source for the places that used to spell the list out themselves.
-CATEGORY_ORDER = ('self', 'peer', 'manager', 'direct_report')
+CATEGORY_ORDER = ('self', 'peer', 'manager', 'direct_report', 'other')
 
 
 class ReviewCycle(TimeStampedModel):
@@ -97,12 +97,14 @@ class ReviewCycle(TimeStampedModel):
     include_peer = models.BooleanField(_('Peer review'), default=True)
     include_manager = models.BooleanField(_('Manager review'), default=True)
     include_direct_report = models.BooleanField(_('Direct report review'), default=True)
+    include_other = models.BooleanField(_('Other'), default=False)
 
     # Secure invitation tokens per category (non-enumerable)
     invitation_token_self = models.UUIDField(_('self assessment invitation token'), unique=True, db_index=True, null=True, blank=True)
     invitation_token_peer = models.UUIDField(_('peer review invitation token'), unique=True, db_index=True, null=True, blank=True)
     invitation_token_manager = models.UUIDField(_('manager review invitation token'), unique=True, db_index=True, null=True, blank=True)
     invitation_token_direct_report = models.UUIDField(_('direct report review invitation token'), unique=True, db_index=True, null=True, blank=True)
+    invitation_token_other = models.UUIDField(_('other stakeholder invitation token'), unique=True, db_index=True, null=True, blank=True)
 
     objects = ReviewCycleManager()
 
@@ -129,6 +131,8 @@ class ReviewCycle(TimeStampedModel):
             self.invitation_token_manager = uuid.uuid4()
         if not self.invitation_token_direct_report:
             self.invitation_token_direct_report = uuid.uuid4()
+        if not self.invitation_token_other:
+            self.invitation_token_other = uuid.uuid4()
 
         # Every creation path goes through here, so this is the only place the
         # single-round credit is charged. One transaction: a failed insert
@@ -154,6 +158,7 @@ class ReviewCycle(TimeStampedModel):
             'peer': self.invitation_token_peer,
             'manager': self.invitation_token_manager,
             'direct_report': self.invitation_token_direct_report,
+            'other': self.invitation_token_other,
         }
         return token_map.get(category)
 
@@ -170,6 +175,7 @@ class ReviewerToken(TimeStampedModel):
         ('peer', _('Peer Review')),
         ('manager', _('Manager Review')),
         ('direct_report', _('Direct Report Review')),
+        ('other', _('Other')),
     ]
 
     cycle = models.ForeignKey(

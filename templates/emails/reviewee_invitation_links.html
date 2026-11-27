@@ -29,5 +29,12 @@
   <div style="font-size:14px; color:#64748b;">{% trans 'For the people who report to you. Each person who opens it gets their own review.' %}</div>
 </div>
 {% endif %}
+{% if other_url %}
+<div style="margin:20px 0; padding:16px 20px; background:#f8fafc; border-left:3px solid #d97706; border-radius:4px;">
+  <div style="font-weight:600; color:#0f172a;">{% trans 'Other' %}</div>
+  <div style="margin:8px 0; padding:8px 10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:4px; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:13px; word-break:break-all;"><a href="{{ other_url }}" style="color:#d97706; text-decoration:none;">{{ other_url }}</a></div>
+  <div style="font-size:14px; color:#64748b;">{% trans 'For project partners, customers or other key stakeholders. Each person who opens it gets their own review.' %}</div>
+</div>
+{% endif %}
 <p>{% trans 'You can share each link with more than one person. Reviewers stay anonymous. They can stop and continue later.' %}</p>
 {% endblock %}
