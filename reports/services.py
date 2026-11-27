@@ -20,9 +20,23 @@ from .scoring import score_on_five
 # Version of report_data's layout: 2 stores codes and numbers where version 1 stored English text
 REPORT_SCHEMA = 2
 
-# Optionally combine Peers and Direct Reports below the anonymity threshold
+# Anonymous reviewer categories can be pooled to preserve useful feedback
+# without exposing a group that is below the anonymity threshold.
 COMBINED_ANONYMOUS_CATEGORY = 'combined_anonymous'
-COMBINABLE_ANONYMOUS_CATEGORIES = ('peer', 'direct_report')
+COMBINABLE_ANONYMOUS_CATEGORIES = tuple(
+    category
+    for category in CATEGORY_ORDER
+    if category not in ('self', 'manager')
+)
+
+# When a small group needs a category that already meets the threshold to
+# rescue it, prefer the closest reviewer relationship. Categories absent from
+# the current build are harmless and are ignored.
+RESCUE_PRIORITY = {
+    'direct_report': ('peer', 'other'),
+    'peer': ('direct_report', 'other'),
+    'other': ('peer', 'direct_report'),
+}
 
 # Everyone but the reviewee: every "others" score is about these groups, as the section scores are
 OTHERS_CATEGORIES = tuple(category for category in CATEGORY_ORDER if category != 'self') + (
@@ -328,26 +342,69 @@ def _combined_category_result(question_data, category_data):
 
 def _combine_small_reviewer_groups(report_data, min_threshold):
     """
-    Combine peer and direct-report feedback for display when both groups are
-    individually below the anonymity threshold but satisfy it together.
+    Preserve anonymous feedback by pooling reviewer categories when necessary.
+
+    Rules:
+    - self and manager are never pooled;
+    - two or more below-threshold anonymous groups are pooled when their total
+      reaches the threshold;
+    - otherwise, a below-threshold group is rescued with one category that
+      already meets the threshold;
+    - the rescue partner is chosen by relationship proximity;
+    - a category that already meets the threshold stays separate unless it is
+      needed to rescue feedback that would otherwise be hidden.
     """
     counts = reviewer_counts(report_data)
-    peer_count = counts.get('peer', 0)
-    direct_report_count = counts.get('direct_report', 0)
+    present = {
+        category: counts.get(category, 0)
+        for category in COMBINABLE_ANONYMOUS_CATEGORIES
+        if counts.get(category, 0) > 0
+    }
+    small = {
+        category: count
+        for category, count in present.items()
+        if count < min_threshold
+    }
 
-    if not (
-        peer_count > 0
-        and direct_report_count > 0
-        and (
-            peer_count < min_threshold
-            or direct_report_count < min_threshold
-        )
-        and peer_count + direct_report_count >= min_threshold
-    ):
+    if not small:
         return copy.deepcopy(report_data), False
 
+    categories_to_combine = tuple(small)
 
+    # First preference: combine only the small groups, preserving every group
+    # that already meets the threshold as a separate category.
+    if len(small) >= 2 and sum(small.values()) >= min_threshold:
+        pass
+    else:
+        safe = {
+            category: count
+            for category, count in present.items()
+            if category not in small and count >= min_threshold
+        }
+        if not safe:
+            return copy.deepcopy(report_data), False
 
+        # Pick one safe partner. For a single small group this follows its
+        # explicit relationship priority. For several small groups whose total
+        # is still too low, choose the partner with the best combined ranking.
+        def partner_rank(candidate):
+            ranks = []
+            for category in small:
+                priority = RESCUE_PRIORITY.get(
+                    category,
+                    COMBINABLE_ANONYMOUS_CATEGORIES,
+                )
+                try:
+                    ranks.append(priority.index(candidate))
+                except ValueError:
+                    ranks.append(len(priority))
+            return (sum(ranks), safe[candidate], candidate)
+
+        partner = min(safe, key=partner_rank)
+        categories_to_combine = (*small, partner)
+
+        if sum(present[category] for category in categories_to_combine) < min_threshold:
+            return copy.deepcopy(report_data), False
 
     combined_data = copy.deepcopy(report_data)
 
@@ -357,15 +414,15 @@ def _combine_small_reviewer_groups(report_data, min_threshold):
 
             sources = [
                 by_category[category]
-                for category in COMBINABLE_ANONYMOUS_CATEGORIES
+                for category in categories_to_combine
                 if category in by_category
             ]
 
             if not sources:
                 continue
 
-            by_category.pop('peer', None)
-            by_category.pop('direct_report', None)
+            for category in categories_to_combine:
+                by_category.pop(category, None)
 
             by_category[COMBINED_ANONYMOUS_CATEGORY] = (
                 _combined_category_result(question_data, sources)
@@ -376,7 +433,7 @@ def _combine_small_reviewer_groups(report_data, min_threshold):
             combined_added = False
 
             for category in old_order:
-                if category in COMBINABLE_ANONYMOUS_CATEGORIES:
+                if category in categories_to_combine:
                     if not combined_added:
                         new_order.append(COMBINED_ANONYMOUS_CATEGORY)
                         combined_added = True
@@ -406,6 +463,7 @@ def _combine_small_reviewer_groups(report_data, min_threshold):
     combined_data['combined_anonymous_feedback'] = True
 
     return combined_data, True
+
 
 def apply_display_anonymization(
     report_data,
