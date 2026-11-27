@@ -8,12 +8,13 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.factories import UserProfileFactory
-from accounts.models import OrgUnitMembership, Reviewee
+from accounts.models import OrgUnitMembership, Reviewee, ReviewSetup
 from accounts.permissions import assign_organization_admin, assign_organization_member
 from core.factories import OrganizationFactory, UserFactory
 from questionnaires.factories import QuestionnaireFactory
 from notifications.models import EmailLog
 from reviews.models import ReviewCycle, ReviewerToken
+from reviews.setup import save_review_setup
 
 
 HEADERS = (
@@ -343,3 +344,216 @@ class ReviewerNominationPreviewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+
+class RevieweeNominationImportTests(TestCase):
+    def setUp(self):
+        self.profile = UserProfileFactory()
+        self.user = self.profile.user
+        self.org = self.profile.organization
+        assign_organization_admin(self.user)
+        self.client.force_login(self.user)
+
+        self.questionnaire = QuestionnaireFactory(
+            organization=self.org,
+            is_default=True,
+        )
+        self.alex = Reviewee.objects.create(
+            organization=self.org,
+            name="Alex Morgan",
+            email="alex@acme.example",
+        )
+        self.manager = Reviewee.objects.create(
+            organization=self.org,
+            name="Blair Chen",
+            email="blair@acme.example",
+        )
+        self.other = Reviewee.objects.create(
+            organization=self.org,
+            name="External Partner",
+            email="partner@acme.example",
+        )
+
+        # Establish an existing setup so the import must preserve the
+        # questionnaire and Self setting while replacing reviewer groups.
+        save_review_setup(
+            self.alex,
+            self.questionnaire,
+            {
+                "include_self": True,
+                "include_manager": True,
+                "include_peer": True,
+                "include_direct_report": True,
+                "include_other": False,
+            },
+            {
+                "manager": [],
+                "peer": [],
+                "direct_report": [],
+                "other": [],
+            },
+            {
+                "manager": [],
+                "peer": ["old.peer@example.com"],
+                "direct_report": ["old.report@example.com"],
+                "other": [],
+            },
+        )
+
+        self.preview_url = reverse(
+            "reviewee_nomination_import",
+            args=[self.alex.uuid],
+        )
+        self.confirm_url = reverse(
+            "reviewee_nomination_import_confirm",
+            args=[self.alex.uuid],
+        )
+
+    def upload(self, body):
+        file = SimpleUploadedFile(
+            "nominations.csv",
+            body.encode("utf-8"),
+            content_type="text/csv",
+        )
+        return self.client.post(self.preview_url, {"file": file})
+
+    def preview_for_confirmation(self, body):
+        response = self.upload(body)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["preview"]["errors"], [])
+        self.assertIn("reviewee_nomination_import", self.client.session)
+        return response
+
+    def saved_rows(self):
+        return sorted(
+            ReviewSetup.objects.get(reviewee=self.alex)
+            .reviewers.values_list("category", "person", "email"),
+            key=str,
+        )
+
+    def test_import_replaces_saved_list_and_preserves_setup(self):
+        body = (
+            HEADERS
+            + "Alex Morgan,alex@acme.example,"
+              "Alex Morgan,alex@acme.example,Self,Org chart\n"
+            + "Alex Morgan,alex@acme.example,"
+              "Blair Chen,blair@acme.example,Manager,Org chart\n"
+            + "Alex Morgan,alex@acme.example,"
+              "New Peer,new.peer@example.com,Peer,\n"
+            + "Alex Morgan,alex@acme.example,"
+              "External Partner,partner@acme.example,Other,\n"
+        )
+        self.preview_for_confirmation(body)
+
+        cycles_before = ReviewCycle.objects.count()
+        tokens_before = ReviewerToken.objects.count()
+        people_before = Reviewee.objects.count()
+
+        response = self.client.post(self.confirm_url)
+
+        self.assertRedirects(
+            response,
+            reverse("reviewee_detail", args=[self.alex.uuid]),
+            fetch_redirect_response=False,
+        )
+
+        setup = ReviewSetup.objects.get(reviewee=self.alex)
+
+        # Existing setup metadata survives.
+        self.assertEqual(setup.questionnaire, self.questionnaire)
+        self.assertTrue(setup.include_self)
+
+        # Imported categories reflect the CSV exactly.
+        self.assertTrue(setup.include_manager)
+        self.assertTrue(setup.include_peer)
+        self.assertFalse(setup.include_direct_report)
+        self.assertTrue(setup.include_other)
+
+        self.assertEqual(
+            self.saved_rows(),
+            sorted(
+                [
+                    ("manager", self.manager.pk, ""),
+                    ("peer", None, "new.peer@example.com"),
+                    ("other", self.other.pk, ""),
+                ],
+                key=str,
+            ),
+        )
+
+        # The ad-hoc import has no cycle/person/token side effects.
+        self.assertEqual(ReviewCycle.objects.count(), cycles_before)
+        self.assertEqual(ReviewerToken.objects.count(), tokens_before)
+        self.assertEqual(Reviewee.objects.count(), people_before)
+        self.assertFalse(
+            Reviewee.objects.filter(
+                organization=self.org,
+                email__iexact="new.peer@example.com",
+            ).exists()
+        )
+
+    def test_preview_uses_only_current_reviewee_from_multi_participant_csv(self):
+        body = (
+            HEADERS
+            + "Alex Morgan,alex@acme.example,"
+              "Blair Chen,blair@acme.example,Manager,\n"
+            + "Another Person,another@acme.example,"
+              "Wrong Peer,wrong.peer@example.com,Peer,\n"
+        )
+
+        response = self.upload(body)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["preview"]["errors"], [])
+
+        participant = response.context["participant"]
+        self.assertEqual(participant["email"], "alex@acme.example")
+        self.assertEqual(
+            [row["rater_email"] for row in participant["assignments"]],
+            ["blair@acme.example"],
+        )
+        self.assertTrue(
+            any(
+                "ignored" in str(warning).lower()
+                for warning in response.context["preview"]["warnings"]
+            )
+        )
+
+        # Preview remains read-only.
+        self.assertIn(
+            ("peer", None, "old.peer@example.com"),
+            self.saved_rows(),
+        )
+        self.assertFalse(ReviewCycle.objects.exists())
+
+    def test_confirm_is_single_use_and_user_without_setup_access_gets_404(self):
+        body = (
+            HEADERS
+            + "Alex Morgan,alex@acme.example,"
+              "New Peer,new.peer@example.com,Peer,\n"
+        )
+        self.preview_for_confirmation(body)
+
+        first = self.client.post(self.confirm_url)
+        self.assertEqual(first.status_code, 302)
+
+        rows_after_first = self.saved_rows()
+
+        second = self.client.post(self.confirm_url)
+        self.assertEqual(second.status_code, 302)
+        self.assertEqual(self.saved_rows(), rows_after_first)
+
+        member_profile = UserProfileFactory(organization=self.org)
+        assign_organization_member(member_profile.user)
+        self.client.force_login(member_profile.user)
+
+        file = SimpleUploadedFile(
+            "nominations.csv",
+            body.encode("utf-8"),
+            content_type="text/csv",
+        )
+        preview = self.client.post(self.preview_url, {"file": file})
+        confirm = self.client.post(self.confirm_url)
+
+        self.assertEqual(preview.status_code, 404)
+        self.assertEqual(confirm.status_code, 404)
