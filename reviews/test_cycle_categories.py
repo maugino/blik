@@ -442,44 +442,119 @@ class ApiTests(CycleCategoryTestCase):
 
 
 class ManageInvitationsTests(CycleCategoryTestCase):
-    """The invitations page must offer the cycle's categories, and only those."""
+    """A live cycle may gain reviewer categories from the invitations page."""
 
     def setUp(self):
         super().setUp()
         self.cycle = ReviewCycle.objects.create(
-            reviewee=self.reviewee, questionnaire=self.questionnaire,
-            include_peer=False, include_direct_report=False)
+            reviewee=self.reviewee,
+            questionnaire=self.questionnaire,
+            include_peer=False,
+            include_direct_report=False,
+            include_other=False,
+        )
 
     def _page(self):
         return self.client.get(
-            reverse('manage_invitations', kwargs={'cycle_uuid': self.cycle.uuid}))
+            reverse(
+                'manage_invitations',
+                kwargs={'cycle_uuid': self.cycle.uuid},
+            )
+        )
 
     def _assign(self, **emails):
         return self.client.post(
-            reverse('assign_invitations', kwargs={'cycle_uuid': self.cycle.uuid}),
+            reverse(
+                'assign_invitations',
+                kwargs={'cycle_uuid': self.cycle.uuid},
+            ),
             emails,
         )
 
-    def test_the_form_only_offers_the_active_categories(self):
+    def test_live_cycle_offers_all_non_self_categories(self):
         response = self._page()
 
         self.assertContains(response, 'name="self_emails"')
         self.assertContains(response, 'name="manager_emails"')
-        self.assertNotContains(response, 'name="peer_emails"')
-        self.assertNotContains(response, 'name="direct_report_emails"')
+        self.assertContains(response, 'name="peer_emails"')
+        self.assertContains(response, 'name="direct_report_emails"')
+        self.assertContains(response, 'name="other_emails"')
 
-    def test_a_posted_email_for_a_dropped_category_is_ignored(self):
-        self._assign(peer_emails='peer@acme.example',
-                     manager_emails='boss@acme.example')
+    def test_posting_other_reviewer_activates_other(self):
+        original_token = self.cycle.invitation_token_other
 
-        self.assertEqual(self.cycle.tokens.filter(category='peer').count(), 0)
-        self.assertEqual(self.cycle.tokens.filter(category='manager').count(), 1)
+        response = self._assign(
+            other_emails='stakeholder@acme.example',
+        )
 
-    def test_an_existing_token_of_a_dropped_category_gets_no_reviewer(self):
-        """Tokens can predate the category being dropped — they stay empty."""
-        stale = ReviewerToken.objects.create(cycle=self.cycle, category='peer')
+        self.assertEqual(response.status_code, 302)
 
-        self._assign(peer_emails='peer@acme.example')
+        self.cycle.refresh_from_db()
+
+        self.assertTrue(self.cycle.include_other)
+        self.assertIsNotNone(self.cycle.invitation_token_other)
+
+        # Existing cycles may already have received a shared token from the
+        # model save hook; either way the category has one after activation.
+        if original_token is not None:
+            self.assertEqual(
+                self.cycle.invitation_token_other,
+                original_token,
+            )
+
+        token = self.cycle.tokens.get(category='other')
+        self.assertEqual(
+            token.reviewer_email,
+            'stakeholder@acme.example',
+        )
+
+    def test_category_without_submitted_reviewers_stays_inactive(self):
+        self._assign(manager_emails='boss@acme.example')
+
+        self.cycle.refresh_from_db()
+
+        self.assertFalse(self.cycle.include_peer)
+        self.assertFalse(self.cycle.include_direct_report)
+        self.assertFalse(self.cycle.include_other)
+
+        self.assertFalse(
+            self.cycle.tokens.filter(category='other').exists()
+        )
+
+    def test_existing_empty_token_is_used_when_category_is_activated(self):
+        stale = ReviewerToken.objects.create(
+            cycle=self.cycle,
+            category='other',
+        )
+
+        self._assign(other_emails='stakeholder@acme.example')
 
         stale.refresh_from_db()
-        self.assertIsNone(stale.reviewer_email)
+        self.cycle.refresh_from_db()
+
+        self.assertTrue(self.cycle.include_other)
+        self.assertEqual(
+            stale.reviewer_email,
+            'stakeholder@acme.example',
+        )
+        self.assertEqual(
+            self.cycle.tokens.filter(category='other').count(),
+            1,
+        )
+
+    def test_completed_cycle_cannot_activate_a_category(self):
+        self.cycle.status = 'completed'
+        self.cycle.save(update_fields=['status'])
+
+        response = self._assign(
+            other_emails='stakeholder@acme.example',
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.cycle.refresh_from_db()
+
+        self.assertFalse(self.cycle.include_other)
+        self.assertFalse(
+            self.cycle.tokens.filter(category='other').exists()
+        )

@@ -3023,19 +3023,57 @@ def assign_invitations(request, cycle_uuid):
     cycle = get_cycle_or_404(request, cycle_uuid)
 
     if request.method == 'POST':
-        categories = cycle.active_categories
-        if cycle.tokens.filter(category='self', reviewer_email__isnull=False).exists():
-            # The reviewee already has their self-assessment token; another
-            # address would start a second one.
-            categories = [c for c in categories if c != 'self']
-        email_assignments, warnings = collect_reviewer_emails(request, request.organization, categories)
+        if cycle.status != 'active':
+            messages.error(
+                request,
+                _('Reviewer categories can only be changed on an active cycle.'),
+            )
+            return redirect('review_cycle_detail', cycle_uuid=cycle.uuid)
+
+        # A live cycle can gain any non-Self reviewer category. Self keeps its
+        # original cycle configuration because it is tied to the reviewee.
+        categories = [
+            category
+            for category in CATEGORY_ORDER
+            if category != 'self'
+        ]
+        if (
+            cycle.include_self
+            and not cycle.tokens.filter(
+                category='self',
+                reviewer_email__isnull=False,
+            ).exists()
+        ):
+            categories.insert(0, 'self')
+
+        email_assignments, warnings = collect_reviewer_emails(
+            request,
+            request.organization,
+            categories,
+        )
         for w in warnings:
             messages.warning(request, w)
 
-        # All new tokens or none: past the free reviewer cap nothing is added.
+        # All category changes, new tokens and assignments succeed together.
         try:
             with transaction.atomic():
-                # Create tokens dynamically based on email count
+                newly_enabled = []
+
+                for category, emails in email_assignments.items():
+                    if (
+                        category != 'self'
+                        and emails
+                        and not getattr(cycle, f'include_{category}')
+                    ):
+                        setattr(cycle, f'include_{category}', True)
+                        newly_enabled.append(category)
+
+                if newly_enabled:
+                    # ReviewCycle.save() also creates missing shared invitation
+                    # tokens, including tokens for legacy cycles.
+                    cycle.save()
+
+                # Create tokens dynamically based on email count.
                 tokens_created = 0
                 for category_code, emails in email_assignments.items():
                     if not emails:
