@@ -98,7 +98,7 @@ def _place_email(setup, category, email, by_email):
 def _chart(reviewee):
     """The org chart buckets, or None when the chart knows nobody besides the person."""
     buckets = derive_reviewers(reviewee)
-    return buckets if any(buckets[c] for c in LISTED) else None
+    return buckets if any(buckets.get(c, []) for c in LISTED) else None
 
 
 def review_setup(reviewee, source=None, with_previous=False):

@@ -9,8 +9,8 @@ from subscriptions.testing import grant
 from reviews.models import ReviewCycle
 from reviews.setup import save_review_setup
 
-NO_PEOPLE = {'manager': [], 'peer': [], 'direct_report': []}
-NO_EMAILS = {'manager': [], 'peer': [], 'direct_report': []}
+NO_PEOPLE = {'manager': [], 'peer': [], 'direct_report': [], 'other': []}
+NO_EMAILS = {'manager': [], 'peer': [], 'direct_report': [], 'other': []}
 ALL_FLAGS = {'include_self': True, 'include_manager': True, 'include_peer': True, 'include_direct_report': True}
 
 
@@ -171,4 +171,8 @@ class FillEndpointTests(TestCase):
         self.assertEqual(data['manager'], [])
         self.assertEqual(data['emails'], NO_EMAILS)
         self.assertIsNone(data['questionnaire'])
-        self.assertTrue(all(data['flags'].values()))
+        self.assertTrue(all(
+            enabled for flag, enabled in data['flags'].items()
+            if flag != 'include_other'
+        ))
+        self.assertFalse(data['flags']['include_other'])

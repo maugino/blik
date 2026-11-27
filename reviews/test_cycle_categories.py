@@ -52,7 +52,10 @@ class ModelDefaultTests(CycleCategoryTestCase):
         cycle = ReviewCycle.objects.create(
             reviewee=self.reviewee, questionnaire=self.questionnaire)
 
-        self.assertEqual(cycle.active_categories, list(CATEGORY_ORDER))
+        self.assertEqual(
+            cycle.active_categories,
+            [category for category in CATEGORY_ORDER if category != 'other'],
+        )
 
     def test_active_categories_keeps_report_order(self):
         cycle = ReviewCycle.objects.create(
@@ -152,7 +155,10 @@ class QuickCycleTests(CycleCategoryTestCase):
         )
 
         created = ReviewCycle.objects.get()
-        self.assertEqual(created.active_categories, list(CATEGORY_ORDER))
+        self.assertEqual(
+            created.active_categories,
+            [category for category in CATEGORY_ORDER if category != 'other'],
+        )
 
     def test_no_tokens_are_made_for_a_dropped_category(self):
         previous = ReviewCycle.objects.create(
