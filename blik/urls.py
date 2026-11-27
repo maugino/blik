@@ -48,6 +48,16 @@ urlpatterns = [
     path('dashboard/reviewees/', admin_views.reviewee_list, name='reviewee_list'),
     path('dashboard/reviewees/create/', admin_views.reviewee_create, name='reviewee_create'),
     path('dashboard/reviewees/<uuid:reviewee_uuid>/', admin_views.reviewee_detail, name='reviewee_detail'),
+    path(
+        'dashboard/reviewees/<uuid:reviewee_uuid>/reviewer-nominations/import/',
+        admin_views.reviewee_nomination_import,
+        name='reviewee_nomination_import',
+    ),
+    path(
+        'dashboard/reviewees/<uuid:reviewee_uuid>/reviewer-nominations/confirm/',
+        admin_views.reviewee_nomination_import_confirm,
+        name='reviewee_nomination_import_confirm',
+    ),
     path('dashboard/reviewees/<uuid:reviewee_uuid>/chart-relation/', admin_views.reviewee_chart_relation, name='reviewee_chart_relation'),
     path('dashboard/reviewees/quick-create/', admin_views.reviewee_quick_create, name='reviewee_quick_create'),
     path('dashboard/reviewees/<uuid:reviewee_uuid>/edit/', admin_views.reviewee_edit, name='reviewee_edit'),

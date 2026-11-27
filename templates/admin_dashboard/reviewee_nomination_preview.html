@@ -1,0 +1,110 @@
+{% extends "admin_dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans 'Reviewer nomination preview' %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{% trans 'Reviewer nomination preview' %}</h1>
+        <p>{{ reviewee.name }} · {{ reviewee.email }}</p>
+        <p class="help-text">{{ filename }}</p>
+    </div>
+    <a href="{% url 'reviewee_detail' reviewee.uuid %}" class="btn btn-secondary">
+        {% trans 'Back to Reviewee' %}
+    </a>
+</div>
+
+{% if preview.errors %}
+<div class="alert alert-error" role="alert">
+    <strong>{% trans 'The file cannot be imported yet.' %}</strong>
+    <ul>
+        {% for error in preview.errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if preview.warnings %}
+<div class="alert alert-warning" role="alert">
+    <strong>{% trans 'Review these warnings.' %}</strong>
+    <ul>
+        {% for warning in preview.warnings %}<li>{{ warning }}</li>{% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if participant %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">{{ participant.name }}</h2>
+            <p class="help-text">{{ participant.email }}</p>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="help-text">
+            Manager {{ participant.counts.manager }} ·
+            Peer {{ participant.counts.peer }} ·
+            Direct Report {{ participant.counts.direct_report }} ·
+            Other {{ participant.counts.other }}
+        </p>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{% trans 'Rater' %}</th>
+                        <th>{% trans 'Email' %}</th>
+                        <th>{% trans 'Group' %}</th>
+                        <th>{% trans 'Person' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in participant.assignments %}
+                    {% if assignment.category != 'self' %}
+                    <tr>
+                        <td>{{ assignment.rater_name }}</td>
+                        <td>{{ assignment.rater_email }}</td>
+                        <td>{{ assignment.group }}</td>
+                        <td>
+                            {% if assignment.known %}
+                                {% trans 'Existing' %}
+                            {% else %}
+                                {% trans 'Email only' %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">{% trans 'No valid reviewer assignments.' %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: flex-end;">
+    <a href="{% url 'reviewee_detail' reviewee.uuid %}" class="btn btn-secondary">
+        {% trans 'Cancel' %}
+    </a>
+
+    {% if not preview.errors and participant %}
+    <form method="post" action="{% url 'reviewee_nomination_import_confirm' reviewee.uuid %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-primary"
+                onclick="this.disabled=true; this.form.submit();">
+            {% trans 'Import reviewer list' %}
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<p class="help-text" style="margin-top: 1rem;">
+    {% trans 'This replaces the saved reviewer list. It does not create a review cycle or send invitations.' %}
+</p>
+{% endblock %}
