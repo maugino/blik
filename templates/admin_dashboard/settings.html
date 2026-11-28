@@ -88,6 +88,128 @@
             </form>
         </div>
 
+        <!-- Branding -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">{% trans 'Branding' %}</h2>
+            </div>
+            <form method="post"
+                  action="{% url 'settings' %}"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="branding">
+
+                <div class="card-body">
+                    <p class="help-text" style="margin-top: 0;">
+                        {% trans 'Add your organization logo to Blik and to generated reports.' %}
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label" for="brand_logo_light">
+                            {% trans 'Logo for light backgrounds' %}
+                        </label>
+
+                        {% if organization.brand_logo_light %}
+                        <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: #fff; border: 1px solid var(--border); border-radius: 6px;">
+                            <img src="{{ organization.brand_logo_light.url }}"
+                                 alt=""
+                                 style="display: block; max-width: 240px; max-height: 72px; object-fit: contain;">
+                        </div>
+                        {% endif %}
+
+                        <input
+                            type="file"
+                            id="brand_logo_light"
+                            name="brand_logo_light"
+                            class="form-control"
+                            accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"
+                            {% if not perms.accounts.can_manage_organization %}disabled{% endif %}
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                id="same_logo_for_dark"
+                                name="same_logo_for_dark"
+                                class="form-check-input"
+                                {% if not organization.brand_logo_dark %}checked{% endif %}
+                                {% if not perms.accounts.can_manage_organization %}disabled{% endif %}
+                            >
+                            <label class="form-label"
+                                   for="same_logo_for_dark"
+                                   style="display: inline; font-weight: normal;">
+                                {% trans 'Use the same logo on dark backgrounds' %}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="dark-logo-fields"
+                         {% if not organization.brand_logo_dark %}style="display: none;"{% endif %}>
+                        <div class="form-group">
+                            <label class="form-label" for="brand_logo_dark">
+                                {% trans 'Logo for dark backgrounds' %}
+                            </label>
+
+                            {% if organization.brand_logo_dark %}
+                            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: #1f2937; border: 1px solid var(--border); border-radius: 6px;">
+                                <img src="{{ organization.brand_logo_dark.url }}"
+                                     alt=""
+                                     style="display: block; max-width: 240px; max-height: 72px; object-fit: contain;">
+                            </div>
+                            {% endif %}
+
+                            <input
+                                type="file"
+                                id="brand_logo_dark"
+                                name="brand_logo_dark"
+                                class="form-control"
+                                accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"
+                                {% if not perms.accounts.can_manage_organization %}disabled{% endif %}
+                            >
+                        </div>
+                    </div>
+
+                    <small class="help-text">
+                        {% trans 'PNG, WebP or SVG. Maximum 2 MB. A transparent background is recommended.' %}
+                    </small>
+
+                    {% if perms.accounts.can_manage_organization %}
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            {% trans 'Save Branding' %}
+                        </button>
+
+                        {% if organization.brand_logo_light or organization.brand_logo_dark %}
+                        <button type="submit"
+                                name="remove_brand_logos"
+                                value="1"
+                                class="btn btn-secondary btn-sm">
+                            {% trans 'Remove uploaded logos' %}
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+
+            <script>
+            (function () {
+                const same = document.getElementById('same_logo_for_dark');
+                const dark = document.getElementById('dark-logo-fields');
+                if (!same || !dark) return;
+
+                function updateDarkLogo() {
+                    dark.style.display = same.checked ? 'none' : '';
+                }
+
+                same.addEventListener('change', updateDarkLogo);
+                updateDarkLogo();
+            })();
+            </script>
+        </div>
+
         <!-- Report Settings -->
         <div class="card">
             <div class="card-header">
