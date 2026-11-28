@@ -4,6 +4,9 @@ Context processors for making settings available in templates.
 from pathlib import Path
 
 from django.conf import settings
+from django.templatetags.static import static
+
+from core.branding import organization_logo_urls
 
 
 def stripe_settings(request):
@@ -53,15 +56,27 @@ def sender_identity(request):
 
 
 def branding(request):
-    """Expose optional co-branding only when the private brand assets exist."""
+    """Resolve organization branding with deployment assets as fallback."""
+    organization = getattr(request, 'organization', None)
+    light, dark = organization_logo_urls(organization)
+
+    # Existing deployment-specific Enovis assets remain a backwards-compatible
+    # fallback. They are intentionally ignored by Git and may not exist.
     static_img = Path(settings.BASE_DIR) / 'static' / 'img' / 'logos'
-    color_logo = static_img / 'enovis-logo-color.svg'
-    white_logo = static_img / 'enovis-logo-white.svg'
+    deployment_light = static_img / 'enovis-logo-color.svg'
+    deployment_dark = static_img / 'enovis-logo-white.svg'
+
+    if not light and deployment_light.is_file():
+        light = static('img/logos/enovis-logo-color.svg')
+
+    if not dark:
+        if deployment_dark.is_file():
+            dark = static('img/logos/enovis-logo-white.svg')
+        else:
+            dark = light
 
     return {
-        'cobranding_enabled': bool(
-            settings.REPORT_LOGO
-            and color_logo.is_file()
-            and white_logo.is_file()
-        ),
+        'cobranding_enabled': bool(light),
+        'cobrand_logo_light': light,
+        'cobrand_logo_dark': dark or light,
     }

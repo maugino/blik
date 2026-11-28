@@ -3,6 +3,8 @@ from datetime import date
 
 import weasyprint
 from django.conf import settings
+
+from core.branding import organization_report_logo
 from django.core.files.base import ContentFile
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -175,7 +177,10 @@ def _pdf_context(report):
         'matrix': _matrix(insights.get('dreyfus_quadrant')),
         'detail_sections': _detail_sections(data),
         'font_dir': FONT_DIR.as_uri(),
-        'report_logo': f"file://{settings.REPORT_LOGO}" if settings.REPORT_LOGO else '',
+        'report_logo': organization_report_logo(
+            report.cycle.organization,
+            settings.REPORT_LOGO,
+        ),
     })
     return context
 

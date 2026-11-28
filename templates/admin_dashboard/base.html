@@ -46,12 +46,12 @@
                     {% if cobranding_enabled %}
                     <span class="navbar-brand-cobrand">
                         <span class="navbar-brand-for">for</span>
-                        <img src="{% static 'img/logos/enovis-logo-color.svg' %}"
+                        <img src="{{ cobrand_logo_light }}"
                              class="navbar-client-logo navbar-client-logo-light"
-                             alt="Enovis">
-                        <img src="{% static 'img/logos/enovis-logo-white.svg' %}"
+                             alt="{{ request.organization.name }}">
+                        <img src="{{ cobrand_logo_dark }}"
                              class="navbar-client-logo navbar-client-logo-dark"
-                             alt="Enovis">
+                             alt="{{ request.organization.name }}">
                     </span>
                     {% endif %}
                 </a>

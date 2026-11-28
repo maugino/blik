@@ -3237,6 +3237,81 @@ def settings_view(request):
                 organization.save()
                 messages.success(request, _('Organization details updated successfully.'))
 
+            elif section == 'branding':
+                from core.branding import validate_brand_logo
+
+                light_upload = request.FILES.get('brand_logo_light')
+                dark_upload = request.FILES.get('brand_logo_dark')
+                same_for_dark = request.POST.get('same_logo_for_dark') == 'on'
+                remove_all = request.POST.get('remove_brand_logos') == '1'
+
+                # Validate both uploads before changing either field.
+                if light_upload:
+                    validate_brand_logo(light_upload)
+                if dark_upload and not same_for_dark:
+                    validate_brand_logo(dark_upload)
+
+                old_light = (
+                    organization.brand_logo_light.name
+                    if organization.brand_logo_light
+                    else ''
+                )
+                old_dark = (
+                    organization.brand_logo_dark.name
+                    if organization.brand_logo_dark
+                    else ''
+                )
+
+                if remove_all:
+                    organization.brand_logo_light = ''
+                    organization.brand_logo_dark = ''
+                else:
+                    if light_upload:
+                        organization.brand_logo_light = light_upload
+
+                    # An empty dark field means use the light logo for both.
+                    if same_for_dark:
+                        organization.brand_logo_dark = ''
+                    elif dark_upload:
+                        organization.brand_logo_dark = dark_upload
+
+                organization.save(
+                    update_fields=[
+                        'brand_logo_light',
+                        'brand_logo_dark',
+                        'updated_at',
+                    ]
+                )
+
+                new_light = (
+                    organization.brand_logo_light.name
+                    if organization.brand_logo_light
+                    else ''
+                )
+                new_dark = (
+                    organization.brand_logo_dark.name
+                    if organization.brand_logo_dark
+                    else ''
+                )
+
+                storage = organization._meta.get_field(
+                    'brand_logo_light'
+                ).storage
+
+                # Delete replaced files only after the database references have
+                # been saved successfully.
+                for old_name in {old_light, old_dark}:
+                    if (
+                        old_name
+                        and old_name not in {new_light, new_dark}
+                    ):
+                        storage.delete(old_name)
+
+                messages.success(
+                    request,
+                    _('Branding updated successfully.')
+                )
+
             elif section == 'registration':
                 # New user settings
                 organization.default_users_can_create_cycles = request.POST.get('default_users_can_create_cycles') == 'on'
