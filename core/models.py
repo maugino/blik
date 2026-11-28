@@ -1,7 +1,9 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext, gettext_lazy as _
+
+from core.branding import validate_brand_logo
 from cryptography.fernet import Fernet
 
 
@@ -18,6 +20,21 @@ class Organization(TimeStampedModel):
     """Organization model for multi-tenant support"""
     name = models.CharField(_('name'), max_length=255)
     email = models.EmailField(_('email'))
+
+    # Optional organization-level co-branding. A missing dark logo means that
+    # the light-background logo is used for both themes.
+    brand_logo_light = models.FileField(
+        _('logo for light backgrounds'),
+        upload_to='organization-logos/',
+        blank=True,
+        validators=[validate_brand_logo],
+    )
+    brand_logo_dark = models.FileField(
+        _('logo for dark backgrounds'),
+        upload_to='organization-logos/',
+        blank=True,
+        validators=[validate_brand_logo],
+    )
 
     # Email settings
     smtp_host = models.CharField(_('SMTP host'), max_length=255, blank=True)
