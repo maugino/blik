@@ -45,6 +45,11 @@ urlpatterns = [
     path('dashboard/team/gdpr/', admin_views.gdpr_management, name='gdpr_management'),
     path('dashboard/team/gdpr/user/<int:user_id>/delete/', admin_views.gdpr_delete_user_view, name='gdpr_delete_user'),
     path('dashboard/team/gdpr/reviewee/<uuid:reviewee_uuid>/delete/', admin_views.gdpr_delete_reviewee_view, name='gdpr_delete_reviewee'),
+    path(
+        'dashboard/branding/logo/<str:theme>/',
+        admin_views.organization_brand_logo,
+        name='organization_brand_logo',
+    ),
     path('dashboard/reviewees/', admin_views.reviewee_list, name='reviewee_list'),
     path('dashboard/reviewees/create/', admin_views.reviewee_create, name='reviewee_create'),
     path('dashboard/reviewees/<uuid:reviewee_uuid>/', admin_views.reviewee_detail, name='reviewee_detail'),

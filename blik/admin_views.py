@@ -19,7 +19,7 @@ from django.db import transaction
 from django.db.models import ProtectedError
 from django.db.models import Avg, Count, Exists, F, Max, OuterRef, Q, Subquery
 from django.db.models.functions import Lower
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -3323,6 +3323,43 @@ def send_report_email(request, cycle_uuid):
         messages.error(request, _('Failed to send email.'))
 
     return redirect('review_cycle_detail', cycle_uuid=cycle.uuid)
+
+
+@login_required
+def organization_brand_logo(request, theme):
+    """Serve the signed-in user's organization logo without exposing MEDIA_ROOT."""
+    from core.branding import logo_content_type
+
+    organization = request.organization
+    if not organization:
+        raise Http404
+
+    if theme == 'light':
+        logo = organization.brand_logo_light
+    elif theme == 'dark':
+        logo = organization.brand_logo_dark or organization.brand_logo_light
+    else:
+        raise Http404
+
+    if not logo:
+        raise Http404
+
+    content_type = logo_content_type(logo.name)
+    if not content_type:
+        raise Http404
+
+    try:
+        handle = logo.open('rb')
+    except (FileNotFoundError, OSError, ValueError):
+        raise Http404
+
+    response = FileResponse(
+        handle,
+        content_type=content_type,
+    )
+    response['Cache-Control'] = 'private, max-age=3600'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 
 @login_required

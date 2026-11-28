@@ -104,22 +104,19 @@ def _validate_svg(content):
 
 
 def organization_logo_urls(organization):
-    """Return browser URLs for organization-uploaded branding."""
+    """Return application routes for organization-uploaded branding."""
     if not organization:
         return '', ''
 
-    light = (
-        organization.brand_logo_light.url
-        if organization.brand_logo_light
-        else ''
-    )
+    # These are recognized by the branding context processor. The browser
+    # never receives storage paths or uploaded filenames.
+    light = 'light' if organization.brand_logo_light else ''
     dark = (
-        organization.brand_logo_dark.url
+        'dark'
         if organization.brand_logo_dark
         else light
     )
     return light, dark
-
 
 def organization_report_logo(organization, deployment_logo=''):
     """Return a file URI suitable for the PDF renderer."""
@@ -139,3 +136,13 @@ def organization_report_logo(organization, deployment_logo=''):
             return path.resolve().as_uri()
 
     return ''
+
+
+def logo_content_type(name):
+    """Return the browser content type for a validated branding logo."""
+    suffix = Path(name).suffix.lower()
+    return {
+        '.svg': 'image/svg+xml',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+    }.get(suffix)

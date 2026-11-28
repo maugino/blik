@@ -5,6 +5,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.templatetags.static import static
+from django.urls import reverse
 
 from core.branding import organization_logo_urls
 
@@ -59,6 +60,20 @@ def branding(request):
     """Resolve organization branding with deployment assets as fallback."""
     organization = getattr(request, 'organization', None)
     light, dark = organization_logo_urls(organization)
+
+    if light == 'light':
+        light = reverse(
+            'organization_brand_logo',
+            kwargs={'theme': 'light'},
+        )
+
+    if dark == 'dark':
+        dark = reverse(
+            'organization_brand_logo',
+            kwargs={'theme': 'dark'},
+        )
+    elif dark == 'light':
+        dark = light
 
     # Existing deployment-specific Enovis assets remain a backwards-compatible
     # fallback. They are intentionally ignored by Git and may not exist.
